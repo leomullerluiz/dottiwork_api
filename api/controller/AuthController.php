@@ -13,15 +13,15 @@ class AuthController
         $body = $request->getBody();
 
         // Validação de entrada
-        if (empty($body['login']) || empty($body['senha'])) {
-            Response::error('Login e senha são obrigatórios', 400);
+        if (empty($body['email']) || empty($body['senha'])) {
+            Response::error('Email e senha são obrigatórios', 400);
         }
 
-        $login = trim($body['login']);
+        $email = trim($body['email']);
         $senha = $body['senha'];
 
         // Busca usuário
-        $user = User::findByLogin($login);
+        $user = User::findByEmail($email);
 
         if (!$user) {
             Response::error('Credenciais inválidas', 401);
