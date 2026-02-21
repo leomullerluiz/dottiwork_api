@@ -50,7 +50,7 @@ $router = new Router();
 // Rota de teste
 $router->get('/', function (Request $request) {
     Response::json([
-        'message' => 'API funcionando!',
+        'message' => 'API funcionando!<br>teste de deploy automatico',
         'version' => '1.0.0',
     ]);
 });
