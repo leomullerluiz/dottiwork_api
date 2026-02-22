@@ -36,7 +36,7 @@ spl_autoload_register(function ($class) {
 
 // Captura erros não tratados
 set_exception_handler(function ($exception) {
-    Response::error('Erro interno do servidor', 500);
+    Response::error('Erro interno do servidor: ' . $exception->getMessage(), 500);
 });
 
 // Inicializa objetos principais
@@ -57,7 +57,7 @@ $router->get('/', function (Request $request) {
 
 // Rotas de autenticação
 $router->post('/auth/login', 'AuthController@login');
-$router->post('/auth/register', 'AuthController@register');
+$router->post('/auth/signup', 'AuthController@signup');
 $router->post('/auth/logout', 'AuthController@logout');
 $router->get('/auth/me', 'AuthController@me');
 

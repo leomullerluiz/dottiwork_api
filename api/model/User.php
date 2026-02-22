@@ -40,13 +40,14 @@ class User
     /**
      * Cria novo usuário
      */
-    public static function create($email, $senha)
+    public static function create($login, $email, $senha)
     {
         $db = Database::getInstance()->getConnection();
         $hashedPassword = Auth::hashPassword($senha);
-        $stmt = $db->prepare("INSERT INTO users (email, senha, created_at) VALUES (:email, :senha, NOW())");
+        $stmt = $db->prepare("INSERT INTO users (email, login, senha, created_at) VALUES (:email, :login, :senha, NOW())");
         $stmt->execute([
             'email' => $email,
+            'login' => $login,
             'senha' => $hashedPassword
         ]);
         $userId = $db->lastInsertId();

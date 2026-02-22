@@ -76,10 +76,10 @@ class AuthController
     }
 
     /**
-     * POST /auth/register
+     * POST /auth/signup
      * Registra novo usuário
      */
-    public function register(Request $request)
+    public function signup(Request $request)
     {
         $body = $request->getBody();
 
@@ -107,7 +107,7 @@ class AuthController
         }
 
         // Cria usuário
-        $userId = User::create($email, $senha);
+        $userId = User::create($email, $email, $senha);
         $user = User::findById($userId);
 
         Response::json([
