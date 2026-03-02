@@ -234,6 +234,188 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  /tasks/:
+    get:
+      summary: Lista todas as tarefas do usuário
+      description: Retorna todas as tarefas do usuário autenticado
+      tags:
+        - Tarefas
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: Lista de tarefas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tasks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Task'
+        '401':
+          description: Token inválido ou expirado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /tasks/{id}:
+    get:
+      summary: Busca tarefa por ID
+      description: Retorna informações de uma tarefa específica
+      tags:
+        - Tarefas
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID da tarefa
+          example: 1
+      responses:
+        '200':
+          description: Tarefa encontrada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  task:
+                    $ref: '#/components/schemas/Task'
+        '401':
+          description: Token inválido ou expirado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Tarefa não encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /tasks/category/{category_id}:
+    get:
+      summary: Lista tarefas por categoria
+      description: Retorna todas as tarefas de uma categoria específica do usuário
+      tags:
+        - Tarefas
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: path
+          name: category_id
+          required: true
+          schema:
+            type: integer
+          description: ID da categoria
+          example: 1
+      responses:
+        '200':
+          description: Lista de tarefas da categoria
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tasks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Task'
+        '401':
+          description: Token inválido ou expirado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Categoria não encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /tasks/create:
+    post:
+      summary: Cria uma nova tarefa
+      description: Cria uma nova tarefa para o usuário autenticado
+      tags:
+        - Tarefas
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - priority
+              properties:
+                category_id:
+                  type: integer
+                  example: 1
+                  description: ID da categoria (opcional)
+                title:
+                  type: string
+                  example: "string"
+                  description: Título da tarefa
+                description:
+                  type: string
+                  example: "string"
+                  description: Descrição detalhada (opcional)
+                is_completed:
+                  type: integer
+                  enum: [0, 1]
+                  example: 0
+                  description: Status de conclusão
+                priority:
+                  type: string
+                  enum: ["baixa", "media", "alta"]
+                  example: "string"
+                  description: Prioridade da tarefa
+                display_order:
+                  type: integer
+                  example: 1
+                  description: Ordem de exibição
+                due_date:
+                  type: string
+                  format: date-time
+                  example: "2026-03-05 18:00:00"
+                  description: Data de vencimento (opcional)
+      responses:
+        '201':
+          description: Tarefa criada com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Tarefa criada com sucesso"
+                  task:
+                    $ref: '#/components/schemas/Task'
+        '400':
+          description: Dados inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token inválido ou expirado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
 components:
   securitySchemes:
     ApiKeyAuth:
@@ -242,6 +424,89 @@ components:
       name: key
       description: Token de autenticação obtido no endpoint /auth/login. Envie o token no header 'key'
 
+  schemas:
+    Task:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        user_id:
+          type: integer
+          example: 1
+        category_id:
+          type: integer
+          nullable: true
+          example: 1
+        title:
+          type: string
+          example: "Finalizar relatório"
+        description:
+          type: string
+          nullable: true
+          example: "Completar e revisar o relatório de desempenho"
+        is_completed:
+          type: integer
+          enum: [0, 1]
+          example: 0
+        priority:
+          type: string
+          enum: ["baixa", "media", "alta"]
+          example: "alta"
+        display_order:
+          type: integer
+          example: 1
+        due_date:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2026-03-05 18:00:00"
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: null
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-03-02 17:30:00"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2026-03-02 17:30:00"
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        email:
+          type: string
+          format: email
+          example: "usuario@exemplo.com"
+        name:
+          type: string
+          example: "João Silva"
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-03-02 17:00:00"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2026-03-02 17:00:00"
+
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "Erro na requisição"
+
 tags:
   - name: Sistema
     description: Endpoints de sistema e status
@@ -249,3 +514,5 @@ tags:
     description: Endpoints de autenticação e gestão de sessão
   - name: Usuários
     description: Endpoints de gerenciamento de usuários
+  - name: Tarefas
+    description: Endpoints de gerenciamento de tarefas (to-dos)
