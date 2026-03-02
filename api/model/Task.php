@@ -1,0 +1,49 @@
+<?php
+class Task
+{
+    public static function findAllByUserId($userId)
+    {
+        $db = Database::getInstance()->getConnection();
+        $stmt = $db->prepare("SELECT * FROM todo_lists WHERE user_id = :user_id");
+        $stmt->execute(['user_id' => $userId]);
+        return $stmt->fetchAll();
+    }
+
+    public static function findByCategorieIdAndUserId($idCategorieId, $userId)
+    {
+        $db = Database::getInstance()->getConnection();
+        $stmt = $db->prepare("SELECT * FROM todo_lists WHERE category_id = :category_id AND user_id = :user_id");
+        $stmt->execute(['category_id' => $idCategorieId, 'user_id' => $userId]);
+        return $stmt->fetchAll();
+    }
+
+    public static function findByIdAndUserId($id, $userId)
+    {
+        $db = Database::getInstance()->getConnection();
+        $stmt = $db->prepare("SELECT * FROM todo_lists WHERE id = :id AND user_id = :user_id");
+        $stmt->execute(['id' => $id, 'user_id' => $userId]);
+        return $stmt->fetch();
+    }
+
+    public static function create($userId, $categoryId, $title, $description, $isCompleted, $priority, $displayOrder, $dueDate)
+    {
+        $db = Database::getInstance()->getConnection();
+        $stmt = $db->prepare("INSERT INTO todo_lists (user_id, category_id, title, description, is_completed, priority, display_order, due_date, created_at) VALUES (:user_id, :category_id, :title, :description, :is_completed, :priority, :display_order, :due_date, NOW())");
+
+        $stmt->execute([
+            'user_id' => $userId,
+            'category_id' => $categoryId,
+            'title' => $title,
+            'description' => $description,
+            'is_completed' => $isCompleted,
+            'priority' => $priority,
+            'display_order' => $displayOrder,
+            'due_date' => $dueDate,
+        ]);
+        return $stmt->rowCount();
+    }
+
+    //todo: delete byId
+    //todo: update byId
+
+}
