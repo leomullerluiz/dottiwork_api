@@ -6,7 +6,10 @@ info:
 
 servers:
   - url: http://localhost/dotti-api/api
-    description: Servidor local de desenvolvimento
+    description: local
+
+  - url: https://dottiwork-api.leomullerluiz.com/api
+    description: Ambiente
 
 paths:
   /:
