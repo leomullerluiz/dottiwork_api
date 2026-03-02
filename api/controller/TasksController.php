@@ -24,8 +24,16 @@ class TasksController
     public function create(Request $request)
     {
         $tokenInfo = AuthToken::findByToken($request->getBearerToken());
-        $tasks = Task::create($tokenInfo['user_id'], $request->getBody()['category_id'], $request->getBody()['title'], $request->getBody()['description'], $request->getBody()['is_completed'], $request->getBody()['priority'], $request->getBody()['display_order'], $request->getBody()['due_date']);
-        Response::json($tasks, 200);
+        $task = Task::create($tokenInfo['user_id'], $request->getBody()['category_id'], $request->getBody()['title'], $request->getBody()['description'], $request->getBody()['is_completed'], $request->getBody()['priority'], $request->getBody()['display_order'], $request->getBody()['due_date']);
+        
+        if ($task) {
+            Response::json([
+                'message' => 'Tarefa criada com sucesso',
+                'task' => $task
+            ], 201);
+        } else {
+            Response::error('Erro ao criar tarefa', 400);
+        }
     }
 
 }

@@ -40,7 +40,12 @@ class Task
             'display_order' => $displayOrder,
             'due_date' => $dueDate,
         ]);
-        return $stmt->rowCount();
+
+        if ($stmt->rowCount() > 0) {
+            $lastId = $db->lastInsertId();
+            return self::findByIdAndUserId($lastId, $userId);
+        }
+        return null;
     }
 
     //todo: delete byId
