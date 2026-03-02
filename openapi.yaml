@@ -242,40 +242,6 @@ components:
       name: key
       description: Token de autenticação obtido no endpoint /auth/login. Envie o token no header 'key'
 
-  schemas:
-    User:
-      type: object
-      properties:
-        id:
-          type: integer
-          example: 1
-        email:
-          type: string
-          format: email
-          example: "usuario@exemplo.com"
-        login:
-          type: string
-          example: "usuario@exemplo.com"
-        created_at:
-          type: string
-          format: date-time
-          example: "2026-03-02T10:30:00Z"
-        ultimo_login:
-          type: string
-          format: date-time
-          example: "2026-03-02T15:45:00Z"
-          nullable: true
-
-    Error:
-      type: object
-      properties:
-        error:
-          type: string
-          example: "Mensagem de erro"
-        status:
-          type: integer
-          example: 400
-
 tags:
   - name: Sistema
     description: Endpoints de sistema e status
