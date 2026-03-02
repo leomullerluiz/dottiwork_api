@@ -1,0 +1,282 @@
+openapi: 3.0.0
+info:
+  title: dotti.work - api
+  version: 1.0.0
+  description: API REST para autenticação e gerenciamento de usuários
+
+servers:
+  - url: http://localhost/dotti-api/api
+    description: Servidor local de desenvolvimento
+
+paths:
+  /:
+    get:
+      summary: Verifica status da API
+      description: Retorna informações básicas sobre a API
+      tags:
+        - Sistema
+      responses:
+        '200':
+          description: API funcionando
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "API online"
+                  version:
+                    type: string
+                    example: "1.0.0"
+
+  /auth/login:
+    post:
+      summary: Realiza login
+      description: Autentica um usuário e retorna um token de acesso
+      tags:
+        - Autenticação
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - senha
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "usuario@exemplo.com"
+                senha:
+                  type: string
+                  format: password
+                  example: "senha123"
+      responses:
+        '200':
+          description: Login realizado com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    example: "abc123def456..."
+                  expires_in:
+                    type: integer
+                    example: 3600
+                  user:
+                    $ref: '#/components/schemas/User'
+        '400':
+          description: Dados inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Credenciais inválidas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/signup:
+    post:
+      summary: Cadastra novo usuário
+      description: Cria uma nova conta de usuário
+      tags:
+        - Autenticação
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+                - password_confirm
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "novousuario@exemplo.com"
+                password:
+                  type: string
+                  format: password
+                  example: "senha123"
+                password_confirm:
+                  type: string
+                  format: password
+                  example: "senha123"
+      responses:
+        '201':
+          description: Usuário criado com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Usuário criado com sucesso"
+                  user:
+                    $ref: '#/components/schemas/User'
+        '400':
+          description: Dados inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Email já está em uso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/logout:
+    post:
+      summary: Realiza logout
+      description: Invalida o token de acesso atual
+      tags:
+        - Autenticação
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: Logout realizado com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Logout realizado com sucesso"
+        '401':
+          description: Token inválido ou expirado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/me:
+    get:
+      summary: Retorna dados do usuário autenticado
+      description: Obtém informações do usuário logado
+      tags:
+        - Autenticação
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: Dados do usuário
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+        '401':
+          description: Token inválido ou expirado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /users/{id}:
+    get:
+      summary: Busca usuário por ID
+      description: Retorna informações de um usuário específico
+      tags:
+        - Usuários
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID do usuário
+          example: 1
+      responses:
+        '200':
+          description: Usuário encontrado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+        '401':
+          description: Token inválido ou expirado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Usuário não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: key
+      description: Token de autenticação obtido no endpoint /auth/login. Envie o token no header 'key'
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        email:
+          type: string
+          format: email
+          example: "usuario@exemplo.com"
+        login:
+          type: string
+          example: "usuario@exemplo.com"
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-03-02T10:30:00Z"
+        ultimo_login:
+          type: string
+          format: date-time
+          example: "2026-03-02T15:45:00Z"
+          nullable: true
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Mensagem de erro"
+        status:
+          type: integer
+          example: 400
+
+tags:
+  - name: Sistema
+    description: Endpoints de sistema e status
+  - name: Autenticação
+    description: Endpoints de autenticação e gestão de sessão
+  - name: Usuários
+    description: Endpoints de gerenciamento de usuários
