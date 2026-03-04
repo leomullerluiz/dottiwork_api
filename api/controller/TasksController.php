@@ -25,7 +25,7 @@ class TasksController
     {
         $tokenInfo = AuthToken::findByToken($request->getBearerToken());
         $task = Task::create($tokenInfo['user_id'], $request->getBody()['category_id'], $request->getBody()['title'], $request->getBody()['description'], $request->getBody()['is_completed'], $request->getBody()['priority'], $request->getBody()['display_order'], $request->getBody()['due_date']);
-        
+
         if ($task) {
             Response::json([
                 'message' => 'Tarefa criada com sucesso',
@@ -33,6 +33,21 @@ class TasksController
             ], 201);
         } else {
             Response::error('Erro ao criar tarefa', 400);
+        }
+    }
+
+    public function update(Request $request)
+    {
+        $tokenInfo = AuthToken::findByToken($request->getBearerToken());
+        $task = Task::update($request->getBody()['task_id'], $tokenInfo['user_id'], $request->getBody()['category_id'], $request->getBody()['title'], $request->getBody()['description'], $request->getBody()['is_completed'], $request->getBody()['priority'], $request->getBody()['display_order'], $request->getBody()['due_date']);
+
+        if ($task) {
+            Response::json([
+                'message' => 'Tarefa atualizada com sucesso',
+                'task' => $task
+            ], 200);
+        } else {
+            Response::error('Erro ao atualizar tarefa', 400);
         }
     }
 

@@ -48,7 +48,29 @@ class Task
         return null;
     }
 
+    public static function update($taskId, $userId, $categoryId, $title, $description, $isCompleted, $priority, $displayOrder, $dueDate)
+    {
+        $db = Database::getInstance()->getConnection();
+        $stmt = $db->prepare("UPDATE todo_lists SET category_id = :category_id, title = :title, description = :description, is_completed = :is_completed, priority = :priority, display_order = :display_order, due_date = :due_date, updated_at = NOW() WHERE id = :id AND user_id = :user_id");
+
+        $stmt->execute([
+            'id' => $taskId,
+            'user_id' => $userId,
+            'category_id' => $categoryId,
+            'title' => $title,
+            'description' => $description,
+            'is_completed' => $isCompleted,
+            'priority' => $priority,
+            'display_order' => $displayOrder,
+            'due_date' => $dueDate,
+        ]);
+
+        if ($stmt->rowCount() > 0) {
+            return self::findByIdAndUserId($taskId, $userId);
+        }
+        return null;
+    }
+
     //todo: delete byId
-    //todo: update byId
 
 }

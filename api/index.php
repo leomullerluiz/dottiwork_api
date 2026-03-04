@@ -38,7 +38,7 @@ set_exception_handler(function ($exception) {
 $request = new Request();
 $router = new Router();
 
-$router->get('/', function (Request $request) {
+$router->get('/', function () {
     Response::json([
         'message' => 'API online',
         'version' => '1.0.0',
@@ -52,10 +52,12 @@ $router->post('/auth/logout', 'AuthController@logout');
 $router->get('/auth/me', 'AuthController@me');
 
 //tasks routes
-$router->get('/tasks/category/:category_id', 'TasksController@listByCategory');
-$router->get('/tasks/', 'TasksController@listAll');
-$router->get('/tasks/:id', 'TasksController@listById');
-$router->post('/tasks/create', 'TasksController@create');
+$router->get('/task/category/:category_id', 'TasksController@listByCategory');
+$router->get('/task/:id', 'TasksController@listById');
+$router->get('/task/list', 'TasksController@listAll');
+$router->post('/task/create', 'TasksController@create');
+$router->post('/task/update', 'TasksController@update');
+
 
 
 $router->dispatch($request);
