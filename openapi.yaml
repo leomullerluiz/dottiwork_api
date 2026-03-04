@@ -416,6 +416,134 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  /tasks/update:
+    post:
+      summary: Atualiza uma tarefa existente
+      description: Atualiza informações de uma tarefa do usuário autenticado
+      tags:
+        - Tarefas
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - task_id
+                - title
+                - priority
+              properties:
+                task_id:
+                  type: integer
+                  example: 1
+                  description: ID da tarefa a ser atualizada
+                category_id:
+                  type: integer
+                  nullable: true
+                  example: 1
+                  description: ID da categoria (opcional)
+                title:
+                  type: string
+                  example: "Finalizar relatório"
+                  description: Título da tarefa
+                description:
+                  type: string
+                  nullable: true
+                  example: "Completar e revisar o relatório de desempenho"
+                  description: Descrição detalhada (opcional)
+                is_completed:
+                  type: integer
+                  enum: [0, 1]
+                  example: 0
+                  description: Status de conclusão
+                priority:
+                  type: string
+                  enum: ["baixa", "media", "alta"]
+                  example: "alta"
+                  description: Prioridade da tarefa
+                display_order:
+                  type: integer
+                  example: 1
+                  description: Ordem de exibição
+                due_date:
+                  type: string
+                  format: date-time
+                  nullable: true
+                  example: "2026-03-05 18:00:00"
+                  description: Data de vencimento (opcional)
+      responses:
+        '200':
+          description: Tarefa atualizada com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Tarefa atualizada com sucesso"
+                  task:
+                    $ref: '#/components/schemas/Task'
+        '400':
+          description: Dados inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token inválido ou expirado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /tasks/delete:
+    delete:
+      summary: Deleta uma tarefa
+      description: Remove uma tarefa do usuário autenticado
+      tags:
+        - Tarefas
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - task_id
+              properties:
+                task_id:
+                  type: integer
+                  example: 1
+                  description: ID da tarefa a ser deletada
+      responses:
+        '200':
+          description: Tarefa excluída com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Tarefa excluída com sucesso"
+        '400':
+          description: Dados inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token inválido ou expirado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
 components:
   securitySchemes:
     ApiKeyAuth:

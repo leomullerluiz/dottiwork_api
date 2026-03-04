@@ -184,6 +184,3 @@ $router->get('/products', 'ProductController@list');
 - Certifique-se de que o arquivo `.htaccess` está na raiz da pasta `api`
 - Verifique se o `AllowOverride All` está configurado no Apache
 
-## 📞 Suporte
-
-Para dúvidas, consulte a documentação do PHP: https://www.php.net/manual/
