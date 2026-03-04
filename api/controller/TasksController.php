@@ -2,7 +2,7 @@
 
 class TasksController
 {
-    public function listAll(Request $request, $params)
+    public function listAll(Request $request)
     {
         $tokenInfo = AuthToken::findByToken($request->getBearerToken());
         $tasks = Task::findAllByUserId($tokenInfo['user_id']);
@@ -48,6 +48,19 @@ class TasksController
             ], 200);
         } else {
             Response::error('Erro ao atualizar tarefa', 400);
+        }
+    }
+
+    public function delete(Request $request)
+    {
+        $tokenInfo = AuthToken::findByToken($request->getBearerToken());
+        $deleted = Task::delete($request->getBody()['task_id'], $tokenInfo['user_id']);
+        if ($deleted) {
+            Response::json([
+                'message' => 'Tarefa excluída com sucesso'
+            ], 200);
+        } else {
+            Response::error('Erro ao excluir tarefa', 400);
         }
     }
 

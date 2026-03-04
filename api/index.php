@@ -57,6 +57,7 @@ $router->get('/task/:id', 'TasksController@listById');
 $router->get('/task/list', 'TasksController@listAll');
 $router->post('/task/create', 'TasksController@create');
 $router->post('/task/update', 'TasksController@update');
+$router->delete('/task/delete', 'TasksController@delete');
 
 
 

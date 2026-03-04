@@ -71,6 +71,12 @@ class Task
         return null;
     }
 
-    //todo: delete byId
+    public static function delete($taskId, $userId)
+    {
+        $db = Database::getInstance()->getConnection();
+        $stmt = $db->prepare("DELETE FROM todo_lists WHERE id = :task_id AND user_id = :user_id");
+        $stmt->execute(params: ['task_id' => $taskId, 'user_id' => $userId]);
+        return $stmt->rowCount() > 0;
+    }
 
 }
