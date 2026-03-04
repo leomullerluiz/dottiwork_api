@@ -46,18 +46,26 @@ $router->get('/', function () {
 });
 
 //auth routes
+//todo: criar um endpoint para oAuth do google
 $router->post('/auth/login', 'AuthController@login');
 $router->post('/auth/signup', 'AuthController@signup');
 $router->post('/auth/logout', 'AuthController@logout');
 $router->get('/auth/me', 'AuthController@me');
 
 //tasks routes
-$router->get('/task/category/:category_id', 'TasksController@listByCategory');
+//todo: criar um endpoint para filtrar por data de vencimento, prioridade, status (concluída ou não concluída), categoria e campo de texto livre
+$router->get('/task/filter_by_category/:category_id', 'TasksController@listByCategory');
 $router->get('/task/:id', 'TasksController@listById');
 $router->get('/task/list', 'TasksController@listAll');
 $router->post('/task/create', 'TasksController@create');
 $router->post('/task/update', 'TasksController@update');
 $router->delete('/task/delete', 'TasksController@delete');
+
+//task category routes
+//todo: criar, atualizar e deletar categorias
+$router->get('/task/category/', 'TaskCategoryController@findAllByUserId');
+$router->get('/task/category/:id', 'TaskCategoryController@findByIdAndUserId');
+
 
 
 
