@@ -195,46 +195,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /users/{id}:
-    get:
-      summary: Busca usuário por ID
-      description: Retorna informações de um usuário específico
-      tags:
-        - Usuários
-      security:
-        - ApiKeyAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: integer
-          description: ID do usuário
-          example: 1
-      responses:
-        '200':
-          description: Usuário encontrado
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  user:
-                    $ref: '#/components/schemas/User'
-        '401':
-          description: Token inválido ou expirado
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Usuário não encontrado
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-  /tasks/:
+  /task/list:
     get:
       summary: Lista todas as tarefas do usuário
       description: Retorna todas as tarefas do usuário autenticado
@@ -261,7 +222,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /tasks/{id}:
+  /task/{id}:
     get:
       summary: Busca tarefa por ID
       description: Retorna informações de uma tarefa específica
@@ -300,7 +261,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /tasks/category/{category_id}:
+  /task/filter_by_category/{category_id}:
     get:
       summary: Lista tarefas por categoria
       description: Retorna todas as tarefas de uma categoria específica do usuário
@@ -341,7 +302,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /tasks/create:
+  /task/create:
     post:
       summary: Cria uma nova tarefa
       description: Cria uma nova tarefa para o usuário autenticado
@@ -416,7 +377,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /tasks/update:
+  /task/update:
     post:
       summary: Atualiza uma tarefa existente
       description: Atualiza informações de uma tarefa do usuário autenticado
@@ -499,7 +460,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /tasks/delete:
+  /task/delete:
     delete:
       summary: Deleta uma tarefa
       description: Remove uma tarefa do usuário autenticado
@@ -544,6 +505,97 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  /task/category/:
+    get:
+      summary: Lista categorias de tarefas
+      description: Retorna todas as categorias de tarefas do usuário autenticado
+      tags:
+        - Categorias
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: Lista de categorias
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  categories:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        name:
+                          type: string
+                          example: "Trabalho"
+                        color:
+                          type: string
+                          example: "#FF5733"
+                        display_order:
+                          type: integer
+                          example: 1
+        '401':
+          description: Token inválido ou expirado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /task/category/{id}:
+    get:
+      summary: Busca categoria por ID
+      description: Retorna informações de uma categoria específica do usuário autenticado
+      tags:
+        - Categorias
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID da categoria
+          example: 1
+      responses:
+        '200':
+          description: Categoria encontrada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  category:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      name:
+                        type: string
+                        example: "Trabalho"
+                      color:
+                        type: string
+                        example: "#FF5733"
+                      display_order:
+                        type: integer
+                        example: 1
+        '401':
+          description: Token inválido ou expirado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Categoria não encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   securitySchemes:
     ApiKeyAuth:
@@ -640,7 +692,7 @@ tags:
     description: Endpoints de sistema e status
   - name: Autenticação
     description: Endpoints de autenticação e gestão de sessão
-  - name: Usuários
-    description: Endpoints de gerenciamento de usuários
   - name: Tarefas
     description: Endpoints de gerenciamento de tarefas (to-dos)
+  - name: Categorias
+    description: Endpoints de gerenciamento de categorias de tarefas

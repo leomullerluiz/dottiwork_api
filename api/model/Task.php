@@ -1,9 +1,15 @@
 <?php
 class Task
 {
+    private static $database;
+
+    public static function setDatabase($db)
+    {
+        self::$database = $db;
+    }
     public static function findAllByUserId($userId)
     {
-        $db = Database::getInstance()->getConnection();
+        $db = self::$database ?: Database::getInstance()->getConnection();
         $stmt = $db->prepare("SELECT * FROM todo_lists WHERE user_id = :user_id");
         $stmt->execute(['user_id' => $userId]);
         return $stmt->fetchAll();

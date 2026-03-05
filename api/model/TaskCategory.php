@@ -2,9 +2,21 @@
 
 class TaskCategory
 {
+    private static $database = null;
+
+    public static function setDatabase($db)
+    {
+        self::$database = $db;
+    }
+
+    public static function getDatabase()
+    {
+        return self::$database ?: Database::getInstance()->getConnection();
+    }
+
     public static function findAllByUserId($userId)
     {
-        $db = Database::getInstance()->getConnection();
+        $db = self::getDatabase();
         $stmt = $db->prepare("SELECT * FROM todo_categories WHERE user_id = :user_id");
         $stmt->execute(['user_id' => $userId]);
         return $stmt->fetchAll();
@@ -12,7 +24,7 @@ class TaskCategory
 
     public static function findByIdAndUserId($id, $userId)
     {
-        $db = Database::getInstance()->getConnection();
+        $db = self::getDatabase();
         $stmt = $db->prepare("SELECT * FROM todo_categories WHERE id = :id AND user_id = :user_id");
         $stmt->execute(['id' => $id, 'user_id' => $userId]);
         return $stmt->fetch();
@@ -20,7 +32,7 @@ class TaskCategory
 
     public static function create($userId, $name, $color, $displayOrder)
     {
-        $db = Database::getInstance()->getConnection();
+        $db = self::getDatabase();
         $stmt = $db->prepare("INSERT INTO todo_categories (user_id, name, color, display_order, created_at) VALUES (:user_id, :name, :color, :display_order, NOW())");
 
         $stmt->execute([
@@ -39,7 +51,7 @@ class TaskCategory
 
     public static function update($id, $name, $color, $displayOrder, $userId)
     {
-        $db = Database::getInstance()->getConnection();
+        $db = self::getDatabase();
         $stmt = $db->prepare("UPDATE todo_categories SET name = :name, color = :color, display_order = :display_order, updated_at = NOW() WHERE id = :id");
 
         $stmt->execute([
@@ -57,7 +69,7 @@ class TaskCategory
 
     public static function delete($id, $userId)
     {
-        $db = Database::getInstance()->getConnection();
+        $db = self::getDatabase();
         $stmt = $db->prepare("DELETE FROM todo_categories WHERE id = :id AND user_id = :user_id");
         $stmt->execute(['id' => $id, 'user_id' => $userId]);
         return $stmt->rowCount() > 0;
