@@ -1,0 +1,26 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo "Rodando testes..."
+
+./vendor/bin/phpunit
+
+if [ $? -ne 0 ]; then
+  echo "❌ Testes falharam. Commit cancelado."
+  exit 1
+fi
+
+echo "✅ Testes passaram."#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo "🔍 Verificando qualidade do código..."
+
+# Verifica PHP Syntax
+echo "Validando sintaxe PHP..."
+find api -name "*.php" -exec php -l {} \; || exit 1
+
+# Executa testes unitários
+echo "Rodando testes unitários..."
+./vendor/bin/phpunit || exit 1
+
+echo "✅ Tudo OK! Commit autorizado."

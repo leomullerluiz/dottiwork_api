@@ -1,0 +1,29 @@
+{
+  "name": "dotti-api",
+  "version": "1.0.0",
+  "description": "- PHP 7.4 ou superior\r - MySQL 5.7 ou superior\r - Apache com mod_rewrite habilitado",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepare": "husky"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/leomullerluiz/dottiwork_api.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/leomullerluiz/dottiwork_api/issues"
+  },
+  "homepage": "https://github.com/leomullerluiz/dottiwork_api#readme",
+  "devDependencies": {
+    "husky": "^9.1.7"
+  }
+}
