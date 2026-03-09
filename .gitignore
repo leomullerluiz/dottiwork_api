@@ -1,4 +1,5 @@
 /node_modules
+# PHPUnit result cache file
 .phpunit.result.cache
 .DS_Store
 build/
