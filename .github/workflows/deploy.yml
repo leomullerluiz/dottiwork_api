@@ -40,6 +40,8 @@ jobs:
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
           FTP_PATH: ${{ secrets.FTP_PATH }}
         run: |
+          HOST=$(echo "$FTP_HOST" | xargs)
+          PATH_DIR=$(echo "$FTP_PATH" | xargs)
           curl -T .env --ftp-create-dirs \
-            "ftp://${FTP_HOST}${FTP_PATH}.env" \
+            "ftp://${HOST}${PATH_DIR}.env" \
             --user "${FTP_USER}:${FTP_PASSWORD}"
