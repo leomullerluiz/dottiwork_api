@@ -1,4 +1,4 @@
-- name: Create .env
+name: Create .env
   run: |
     echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
     echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
