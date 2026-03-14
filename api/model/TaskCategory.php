@@ -30,16 +30,17 @@ class TaskCategory
         return $stmt->fetch();
     }
 
-    public static function create($userId, $name, $color, $displayOrder)
+    public static function create($userId, $name, $color, $displayOrder, $icon = null)
     {
         $db = self::getDatabase();
-        $stmt = $db->prepare("INSERT INTO todo_categories (user_id, name, color, display_order, created_at) VALUES (:user_id, :name, :color, :display_order, NOW())");
+        $stmt = $db->prepare("INSERT INTO todo_categories (user_id, name, color, display_order, icon, created_at) VALUES (:user_id, :name, :color, :display_order, :icon, NOW())");
 
         $stmt->execute([
             'user_id' => $userId,
             'name' => $name,
             'color' => $color,
             'display_order' => $displayOrder,
+            'icon' => $icon,
         ]);
 
         if ($stmt->rowCount() > 0) {
@@ -74,6 +75,5 @@ class TaskCategory
         $stmt->execute(['id' => $id, 'user_id' => $userId]);
         return $stmt->rowCount() > 0;
     }
-
 
 }

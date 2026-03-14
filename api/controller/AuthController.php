@@ -2,7 +2,7 @@
 /**
  * Controller de Autenticação
  */
-class AuthController
+class AuthController extends BaseController
 {
     /**
      * POST /auth/login
@@ -55,6 +55,7 @@ class AuthController
      */
     public function logout(Request $request)
     {
+        $user = $this->requireToken($request);
         $token = $request->getBearerToken();
 
         AuthToken::deleteByToken($token);
@@ -68,7 +69,7 @@ class AuthController
      */
     public function me(Request $request)
     {
-        $user = Auth::requireAuth($request);
+        $user = $this->requireToken($request);
 
         Response::json([
             'user' => User::toPublic($user)

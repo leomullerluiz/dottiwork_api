@@ -60,19 +60,18 @@ $router->get('/auth/me', 'AuthController@me');
 
 //tasks routes
 //todo: criar um endpoint para filtrar por data de vencimento, prioridade, status (concluída ou não concluída), categoria e campo de texto livre
+//todo: mudar o filter_by_category para receber os parametros via query string e não via URL
 $router->get('/task/filter_by_category/:category_id', 'TasksController@listByCategory');
-$router->get('/task/:id', 'TasksController@listById');
+$router->get('/task/:id', callback: 'TasksController@listById');
 $router->get('/task/list', 'TasksController@listAll');
 $router->post('/task/create', 'TasksController@create');
 $router->post('/task/update', 'TasksController@update');
 $router->delete('/task/delete', 'TasksController@delete');
 
 //task category routes
-//todo: criar, atualizar e deletar categorias
 $router->get('/task/category/', 'TaskCategoryController@findAllByUserId');
 $router->get('/task/category/:id', 'TaskCategoryController@findByIdAndUserId');
-
-
-
-
+$router->post('/task/category/create', 'TaskCategoryController@create');
+$router->post('/task/category/update', 'TaskCategoryController@update');
+$router->post('/task/category/delete', 'TaskCategoryController@delete');
 $router->dispatch($request);

@@ -1,30 +1,31 @@
 <?php
 
-class TasksController
+class TasksController extends BaseController
 {
     public function listAll(Request $request)
     {
-        $tokenInfo = AuthToken::findByToken($request->getBearerToken());
-        $tasks = Task::findAllByUserId($tokenInfo['user_id']);
+        $user = $this->requireToken($request);
+        $tasks = Task::findAllByUserId($user['id']);
         Response::json($tasks, 200);
     }
     public function listByCategory(Request $request, $params)
     {
-        $tokenInfo = AuthToken::findByToken($request->getBearerToken());
-        $tasks = Task::findByCategorieIdAndUserId($params['category_id'], $tokenInfo['user_id']);
+        $user = $this->requireToken($request);
+        $tasks = Task::findByCategorieIdAndUserId($params['category_id'], $user['id']);
         Response::json($tasks, 200);
     }
     public function listById(Request $request, $params)
     {
-        $tokenInfo = AuthToken::findByToken($request->getBearerToken());
-        $tasks = Task::findByIdAndUserId($params['id'], $tokenInfo['user_id']);
+        $user = $this->requireToken($request);
+        $tasks = Task::findByIdAndUserId($params['id'], $user['id']);
         Response::json($tasks, 200);
     }
 
     public function create(Request $request)
     {
-        $tokenInfo = AuthToken::findByToken($request->getBearerToken());
-        $task = Task::create($tokenInfo['user_id'], $request->getBody()['category_id'], $request->getBody()['title'], $request->getBody()['description'], $request->getBody()['is_completed'], $request->getBody()['priority'], $request->getBody()['display_order'], $request->getBody()['due_date']);
+        $user = $this->requireToken($request);
+        $body = $request->getBody();
+        $task = Task::create($user['id'], $body['category_id'], $body['title'], $body['description'], $body['is_completed'], $body['priority'], $body['display_order'], $body['due_date']);
 
         if ($task) {
             Response::json([
@@ -38,8 +39,9 @@ class TasksController
 
     public function update(Request $request)
     {
-        $tokenInfo = AuthToken::findByToken($request->getBearerToken());
-        $task = Task::update($request->getBody()['task_id'], $tokenInfo['user_id'], $request->getBody()['category_id'], $request->getBody()['title'], $request->getBody()['description'], $request->getBody()['is_completed'], $request->getBody()['priority'], $request->getBody()['display_order'], $request->getBody()['due_date']);
+        $user = $this->requireToken($request);
+        $body = $request->getBody();
+        $task = Task::update($body['task_id'], $user['id'], $body['category_id'], $body['title'], $body['description'], $body['is_completed'], $body['priority'], $body['display_order'], $body['due_date']);
 
         if ($task) {
             Response::json([
@@ -53,8 +55,9 @@ class TasksController
 
     public function delete(Request $request)
     {
-        $tokenInfo = AuthToken::findByToken($request->getBearerToken());
-        $deleted = Task::delete($request->getBody()['task_id'], $tokenInfo['user_id']);
+        $user = $this->requireToken($request);
+        $body = $request->getBody();
+        $deleted = Task::delete($body['task_id'], $user['id']);
         if ($deleted) {
             Response::json([
                 'message' => 'Tarefa excluída com sucesso'
