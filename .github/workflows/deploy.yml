@@ -41,7 +41,8 @@ jobs:
           FTP_PATH: ${{ secrets.FTP_PATH }}
         run: |
           HOST=$(echo "$FTP_HOST" | xargs)
-          PATH_DIR=$(echo "$FTP_PATH" | xargs)
+          PATH_DIR=$(echo "$FTP_PATH" | xargs | sed 's|^/||; s|/$||')
+          echo "::notice::FTP Host='$HOST' | Path='$PATH_DIR'"
           curl -T .env --ftp-create-dirs \
-            "ftp://${HOST}${PATH_DIR}.env" \
+            "ftp://${HOST}/${PATH_DIR}/.env" \
             --user "${FTP_USER}:${FTP_PASSWORD}"
