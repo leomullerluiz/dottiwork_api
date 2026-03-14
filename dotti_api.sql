@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 02/03/2026 às 23:16
+-- Tempo de geração: 14/03/2026 às 12:00
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.0.30
 
@@ -18,7 +18,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Banco de dados: `dotti_api`
+-- Banco de dados: `dottiwork_db`
 --
 
 -- --------------------------------------------------------
@@ -37,13 +37,7 @@ CREATE TABLE `auth_tokens` (
 
 --
 -- Despejando dados para a tabela `auth_tokens`
---
-
-INSERT INTO `auth_tokens` (`id`, `user_id`, `token`, `expires_at`, `created_at`) VALUES
-(10, 2, 'b2c626264c360bedd926db7c5e46562f9887b1f87e1b8edb5c70e38cfc4fa9ec', '2026-02-21 20:04:39', '2026-02-21 15:04:39'),
-(11, 2, '6ca1160e776d5b917be007afe4f5159986d6a960bc10052532561b8b95160991', '2026-02-21 20:04:43', '2026-02-21 15:04:43'),
-(12, 2, 'aa529416a8d68139ac5481db50ebb81a72eb9350fb0e77e63318e194354d4c5e', '2026-02-22 05:47:55', '2026-02-22 00:47:55'),
-(13, 2, 'c3b2f4897afd771988e0394356ddd750d085420721731ec7dbfdc63d4f2559a0', '2026-03-02 22:26:14', '2026-03-02 17:26:14');
+-- (sem tokens ativos no dump inicial)
 
 -- --------------------------------------------------------
 
@@ -62,6 +56,16 @@ CREATE TABLE `feedback` (
   `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp() COMMENT 'Data/hora da última atualização'
 ) ;
 
+--
+-- Despejando dados para a tabela `feedback`
+--
+
+INSERT INTO `feedback` (`id`, `user_id`, `rating`, `suggestion`, `status`, `admin_notes`, `created_at`, `updated_at`) VALUES
+(1, 1, 5, 'Adorei o app! Seria incrível ter integração com o Google Calendar para sincronizar as tarefas.', 'pendente',    NULL,                                  '2026-03-11 10:00:00', '2026-03-11 10:00:00'),
+(2, 1, 4, 'A interface é bem intuitiva. Senti falta de notificações por e-mail quando o prazo está próximo.',              'analisado',   'Funcionalidade no backlog Q2', '2026-03-12 16:30:00', '2026-03-13 09:00:00'),
+(3, 2, 3, 'Funcionando bem no geral, mas às vezes demora para carregar as categorias no celular.',                          'analisado',   'Investigar performance mobile', '2026-03-12 20:00:00', '2026-03-13 11:00:00'),
+(4, 2, 5, 'Muito bom! Uso todo dia para organizar minhas tarefas pessoais. Parabéns pela simplicidade.',                   'implementado', 'Feedback positivo arquivado',  '2026-03-13 08:00:00', '2026-03-14 09:00:00');
+
 -- --------------------------------------------------------
 
 --
@@ -78,6 +82,18 @@ CREATE TABLE `notepads` (
   `created_at` datetime DEFAULT current_timestamp() COMMENT 'Data/hora de criação do bloco',
   `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp() COMMENT 'Data/hora da última atualização'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Armazena os blocos de notas dos usuários';
+
+--
+-- Despejando dados para a tabela `notepads`
+--
+
+INSERT INTO `notepads` (`id`, `user_id`, `title`, `content`, `color`, `is_favorite`, `created_at`, `updated_at`) VALUES
+(1, 1, 'Ideias para o produto', 'Adicionar integração com Google Calendar\nNotificações push para tarefas com prazo\nDashboard com métricas de produtividade', '#fef9c3', 1, '2026-03-10 08:30:00', '2026-03-12 11:00:00'),
+(2, 1, 'Links úteis de desenvolvimento', 'MDN Web Docs: https://developer.mozilla.org\nPHP FIG / PSR: https://www.php-fig.org/psr/\nConvensões de commit: https://www.conventionalcommits.org', '#dbeafe', 0, '2026-03-10 09:00:00', '2026-03-10 09:00:00'),
+(3, 1, 'Checklist de deploy', '1. Rodar testes unitários\n2. Atualizar variáveis de ambiente\n3. Fazer backup do banco\n4. Deploy no servidor de homologação\n5. Validar endpoints críticos\n6. Deploy em produção', '#dcfce7', 1, '2026-03-11 14:00:00', '2026-03-13 10:30:00'),
+(4, 2, 'Lista de compras do mês', 'Arroz, feijão, macarrão\nFrango, carne moída\nLeite, iogurte, queijo\nFrutas da estação\nDetergente, sabão em pó', '#fce7f3', 0, '2026-03-10 10:30:00', '2026-03-10 10:30:00'),
+(5, 2, 'Senhas e anotações importantes', 'Nota: não guardas senhas aqui em texto puro! Use um gerenciador de senhas.', '#fee2e2', 1, '2026-03-11 09:00:00', '2026-03-11 09:00:00'),
+(6, 2, 'Receita de frango grelhado', 'Ingredientes: 2 filés de frango, limão, alho, azeite, sal e pimenta\nPreparo: Marinar por 30min, grelhar 7min cada lado em fogo médio', '#ede9fe', 0, '2026-03-12 19:00:00', '2026-03-12 19:00:00');
 
 -- --------------------------------------------------------
 
@@ -101,26 +117,16 @@ CREATE TABLE `todo_categories` (
 --
 
 INSERT INTO `todo_categories` (`id`, `user_id`, `name`, `color`, `icon`, `display_order`, `created_at`, `updated_at`) VALUES
-(1, 1, 'Trabalho', '#3b82f6', '💼', 1, '2026-03-02 17:00:00', '2026-03-02 17:00:00'),
-(2, 1, 'Projetos', '#06b6d4', '🚀', 2, '2026-03-02 17:05:00', '2026-03-02 17:05:00'),
-(3, 1, 'Reuniões', '#8b5cf6', '👥', 3, '2026-03-02 17:10:00', '2026-03-02 17:10:00'),
-(4, 1, 'Documentação', '#ec4899', '📄', 4, '2026-03-02 17:15:00', '2026-03-02 17:15:00'),
-(5, 1, 'Pendências', '#f59e0b', '⏰', 5, '2026-03-02 17:20:00', '2026-03-02 17:20:00'),
-(6, 2, 'Pessoal', '#ef4444', '👤', 1, '2026-03-02 17:25:00', '2026-03-02 17:25:00'),
-(7, 2, 'Compras', '#8b5cf6', '🛒', 2, '2026-03-02 17:30:00', '2026-03-02 17:30:00'),
-(8, 2, 'Casa', '#14b8a6', '🏠', 3, '2026-03-02 17:35:00', '2026-03-02 17:35:00'),
-(9, 2, 'Saúde', '#10b981', '❤️', 4, '2026-03-02 17:40:00', '2026-03-02 17:40:00'),
-(10, 2, 'Lazer', '#d946ef', '🎮', 5, '2026-03-02 17:45:00', '2026-03-02 17:45:00'),
-(11, 14, 'Saúde', '#10b981', '❤️', 1, '2026-03-02 17:50:00', '2026-03-02 17:50:00'),
-(12, 14, 'Exercícios', '#06b6d4', '🏃', 2, '2026-03-02 17:55:00', '2026-03-02 17:55:00'),
-(13, 14, 'Nutrição', '#84cc16', '🥗', 3, '2026-03-02 18:00:00', '2026-03-02 18:00:00'),
-(14, 14, 'Médico', '#f472b6', '⚕️', 4, '2026-03-02 18:05:00', '2026-03-02 18:05:00'),
-(15, 14, 'Bem-estar', '#a78bfa', '🧘', 5, '2026-03-02 18:10:00', '2026-03-02 18:10:00'),
-(16, 15, 'Estudos', '#f59e0b', '📚', 1, '2026-03-02 18:15:00', '2026-03-02 18:15:00'),
-(17, 15, 'Provas', '#ef4444', '✏️', 2, '2026-03-02 18:20:00', '2026-03-02 18:20:00'),
-(18, 15, 'Trabalhos', '#3b82f6', '📝', 3, '2026-03-02 18:25:00', '2026-03-02 18:25:00'),
-(19, 15, 'Leitura', '#8b5cf6', '📖', 4, '2026-03-02 18:30:00', '2026-03-02 18:30:00'),
-(20, 15, 'Pesquisa', '#06b6d4', '🔍', 5, '2026-03-02 18:35:00', '2026-03-02 18:35:00');
+(1, 1, 'Trabalho', '#3b82f6', '💼', 1, '2026-03-10 09:00:00', '2026-03-10 09:00:00'),
+(2, 1, 'Projetos', '#06b6d4', '🚀', 2, '2026-03-10 09:05:00', '2026-03-10 09:05:00'),
+(3, 1, 'Reuniões', '#8b5cf6', '👥', 3, '2026-03-10 09:10:00', '2026-03-10 09:10:00'),
+(4, 1, 'Documentação', '#ec4899', '📄', 4, '2026-03-10 09:15:00', '2026-03-10 09:15:00'),
+(5, 1, 'Pendências', '#f59e0b', '⏰', 5, '2026-03-10 09:20:00', '2026-03-10 09:20:00'),
+(6, 2, 'Pessoal', '#ef4444', '👤', 1, '2026-03-10 10:00:00', '2026-03-10 10:00:00'),
+(7, 2, 'Compras', '#8b5cf6', '🛒', 2, '2026-03-10 10:05:00', '2026-03-10 10:05:00'),
+(8, 2, 'Casa', '#14b8a6', '🏠', 3, '2026-03-10 10:10:00', '2026-03-10 10:10:00'),
+(9, 2, 'Saúde', '#10b981', '❤️', 4, '2026-03-10 10:15:00', '2026-03-10 10:15:00'),
+(10, 2, 'Lazer', '#d946ef', '🎮', 5, '2026-03-10 10:20:00', '2026-03-10 10:20:00');
 
 -- --------------------------------------------------------
 
@@ -148,26 +154,22 @@ CREATE TABLE `todo_lists` (
 --
 
 INSERT INTO `todo_lists` (`id`, `user_id`, `category_id`, `title`, `description`, `is_completed`, `priority`, `display_order`, `due_date`, `completed_at`, `created_at`, `updated_at`) VALUES
-  (1, 1, 1, 'Finalizar relatório trimestral', 'Completar e revisar o relatório de desempenho do Q1', 0, 'alta', 1, '2026-03-05 18:00:00', NULL, '2026-03-02 17:30:00', '2026-03-02 17:30:00'),
-(2, 1, 2, 'Iniciar novo projeto client', 'Kickoff meeting e setup do repositório', 0, 'alta', 2, '2026-03-06 14:00:00', NULL, '2026-03-02 17:35:00', '2026-03-02 17:35:00'),
-(3, 1, 3, 'Participar de reunião com stakeholders', 'Discussão sobre roadmap do produto', 1, 'media', 1, '2026-03-03 10:00:00', '2026-03-02 09:30:00', '2026-03-02 17:40:00', '2026-03-02 09:30:00'),
-(4, 1, 4, 'Atualizar documentação da API', 'Adicionar novos endpoints e exemplos', 0, 'media', 3, '2026-03-10 17:00:00', NULL, '2026-03-02 17:45:00', '2026-03-02 17:45:00'),
-(5, 1, 5, 'Revisar pull requests da equipe', 'Code review de 3 PRs aguardando', 0, 'alta', 2, '2026-03-03 16:00:00', NULL, '2026-03-02 17:50:00', '2026-03-02 17:50:00'),
-(6, 2, 6, 'Ligar para o médico', 'Agendar consulta de rotina', 1, 'media', 1, '2026-03-10 12:00:00', '2026-03-02 15:45:00', '2026-03-02 14:00:00', '2026-03-02 15:45:00'),
-(7, 2, 7, 'Comprar frutas e vegetais', 'Cenoura, maçã, alface e brócolis', 0, 'media', 1, '2026-03-04 19:00:00', NULL, '2026-03-02 10:30:00', '2026-03-02 10:30:00'),
-(8, 2, 8, 'Consertar vazamento da pia', 'Chamar encanador ou tentar consertar', 0, 'alta', 2, '2026-03-05 14:00:00', NULL, '2026-03-02 16:20:00', '2026-03-02 16:20:00'),
-(9, 2, 9, 'Tomar medicamento da pressão', 'Tomar diariamente pela manhã', 0, 'alta', 1, NULL, NULL, '2026-03-02 06:00:00', '2026-03-02 06:00:00'),
-(10, 2, 10, 'Assistir novo filme indicado', 'Ver o filme no fim de semana', 0, 'baixa', 2, '2026-03-08 20:00:00', NULL, '2026-03-02 15:00:00', '2026-03-02 15:00:00'),
-(11, 14, 11, 'Tomar medicamento', 'Tomar vitaminas pela manhã', 0, 'alta', 1, NULL, NULL, '2026-03-02 09:00:00', '2026-03-02 09:00:00'),
-(12, 14, 12, 'Fazer caminhada', 'Caminhada de 45 minutos no parque', 0, 'media', 2, '2026-03-04 07:00:00', NULL, '2026-03-02 08:00:00', '2026-03-02 08:00:00'),
-(13, 14, 13, 'Preparar refeição saudável', 'Fazer almoço com proteína e vegetais', 1, 'media', 1, '2026-03-02 12:00:00', '2026-03-02 12:30:00', '2026-03-02 11:00:00', '2026-03-02 12:30:00'),
-(14, 14, 14, 'Agendar consulta com cardiologista', 'Fazer check-up anual', 0, 'alta', 3, '2026-03-20 09:00:00', NULL, '2026-03-02 14:00:00', '2026-03-02 14:00:00'),
-(15, 14, 15, 'Meditar por 20 minutos', 'Praticar meditação matinal', 0, 'baixa', 2, NULL, NULL, '2026-03-02 06:30:00', '2026-03-02 06:30:00'),
-(16, 15, 16, 'Estudar para prova de álgebra', 'Revisar capítulos 5 a 8', 0, 'alta', 1, '2026-03-15 17:00:00', NULL, '2026-03-02 18:00:00', '2026-03-02 18:00:00'),
-(17, 15, 17, 'Fazer lista de exercícios de física', 'Resolver 20 questões do capítulo 3', 0, 'alta', 2, '2026-03-07 20:00:00', NULL, '2026-03-02 18:30:00', '2026-03-02 18:30:00'),
-(18, 15, 18, 'Escrever trabalho sobre Historia do Brasil', 'Tema: Período colonial - 5 páginas', 0, 'alta', 1, '2026-03-12 18:00:00', NULL, '2026-03-02 17:00:00', '2026-03-02 17:00:00'),
-(19, 15, 19, 'Ler livro de português', 'Ler capítulos 7 e 8', 0, 'media', 3, '2026-03-20 18:00:00', NULL, '2026-03-02 19:00:00', '2026-03-02 19:00:00'),
-(20, 15, 20, 'Pesquisar sobre mudanças climáticas', 'Colher informações para projeto', 0, 'media', 2, '2026-03-18 16:00:00', NULL, '2026-03-02 19:30:00', '2026-03-02 19:30:00');
+(1,  1, 1, 'Finalizar relatório trimestral',       'Completar e revisar o relatório de desempenho do Q1',        0, 'alta',  1, '2026-03-20 18:00:00', NULL,                  '2026-03-10 09:30:00', '2026-03-10 09:30:00'),
+(2,  1, 2, 'Configurar repositório do novo projeto','Criar estrutura de pastas, README e pipeline de CI/CD',      0, 'alta',  1, '2026-03-18 14:00:00', NULL,                  '2026-03-10 09:35:00', '2026-03-10 09:35:00'),
+(3,  1, 3, 'Reunião com stakeholders',              'Apresentar roadmap do produto para o time de negócios',      1, 'media', 1, '2026-03-12 10:00:00', '2026-03-12 10:45:00', '2026-03-10 09:40:00', '2026-03-12 10:45:00'),
+(4,  1, 4, 'Atualizar documentação da API',         'Adicionar novos endpoints ao OpenAPI e exemplos de uso',     0, 'media', 1, '2026-03-22 17:00:00', NULL,                  '2026-03-10 09:45:00', '2026-03-10 09:45:00'),
+(5,  1, 5, 'Revisar pull requests da equipe',       'Code review de 3 PRs aguardando aprovação',                  0, 'alta',  1, '2026-03-15 16:00:00', NULL,                  '2026-03-10 09:50:00', '2026-03-10 09:50:00'),
+(6,  1, 1, 'Preparar apresentação do sprint',       'Slides para o sprint review de sexta-feira',                 0, 'media', 2, '2026-03-14 09:00:00', NULL,                  '2026-03-10 10:00:00', '2026-03-10 10:00:00'),
+(7,  1, 2, 'Implementar autenticação JWT',          'Adicionar suporte a JWT no módulo de auth do projeto',       1, 'alta',  2, '2026-03-11 18:00:00', '2026-03-11 17:30:00', '2026-03-10 10:05:00', '2026-03-11 17:30:00'),
+(8,  1, 5, 'Responder e-mails pendentes',           'Responder ao cliente sobre prazo de entrega',                0, 'media', 2, '2026-03-14 12:00:00', NULL,                  '2026-03-10 10:10:00', '2026-03-10 10:10:00'),
+(9,  2, 6, 'Ligar para o médico',                   'Agendar consulta de rotina',                                 1, 'media', 1, '2026-03-15 12:00:00', '2026-03-11 09:00:00', '2026-03-10 10:00:00', '2026-03-11 09:00:00'),
+(10, 2, 7, 'Comprar frutas e vegetais',             'Cenoura, maçã, alface, brócolis e tomate',                   0, 'media', 1, '2026-03-14 19:00:00', NULL,                  '2026-03-10 10:05:00', '2026-03-10 10:05:00'),
+(11, 2, 8, 'Consertar vazamento da pia',            'Chamar encanador ou tentar resolver com vídeo no YouTube',   0, 'alta',  1, '2026-03-16 14:00:00', NULL,                  '2026-03-10 10:10:00', '2026-03-10 10:10:00'),
+(12, 2, 9, 'Tomar vitaminas pela manhã',            'Vitamina D3 e complexo B em jejum',                          0, 'alta',  1, NULL,                  NULL,                  '2026-03-10 10:15:00', '2026-03-10 10:15:00'),
+(13, 2, 10,'Assistir novo filme indicado',          'Ver o filme no fim de semana com a família',                  0, 'baixa', 1, '2026-03-15 20:00:00', NULL,                  '2026-03-10 10:20:00', '2026-03-10 10:20:00'),
+(14, 2, 7, 'Renovar seguro do carro',               'Contatar corretora antes do vencimento',                     0, 'alta',  2, '2026-03-20 18:00:00', NULL,                  '2026-03-10 10:25:00', '2026-03-10 10:25:00'),
+(15, 2, 8, 'Organizar armário da sala',             'Separar roupas para doação e reorganizar cabides',           0, 'baixa', 2, '2026-03-22 16:00:00', NULL,                  '2026-03-10 10:30:00', '2026-03-10 10:30:00'),
+(16, 2, 10,'Jogar partida de xadrez online',        'Manter sequência diária no lichess',                         1, 'baixa', 2, NULL,                  '2026-03-13 21:00:00', '2026-03-10 10:35:00', '2026-03-13 21:00:00');
 
 -- --------------------------------------------------------
 
@@ -191,10 +193,8 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `login`, `senha`, `email`, `first_name`, `last_name`, `ultimo_login`, `created_at`) VALUES
-(1, 'exemplo', '$2a$12$ojqKdUdATriPdrVdLXpog.bWe.LPgVeG2TwLWIqo/LQntx.GhrCae', 'exemplo@email.com', '', '', '2026-02-21 14:09:57', '2026-02-21 09:12:46'),
-(2, '', '$2y$10$DZGV1f0UGsBNtGu3aHy7xOw5zIbE9909jisxUUznNcvwDEzeYzDIy', 'teste@teste.com', '', '', '2026-03-02 17:26:14', '2026-02-21 13:59:51'),
-(14, 'teste2@teste.com', '$2y$10$odjrnAkbcXmtRPwwV0y65.1ZxRmFgtGKRuGHe70cc9XWsMPXETsNq', 'teste2@teste.com', '', '', NULL, '2026-02-21 23:48:38'),
-(15, 'teste3@teste.com', '$2y$10$kMjRneJvY.635Fp6sUywveodvMxU7Z8mR27HbIAaL71sAKbqZxLXe', 'teste3@teste.com', '', '', NULL, '2026-02-21 23:48:48');
+(1, 'leomullerluiz', '$2y$10$FLzS9FeillPPgqF6XBd7UuJztYq2iIr.E0zF3o/shtWmpWSDmOuHm', 'leomullerluiz@gmail.com', 'Leo', 'Muller',  '2026-03-14 10:00:00', '2026-03-10 08:00:00'),
+(2, 'teste',         '$2y$10$bqoDUDli9WAwQPVLrfvzKO2vISYVfkmoO0eTysUCgZPvx9gAleMhq', 'teste@teste.com',          'Teste', 'Usuário', '2026-03-13 18:00:00', '2026-03-10 09:00:00');
 
 --
 -- Índices para tabelas despejadas
@@ -268,37 +268,37 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT de tabela `auth_tokens`
 --
 ALTER TABLE `auth_tokens`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
 
 --
 -- AUTO_INCREMENT de tabela `feedback`
 --
 ALTER TABLE `feedback`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Identificador único do feedback';
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Identificador único do feedback', AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT de tabela `notepads`
 --
 ALTER TABLE `notepads`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Identificador único do bloco de notas';
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Identificador único do bloco de notas', AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT de tabela `todo_categories`
 --
 ALTER TABLE `todo_categories`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Identificador único da categoria';
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Identificador único da categoria', AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT de tabela `todo_lists`
 --
 ALTER TABLE `todo_lists`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Identificador único da tarefa';
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Identificador único da tarefa', AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT de tabela `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- Restrições para tabelas despejadas

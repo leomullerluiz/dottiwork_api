@@ -51,6 +51,17 @@ $router->get('/', function () {
     ]);
 });
 
+$router->get('/db_connection_test', function () {
+    try {
+        $db = Database::getInstance()->getConnection();
+        $stmt = $db->query('SELECT 1');
+        $stmt->fetch();
+        Response::json(['message' => 'Conexão com banco de dados bem-sucedida']);
+    } catch (Exception $e) {
+        Response::error('Erro ao conectar ao banco de dados: ' . $e->getMessage(), 500);
+    }
+});
+
 //auth routes
 //todo: criar um endpoint para oAuth do google
 $router->post('/auth/login', 'AuthController@login');
