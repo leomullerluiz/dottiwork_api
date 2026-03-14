@@ -54,14 +54,16 @@ $router->get('/', function () {
     ]);
 });
 
-$router->get('/db_connection_test', function () {
+$config = require __DIR__ . '/../config/database.php';
+
+$router->get('/db_connection_test', function () use ($config) {
     try {
         $db = Database::getInstance()->getConnection();
         $stmt = $db->query('SELECT 1');
         $stmt->fetch();
         Response::json(['message' => 'Conexão com banco de dados bem-sucedida']);
     } catch (Exception $e) {
-        Response::error('Erro ao conectar ao banco de dados: ' . $e->getMessage(), 500);
+        Response::error('Erro ao conectar ao banco de dados: ' . $e->getMessage() . ' | DB_HOST: ' . $config['host'] . ' | DB_NAME: ' . $config['dbname'] . ' | DB_USER: ' . $config['username'], 500);
     }
 });
 
