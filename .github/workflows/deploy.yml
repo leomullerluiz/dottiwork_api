@@ -31,3 +31,10 @@ jobs:
             **/.git*/**
             **/.github/**
             **/vendor/**
+            **/.env
+
+      - name: Upload .env via FTP
+        run: |
+          curl -T .env --ftp-create-dirs \
+            "ftp://${{ secrets.FTP_HOST }}${{ secrets.FTP_PATH }}.env" \
+            --user "${{ secrets.FTP_USER }}:${{ secrets.FTP_PASSWORD }}"
