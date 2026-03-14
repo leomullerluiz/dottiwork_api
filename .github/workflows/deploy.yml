@@ -34,7 +34,12 @@ jobs:
             **/.env
 
       - name: Upload .env via FTP
+        env:
+          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_USER: ${{ secrets.FTP_USER }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_PATH: ${{ secrets.FTP_PATH }}
         run: |
           curl -T .env --ftp-create-dirs \
-            "ftp://${{ secrets.FTP_HOST }}${{ secrets.FTP_PATH }}.env" \
-            --user "${{ secrets.FTP_USER }}:${{ secrets.FTP_PASSWORD }}"
+            "ftp://${FTP_HOST}${FTP_PATH}.env" \
+            --user "${FTP_USER}:${FTP_PASSWORD}"
