@@ -54,7 +54,7 @@ $router->get('/', function () {
     ]);
 });
 
-$config = require __DIR__ . '/../config/database.php';
+$config = require __DIR__ . './config/database.php';
 
 $router->get('/db_connection_test', function () use ($config) {
     try {
