@@ -6,6 +6,9 @@ require __DIR__ . '/../vendor/autoload.php';
     'dsn' => 'https://7356870e3b9efc8546edb728d150e94e@o4510988945391616.ingest.us.sentry.io/4510988947161088',
 ]);
 
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
+$dotenv->load();
+
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
 
