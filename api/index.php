@@ -61,9 +61,9 @@ $router->get('/db_connection_test', function () use ($config) {
         $db = Database::getInstance()->getConnection();
         $stmt = $db->query('SELECT 1');
         $stmt->fetch();
-        Response::json(['message' => 'Conexão com banco de dados bem-sucedida']);
+        Response::json(['message' => 'CONEXAO EFETUADA | DB_HOST: ' . $config['host']]);
     } catch (Exception $e) {
-        Response::error('Erro ao conectar ao banco de dados: ' . $e->getMessage() . ' | DB_HOST: ' . $config['host'] . ' | DB_NAME: ' . $config['dbname'] . ' | DB_USER: ' . $config['username'], 500);
+        Response::error('Error conn:' . $e->getMessage(), 500);
     }
 });
 
