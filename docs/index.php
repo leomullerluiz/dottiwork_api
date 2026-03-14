@@ -1,6 +1,11 @@
 <?php
-$user = 'admin';
-$pass = 'admin';
+require_once __DIR__ . '/../vendor/autoload.php';
+
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
+$dotenv->safeLoad();
+
+$user = $_ENV['DOCS_USER'];
+$pass = $_ENV['DOCS_PASSWORD'];
 
 if (
   !isset($_SERVER['PHP_AUTH_USER'])
