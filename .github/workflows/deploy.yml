@@ -44,5 +44,5 @@ jobs:
           PATH_DIR=$(echo "$FTP_PATH" | xargs | sed 's|^/||; s|/$||')
           echo "::notice::FTP Host='$HOST' | Path='$PATH_DIR'"
           curl -T .env --ftp-create-dirs \
-            "ftp://${HOST}/${PATH_DIR}/.env" \
+            "ftp://${HOST}/${PATH_DIR}/public_html/.env" \
             --user "${FTP_USER}:${FTP_PASSWORD}"
