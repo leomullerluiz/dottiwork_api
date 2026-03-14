@@ -4,10 +4,10 @@
  */
 
 return [
-    'host' => getenv('DB_HOST') ?: 'localhost',
-    'dbname' => getenv('DB_NAME') ?: 'dottiwork_db',
-    'username' => getenv('DB_USER') ?: 'root',
-    'password' => getenv('DB_PASSWORD') ?: '',
+    'host' => $_ENV['DB_HOST'] ?: 'localhost',
+    'dbname' => $_ENV['DB_NAME'] ?: 'dottiwork_db',
+    'username' => $_ENV['DB_USER'] ?: 'root',
+    'password' => $_ENV['DB_PASSWORD'] ?: '',
     'charset' => 'utf8mb4',
     'options' => [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
