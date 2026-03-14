@@ -15,7 +15,7 @@ class Database
             $dsn = "mysql:host={$config['host']};dbname={$config['dbname']};charset={$config['charset']}";
             $this->connection = new PDO($dsn, $config['username'], $config['password'], $config['options']);
         } catch (PDOException $e) {
-            Response::json(['error' => 'DB CONN ERROR | DB_HOST: ' . $config['host']] . $e->getMessage(), 500);
+            Response::json(['error' => 'DB CONN ERROR: ' . $e->getMessage()], 500);
             exit;
         }
     }

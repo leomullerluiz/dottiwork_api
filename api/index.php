@@ -61,7 +61,7 @@ $router->get('/db_connection_test', function () use ($config) {
         $db = Database::getInstance()->getConnection();
         $stmt = $db->query('SELECT 1');
         $stmt->fetch();
-        Response::json(['message' => 'CONEXAO EFETUADA | DB_HOST: ' . $config['host']]);
+        Response::json(['message' => 'CONEXAO EFETUADA']);
     } catch (Exception $e) {
         Response::error('Error conn:' . $e->getMessage(), 500);
     }
