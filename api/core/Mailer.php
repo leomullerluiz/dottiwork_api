@@ -36,7 +36,7 @@ class Mailer
             $mail->addAddress($toEmail);
 
             $mail->isHTML(true);
-            $mail->Subject = 'Código de redefinição de senha - DottiWork';
+            $mail->Subject = 'Código de redefinição de senha - Dotti.Work';
             $mail->Body = self::buildResetEmailBody($code);
             $mail->AltBody = "Seu código de redefinição de senha é: {$code}\nEle expira em 1 hora.";
 
@@ -51,20 +51,8 @@ class Mailer
      */
     private static function buildResetEmailBody($code)
     {
-        return "
-        <html>
-        <body style='font-family: Arial, sans-serif; color: #333;'>
-            <h2>Redefinição de Senha - DottiWork</h2>
-            <p>Recebemos uma solicitação para redefinir a senha da sua conta.</p>
-            <p>Use o código abaixo para concluir o processo. Ele é válido por <strong>1 hora</strong>.</p>
-            <div style='font-size: 32px; font-weight: bold; letter-spacing: 8px; margin: 24px 0; color: #4F46E5;'>
-                {$code}
-            </div>
-            <p>Se você não solicitou esta redefinição, ignore este e-mail.</p>
-            <hr/>
-            <p style='font-size: 12px; color: #999;'>DottiWork &mdash; não responda este e-mail.</p>
-        </body>
-        </html>
-        ";
+        $templatePath = __DIR__ . '/../templates/password_reset.html';
+        $template = file_get_contents($templatePath);
+        return str_replace('{{CODE}}', $code, $template);
     }
 }

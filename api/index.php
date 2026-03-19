@@ -80,9 +80,10 @@ $router->get('/auth/password_reset/:resetToken/:email', 'AuthController@validate
 $router->post('/auth/password_reset/credentials', 'AuthController@resetPassword');
 
 
-//tasks routes$router->get('/task/filter/category/:category_id', 'TasksController@listByCategory');
+//tasks routes
+$router->get('/task/filter/category/:category_id', 'TasksController@listByCategory');
 $router->get('/task/filter', 'TasksController@filter');
-$router->get('/task/:id', callback: 'TasksController@listById');
+$router->get('/task/:id', 'TasksController@listById');
 $router->get('/task/list', 'TasksController@listAll');
 $router->post('/task/create', 'TasksController@create');
 $router->post('/task/update', 'TasksController@update');
