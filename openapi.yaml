@@ -8,7 +8,7 @@ servers:
   - url: http://localhost/dottiwork_api/api
     description: local
 
-  - url: https://dottiwork-api.leomullerluiz.com/api
+  - url: https://api.dottiwork.com/api
     description: Ambiente
 
 paths:
@@ -190,6 +190,143 @@ paths:
                     $ref: '#/components/schemas/User'
         '401':
           description: Token inválido ou expirado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/password_reset:
+    post:
+      summary: Solicita reset de senha
+      description: Gera um código de 5 dígitos e envia para o e-mail informado. O código expira em 1 hora.
+      tags:
+        - Autenticação
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "usuario@exemplo.com"
+      responses:
+        '200':
+          description: Código enviado com sucesso (resposta genérica por segurança)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Se este e-mail estiver cadastrado, você receberá o código em instantes."
+        '400':
+          description: Dados inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Erro ao enviar e-mail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/password_reset/{resetToken}/{email}:
+    get:
+      summary: Valida token de reset de senha
+      description: Verifica se o código de reset é válido, não expirado e não utilizado
+      tags:
+        - Autenticação
+      parameters:
+        - in: path
+          name: resetToken
+          required: true
+          schema:
+            type: string
+          description: Código de 5 dígitos de reset
+          example: "12345"
+        - in: path
+          name: email
+          required: true
+          schema:
+            type: string
+            format: email
+          description: E-mail do usuário
+          example: "usuario@exemplo.com"
+      responses:
+        '200':
+          description: Validação do token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                    example: true
+        '400':
+          description: Parâmetros obrigatórios não fornecidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/password_reset/credentials:
+    post:
+      summary: Reseta a senha do usuário
+      description: Valida o token e atualiza a senha do usuário
+      tags:
+        - Autenticação
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - token
+                - password
+                - password_confirm
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "usuario@exemplo.com"
+                token:
+                  type: string
+                  example: "12345"
+                  description: Código de 5 dígitos recebido por e-mail
+                password:
+                  type: string
+                  format: password
+                  example: "novaSenha123"
+                  description: Nova senha
+                password_confirm:
+                  type: string
+                  format: password
+                  example: "novaSenha123"
+                  description: Confirmação da nova senha
+      responses:
+        '200':
+          description: Senha atualizada com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Senha atualizada com sucesso"
+        '400':
+          description: Dados inválidos ou token inválido/expirado
           content:
             application/json:
               schema:
