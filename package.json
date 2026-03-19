@@ -1,5 +1,5 @@
 {
-  "name": "dotti-api",
+  "name": "dottiwork_api",
   "version": "1.0.0",
   "description": "- PHP 7.4 ou superior\r - MySQL 5.7 ou superior\r - Apache com mod_rewrite habilitado",
   "main": "index.js",

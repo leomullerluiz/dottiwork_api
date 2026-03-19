@@ -5,7 +5,7 @@ info:
   description: API REST para autenticação e gerenciamento de usuários
 
 servers:
-  - url: http://localhost/dotti-api/api
+  - url: http://localhost/dottiwork_api/api
     description: local
 
   - url: https://dottiwork-api.leomullerluiz.com/api
@@ -261,7 +261,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /task/filter_by_category/{category_id}:
+  /task/filter/category/{category_id}:
     get:
       summary: Lista tarefas por categoria
       description: Retorna todas as tarefas de uma categoria específica do usuário
@@ -297,6 +297,72 @@ paths:
                 $ref: '#/components/schemas/Error'
         '404':
           description: Categoria não encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /task/filter:
+    get:
+      summary: Filtra tarefas
+      description: Retorna tarefas do usuário autenticado com filtros opcionais por data de vencimento, prioridade, status, categoria e texto livre
+      tags:
+        - Tarefas
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: query
+          name: category_id
+          required: false
+          schema:
+            type: integer
+          description: Filtra por ID da categoria
+          example: 1
+        - in: query
+          name: priority
+          required: false
+          schema:
+            type: string
+            enum: ["baixa", "media", "alta"]
+          description: Filtra por prioridade
+          example: "alta"
+        - in: query
+          name: is_completed
+          required: false
+          schema:
+            type: integer
+            enum: [0, 1]
+          description: Filtra por status de conclusão (0 = pendente, 1 = concluída)
+          example: 0
+        - in: query
+          name: due_date
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: Retorna tarefas com data de vencimento até a data informada
+          example: "2026-12-31 23:59:59"
+        - in: query
+          name: search
+          required: false
+          schema:
+            type: string
+          description: Texto livre para busca no título e descrição
+          example: "relatório"
+      responses:
+        '200':
+          description: Lista de tarefas filtradas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tasks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Task'
+        '401':
+          description: Token inválido ou expirado
           content:
             application/json:
               schema:
@@ -596,6 +662,205 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+
+  /task/category/create:
+    post:
+      summary: Cria uma nova categoria
+      description: Cria uma nova categoria de tarefas para o usuário autenticado
+      tags:
+        - Categorias
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  example: "Trabalho"
+                  description: Nome da categoria
+                color:
+                  type: string
+                  example: "#FF5733"
+                  description: Cor da categoria em formato hexadecimal
+                display_order:
+                  type: integer
+                  example: 1
+                  description: Ordem de exibição
+      responses:
+        '201':
+          description: Categoria criada com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Categoria criada com sucesso"
+                  category:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      name:
+                        type: string
+                        example: "Trabalho"
+                      color:
+                        type: string
+                        example: "#FF5733"
+                      display_order:
+                        type: integer
+                        example: 1
+        '400':
+          description: Dados inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token inválido ou expirado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /task/category/update:
+    post:
+      summary: Atualiza uma categoria existente
+      description: Atualiza informações de uma categoria do usuário autenticado
+      tags:
+        - Categorias
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+                - name
+              properties:
+                id:
+                  type: integer
+                  example: 1
+                  description: ID da categoria a ser atualizada
+                name:
+                  type: string
+                  example: "Trabalho"
+                  description: Nome da categoria
+                color:
+                  type: string
+                  example: "#FF5733"
+                  description: Cor da categoria em formato hexadecimal
+                display_order:
+                  type: integer
+                  example: 1
+                  description: Ordem de exibição
+      responses:
+        '200':
+          description: Categoria atualizada com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Categoria atualizada com sucesso"
+                  category:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      name:
+                        type: string
+                        example: "Trabalho"
+                      color:
+                        type: string
+                        example: "#FF5733"
+                      display_order:
+                        type: integer
+                        example: 1
+        '400':
+          description: Dados inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token inválido ou expirado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Categoria não encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /task/category/delete:
+    post:
+      summary: Deleta uma categoria
+      description: Remove uma categoria de tarefas do usuário autenticado
+      tags:
+        - Categorias
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - id
+              properties:
+                id:
+                  type: integer
+                  example: 1
+                  description: ID da categoria a ser deletada
+      responses:
+        '200':
+          description: Categoria excluída com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Categoria excluída com sucesso"
+        '400':
+          description: Dados inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Token inválido ou expirado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Categoria não encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
 components:
   securitySchemes:
     ApiKeyAuth:
