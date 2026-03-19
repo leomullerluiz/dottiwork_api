@@ -73,11 +73,10 @@ $router->post('/auth/login', 'AuthController@login');
 $router->post('/auth/signup', 'AuthController@signup');
 $router->post('/auth/logout', 'AuthController@logout');
 $router->get('/auth/me', 'AuthController@me');
+//todo: criar endpoint para reset de senha
 
-//tasks routes
-//todo: criar um endpoint para filtrar por data de vencimento, prioridade, status (concluída ou não concluída), categoria e campo de texto livre
-//todo: mudar o filter_by_category para receber os parametros via query string e não via URL
-$router->get('/task/filter_by_category/:category_id', 'TasksController@listByCategory');
+//tasks routes$router->get('/task/filter/category/:category_id', 'TasksController@listByCategory');
+$router->get('/task/filter', 'TasksController@filter');
 $router->get('/task/:id', callback: 'TasksController@listById');
 $router->get('/task/list', 'TasksController@listAll');
 $router->post('/task/create', 'TasksController@create');

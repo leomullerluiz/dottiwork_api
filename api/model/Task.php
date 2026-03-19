@@ -85,4 +85,44 @@ class Task
         return $stmt->rowCount() > 0;
     }
 
+    public static function filter($userId, $filters)
+    {
+        $db = Database::getInstance()->getConnection();
+
+        $conditions = ['user_id = :user_id'];
+        $params = ['user_id' => $userId];
+
+        if (isset($filters['category_id']) && $filters['category_id'] !== '') {
+            $conditions[] = 'category_id = :category_id';
+            $params['category_id'] = (int) $filters['category_id'];
+        }
+
+        if (isset($filters['priority']) && $filters['priority'] !== '') {
+            $conditions[] = 'priority = :priority';
+            $params['priority'] = $filters['priority'];
+        }
+
+        if (isset($filters['is_completed']) && $filters['is_completed'] !== '') {
+            $conditions[] = 'is_completed = :is_completed';
+            $params['is_completed'] = (int) $filters['is_completed'];
+        }
+
+        if (isset($filters['due_date']) && $filters['due_date'] !== '') {
+            $conditions[] = 'due_date <= :due_date';
+            $params['due_date'] = $filters['due_date'];
+        }
+
+        if (isset($filters['search']) && $filters['search'] !== '') {
+            $conditions[] = '(title LIKE :search )';
+            //todo: verificar o porque o filtro nao busca com 'description'
+            //SQLSTATE[HY093]: Invalid parameter number
+            $params['search'] = '%' . $filters['search'] . '%';
+        }
+
+        $sql = 'SELECT * FROM todo_lists WHERE ' . implode(' AND ', $conditions);
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll();
+    }
+
 }

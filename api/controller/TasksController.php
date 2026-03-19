@@ -67,4 +67,21 @@ class TasksController extends BaseController
         }
     }
 
+    public function filter(Request $request)
+    {
+        //todo: escrever testes unitarios
+        $user = $this->requireToken($request);
+
+        $allowed = ['category_id', 'priority', 'is_completed', 'due_date', 'search'];
+        $filters = [];
+        foreach ($allowed as $key) {
+            if (isset($_GET[$key]) && $_GET[$key] !== '') {
+                $filters[$key] = $_GET[$key];
+            }
+        }
+
+        $tasks = Task::filter($user['id'], $filters);
+        Response::json(['tasks' => $tasks], 200);
+    }
+
 }

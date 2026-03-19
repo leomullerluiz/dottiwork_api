@@ -89,8 +89,8 @@ class AuthController extends BaseController
             Response::error('Email, senha e confirmação de senha são obrigatórios', 400);
         }
 
-        $senha = $body['password'];
         $email = trim($body['email']);
+        $senha = $body['password'];
         $password_confirm = $body['password_confirm'];
 
         // Valida formato de email
