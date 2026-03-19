@@ -73,7 +73,12 @@ $router->post('/auth/login', 'AuthController@login');
 $router->post('/auth/signup', 'AuthController@signup');
 $router->post('/auth/logout', 'AuthController@logout');
 $router->get('/auth/me', 'AuthController@me');
-//todo: criar endpoint para reset de senha
+
+// password reset routes
+$router->post('/auth/password_reset', 'AuthController@requestPasswordReset');
+$router->get('/auth/password_reset/:resetToken/:email', 'AuthController@validateResetToken');
+$router->post('/auth/password_reset/credentials', 'AuthController@resetPassword');
+
 
 //tasks routes$router->get('/task/filter/category/:category_id', 'TasksController@listByCategory');
 $router->get('/task/filter', 'TasksController@filter');

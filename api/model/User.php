@@ -55,6 +55,17 @@ class User
     }
 
     /**
+     * Atualiza a senha do usuário
+     */
+    public static function updatePassword($userId, $plainPassword)
+    {
+        $db = Database::getInstance()->getConnection();
+        $hash = Auth::hashPassword($plainPassword);
+        $stmt = $db->prepare("UPDATE users SET senha = :senha WHERE id = :id");
+        $stmt->execute(['senha' => $hash, 'id' => $userId]);
+    }
+
+    /**
      * Atualiza último login do usuário
      */
     public static function updateLastLogin($userId)
