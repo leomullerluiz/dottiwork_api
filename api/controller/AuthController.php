@@ -111,6 +111,16 @@ class AuthController extends BaseController
         $userId = User::create($email, $email, $senha);
         $user = User::findById($userId);
 
+        // Envia e-mail de boas-vindas
+        try {
+            Mailer::sendTemplate($email, 'new_user', [
+                'url' => 'https://app.dottiwork.com'
+            ]);
+        } catch (RuntimeException $e) {
+            // Log erro mas não falha a criação do usuário
+            error_log('Erro ao enviar e-mail de boas-vindas: ' . $e->getMessage());
+        }
+
         Response::json([
             'message' => 'Usuário criado com sucesso',
             'user' => User::toPublic($user)

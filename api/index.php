@@ -56,16 +56,11 @@ $router->get('/', function () {
 
 $config = require __DIR__ . '/config/database.php';
 
-$router->get('/db_connection_test', function () use ($config) {
-    try {
-        $db = Database::getInstance()->getConnection();
-        $stmt = $db->query('SELECT 1');
-        $stmt->fetch();
-        Response::json(['message' => 'CONEXAO EFETUADA']);
-    } catch (Exception $e) {
-        Response::error('Error conn:' . $e->getMessage(), 500);
-    }
-});
+// ============ TEST ENDPOINTS ============
+// Rotas de teste (não incluídas na documentação)
+
+$router->get('/test/db_connection_test', 'TestController@dbConnectionTest');
+$router->post('/test/email/send', 'TestController@sendEmailTemplate');
 
 //auth routes
 //todo: criar um endpoint para oAuth do google

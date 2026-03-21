@@ -1,0 +1,16 @@
+<svg width="600" height="120" viewBox="0 0 600 120" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .text {
+      font-family: "Noto Sans JP", "Noto Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      font-size: 64px;
+      font-weight: 600;
+      letter-spacing: -1px;
+    }
+  </style>
+
+  <text x="20" y="75" class="text">
+    <tspan fill="#41494D">dotti</tspan>
+    <tspan fill="#FF6F61">.</tspan>
+    <tspan fill="#41494D">work</tspan>
+  </text>
+</svg>
