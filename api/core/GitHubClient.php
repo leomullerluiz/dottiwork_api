@@ -1,0 +1,182 @@
+<?php
+
+class GitHubClient
+{
+    private $config;
+    private $accessToken;
+
+    public function __construct($accessToken = null)
+    {
+        $this->config = require __DIR__ . '/../config/github.php';
+        $this->accessToken = $accessToken;
+    }
+
+    public function exchangeOAuthCode($code)
+    {
+        return $this->requestForm('https://github.com/login/oauth/access_token', [
+            'client_id' => $this->config['client_id'],
+            'client_secret' => $this->config['client_secret'],
+            'code' => $code,
+            'redirect_uri' => $this->config['redirect_uri'],
+        ]);
+    }
+
+    public function getAuthenticatedUser()
+    {
+        return $this->request('GET', 'https://api.github.com/user');
+    }
+
+    public function getAuthenticatedUserEmails()
+    {
+        return $this->request('GET', 'https://api.github.com/user/emails');
+    }
+
+    public function searchRepositories($query, $page = 1, $perPage = 10)
+    {
+        return $this->request('GET', 'https://api.github.com/search/repositories?' . http_build_query([
+            'q' => $query,
+            'sort' => 'updated',
+            'order' => 'desc',
+            'page' => $page,
+            'per_page' => $perPage,
+        ]));
+    }
+
+    public function getRepository($owner, $repo)
+    {
+        return $this->request('GET', 'https://api.github.com/repos/' . rawurlencode($owner) . '/' . rawurlencode($repo));
+    }
+
+    public function getRepositoryLanguages($owner, $repo)
+    {
+        return $this->request('GET', 'https://api.github.com/repos/' . rawurlencode($owner) . '/' . rawurlencode($repo) . '/languages');
+    }
+
+    public function getRepositoryTopics($owner, $repo)
+    {
+        return $this->request('GET', 'https://api.github.com/repos/' . rawurlencode($owner) . '/' . rawurlencode($repo) . '/topics');
+    }
+
+    public function getRepositoryIssues($owner, $repo, array $params = [])
+    {
+        $params = array_merge([
+            'state' => 'open',
+            'per_page' => 20,
+        ], $params);
+
+        return $this->request('GET', 'https://api.github.com/repos/' . rawurlencode($owner) . '/' . rawurlencode($repo) . '/issues?' . http_build_query($params));
+    }
+
+    public function getRepositoryLabels($owner, $repo)
+    {
+        return $this->request('GET', 'https://api.github.com/repos/' . rawurlencode($owner) . '/' . rawurlencode($repo) . '/labels?per_page=100');
+    }
+
+    public function getRepositoryContents($owner, $repo, $path = '')
+    {
+        $url = 'https://api.github.com/repos/' . rawurlencode($owner) . '/' . rawurlencode($repo) . '/contents';
+        if ($path !== '') {
+            $url .= '/' . str_replace('%2F', '/', rawurlencode($path));
+        }
+
+        return $this->request('GET', $url);
+    }
+
+    public function getRateLimit()
+    {
+        return $this->request('GET', 'https://api.github.com/rate_limit');
+    }
+
+    private function request($method, $url, $payload = null, $useBearer = true)
+    {
+        if (!function_exists('curl_init')) {
+            throw new RuntimeException('Extensao cURL nao esta disponivel.');
+        }
+
+        $headers = [
+            'Accept: application/vnd.github+json',
+            'User-Agent: ' . $this->config['user_agent'],
+            'X-GitHub-Api-Version: ' . $this->config['api_version'],
+        ];
+
+        if ($useBearer && $this->accessToken) {
+            $headers[] = 'Authorization: Bearer ' . $this->accessToken;
+        }
+
+        if (!$useBearer) {
+            $headers[] = 'Accept: application/json';
+        }
+
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $this->config['connect_timeout']);
+        curl_setopt($ch, CURLOPT_TIMEOUT, $this->config['timeout']);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+
+        if ($payload !== null) {
+            $body = json_encode($payload);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, array_merge($headers, ['Content-Type: application/json']));
+        }
+
+        $raw = curl_exec($ch);
+        $error = curl_error($ch);
+        $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($raw === false) {
+            throw new RuntimeException('Falha ao chamar GitHub: ' . $error);
+        }
+
+        $decoded = json_decode($raw, true);
+        $data = is_array($decoded) ? $decoded : [];
+
+        if ($status >= 400) {
+            $message = isset($data['message']) ? $data['message'] : 'Erro na API do GitHub.';
+            throw new RuntimeException('GitHub HTTP ' . $status . ': ' . $message, $status);
+        }
+
+        return $data;
+    }
+
+    private function requestForm($url, array $payload)
+    {
+        if (!function_exists('curl_init')) {
+            throw new RuntimeException('Extensao cURL nao esta disponivel.');
+        }
+
+        $headers = [
+            'Accept: application/json',
+            'Content-Type: application/x-www-form-urlencoded',
+            'User-Agent: ' . $this->config['user_agent'],
+        ];
+
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $this->config['connect_timeout']);
+        curl_setopt($ch, CURLOPT_TIMEOUT, $this->config['timeout']);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($payload));
+
+        $raw = curl_exec($ch);
+        $error = curl_error($ch);
+        $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($raw === false) {
+            throw new RuntimeException('Falha ao chamar GitHub: ' . $error);
+        }
+
+        $decoded = json_decode($raw, true);
+        $data = is_array($decoded) ? $decoded : [];
+
+        if ($status >= 400) {
+            $message = isset($data['error_description']) ? $data['error_description'] : 'Erro no OAuth GitHub.';
+            throw new RuntimeException('GitHub OAuth HTTP ' . $status . ': ' . $message, $status);
+        }
+
+        return $data;
+    }
+}

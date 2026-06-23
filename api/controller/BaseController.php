@@ -2,12 +2,38 @@
 
 class BaseController
 {
-    /**
-     * Valida o token da requisição e retorna o usuário autenticado.
-     * Encerra a execução com 401 se o token estiver ausente, inválido ou expirado.
-     */
-    protected function requireToken(Request $request): array
+    protected function requireToken(Request $request)
     {
+        $this->validateMutationOrigin($request);
         return Auth::requireAuth($request);
+    }
+
+    protected function validateMutationOrigin(Request $request)
+    {
+        if (!in_array($request->getMethod(), ['POST', 'PUT', 'PATCH', 'DELETE'], true)) {
+            return;
+        }
+
+        $origin = $request->getOrigin();
+        if (!$origin) {
+            return;
+        }
+
+        $allowed = array_filter(array_map('trim', explode(',', $_ENV['CORS_ALLOWED_ORIGINS'] ?? '')));
+        if ($allowed && !in_array($origin, $allowed, true)) {
+            Response::forbidden('Origem nao autorizada.');
+        }
+    }
+
+    protected function jsonBody(Request $request)
+    {
+        $body = $request->getJsonBody();
+        return is_array($body) ? $body : [];
+    }
+
+    protected function limit(Request $request, $default = 30, $max = 100)
+    {
+        $limit = (int) $request->getQuery('limit', $default);
+        return min(max($limit, 1), $max);
     }
 }

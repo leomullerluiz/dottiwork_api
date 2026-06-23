@@ -1,15 +1,24 @@
 <?php
 
-// Carrega o autoload do Composer
 require_once __DIR__ . '/../vendor/autoload.php';
 
-// Carrega as classes do projeto
-require_once __DIR__ . '/../api/core/Database.php';
-require_once __DIR__ . '/../api/core/Response.php';
-require_once __DIR__ . '/../api/core/Request.php';
-require_once __DIR__ . '/../api/core/Router.php';
-require_once __DIR__ . '/../api/core/Auth.php';
-require_once __DIR__ . '/../api/model/User.php';
-require_once __DIR__ . '/../api/model/AuthToken.php';
-require_once __DIR__ . '/../api/model/Task.php';
-require_once __DIR__ . '/../api/model/TaskCategory.php';
+$_ENV['APP_SECRET'] = $_ENV['APP_SECRET'] ?? 'test-secret';
+$_ENV['APP_ENCRYPTION_KEY'] = $_ENV['APP_ENCRYPTION_KEY'] ?? 'test-encryption-key';
+$_ENV['SESSION_COOKIE_NAME'] = $_ENV['SESSION_COOKIE_NAME'] ?? 'dotti_session';
+$_ENV['SESSION_COOKIE_SECURE'] = $_ENV['SESSION_COOKIE_SECURE'] ?? 'false';
+
+spl_autoload_register(function ($class) {
+    $paths = [
+        __DIR__ . '/../api/core/' . $class . '.php',
+        __DIR__ . '/../api/controller/' . $class . '.php',
+        __DIR__ . '/../api/model/' . $class . '.php',
+        __DIR__ . '/../api/service/' . $class . '.php',
+    ];
+
+    foreach ($paths as $path) {
+        if (file_exists($path)) {
+            require_once $path;
+            return;
+        }
+    }
+});

@@ -34,6 +34,13 @@ class Router {
     }
 
     /**
+     * Registra uma rota PATCH
+     */
+    public function patch($uri, $callback) {
+        $this->addRoute('PATCH', $uri, $callback);
+    }
+
+    /**
      * Adiciona rota ao array
      */
     private function addRoute($method, $uri, $callback) {

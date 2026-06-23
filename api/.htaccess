@@ -1,22 +1,18 @@
-# Habilitar o mod_rewrite
 RewriteEngine On
 
-# Bloquear acesso direto a pastas sensíveis
-RewriteRule ^(config|core|controllers|models)/ - [F,L]
+# Preserve Authorization header for PHP/FastCGI environments.
+SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
 
-# Redirecionar tudo para index.php
+# Block direct access to implementation directories.
+RewriteRule ^(config|core|controller|model|service|tests|vendor|migrations|templates)/ - [F,L]
+
+# Route everything else to the API entrypoint.
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^(.*)$ index.php [QSA,L]
 
-# Forçar JSON como content-type
-<FilesMatch "\.php$">
-    Header set Content-Type "application/json; charset=utf-8"
-</FilesMatch>
-
-# Segurança adicional
 <IfModule mod_headers.c>
     Header set X-Content-Type-Options "nosniff"
     Header set X-Frame-Options "DENY"
-    Header set X-XSS-Protection "1; mode=block"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
 </IfModule>

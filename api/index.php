@@ -2,33 +2,29 @@
 
 require __DIR__ . '/../vendor/autoload.php';
 
-\Sentry\init([
-    'dsn' => 'https://7356870e3b9efc8546edb728d150e94e@o4510988945391616.ingest.us.sentry.io/4510988947161088',
-]);
-
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
-$dotenv->load();
+$dotenv->safeLoad();
+
+if (!empty($_ENV['SENTRY_DSN'])) {
+    \Sentry\init(['dsn' => $_ENV['SENTRY_DSN']]);
+}
 
 error_reporting(E_ALL);
-ini_set('display_errors', 0);
+ini_set('display_errors', ($_ENV['APP_ENV'] ?? 'local') === 'production' ? 0 : 1);
 
+configureCors();
 
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
-
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
-
 
 spl_autoload_register(function ($class) {
     $paths = [
         __DIR__ . '/core/' . $class . '.php',
         __DIR__ . '/controller/' . $class . '.php',
         __DIR__ . '/model/' . $class . '.php',
+        __DIR__ . '/service/' . $class . '.php',
     ];
 
     foreach ($paths as $path) {
@@ -40,54 +36,84 @@ spl_autoload_register(function ($class) {
 });
 
 set_exception_handler(function ($exception) {
-    Response::error('Erro interno do servidor: ' . $exception->getMessage(), 500);
-});
+    if (($_ENV['APP_ENV'] ?? 'local') !== 'production') {
+        error_log($exception->getMessage());
+    }
 
+    Response::error('Erro interno do servidor.', 500, 'INTERNAL_SERVER_ERROR');
+});
 
 $request = new Request();
 $router = new Router();
 
-$router->get('/', function () {
-    Response::json([
-        'message' => 'API online',
-        'version' => '1.0.0',
-    ]);
-});
-
-$config = require __DIR__ . '/config/database.php';
-
-// ============ TEST ENDPOINTS ============
-// Rotas de teste (não incluídas na documentação)
-
-$router->get('/test/db_connection_test', 'TestController@dbConnectionTest');
-$router->post('/test/email/send', 'TestController@sendEmailTemplate');
-
-//auth routes
-//todo: criar um endpoint para oAuth do google
-$router->post('/auth/login', 'AuthController@login');
-$router->post('/auth/signup', 'AuthController@signup');
-$router->post('/auth/logout', 'AuthController@logout');
-$router->get('/auth/me', 'AuthController@me');
-
-// password reset routes
-$router->post('/auth/password_reset', 'AuthController@requestPasswordReset');
-$router->get('/auth/password_reset/:resetToken/:email', 'AuthController@validateResetToken');
-$router->post('/auth/password_reset/credentials', 'AuthController@resetPassword');
-
-
-//tasks routes
-$router->get('/task/filter/category/:category_id', 'TasksController@listByCategory');
-$router->get('/task/filter', 'TasksController@filter');
-$router->get('/task/:id', 'TasksController@listById');
-$router->get('/task/list', 'TasksController@listAll');
-$router->post('/task/create', 'TasksController@create');
-$router->post('/task/update', 'TasksController@update');
-$router->delete('/task/delete', 'TasksController@delete');
-
-//task category routes
-$router->get('/task/category/', 'TaskCategoryController@findAllByUserId');
-$router->get('/task/category/:id', 'TaskCategoryController@findByIdAndUserId');
-$router->post('/task/category/create', 'TaskCategoryController@create');
-$router->post('/task/category/update', 'TaskCategoryController@update');
-$router->post('/task/category/delete', 'TaskCategoryController@delete');
+registerRoutes($router);
 $router->dispatch($request);
+
+function registerRoutes(Router $router)
+{
+    $route = function ($method, $path, $callback) use ($router) {
+        foreach (['', '/api/v1'] as $prefix) {
+            $fullPath = $prefix . $path;
+            $router->{$method}($fullPath, $callback);
+        }
+    };
+
+    $route('get', '/', 'HealthController@health');
+    $route('get', '/health', 'HealthController@health');
+    $route('get', '/health/database', 'HealthController@database');
+
+    $route('get', '/auth/github/start', 'AuthController@githubStart');
+    $route('get', '/auth/github/callback', 'AuthController@githubCallback');
+    $route('get', '/auth/me', 'AuthController@me');
+    $route('post', '/auth/logout', 'AuthController@logout');
+    $route('post', '/auth/logout-all', 'AuthController@logoutAll');
+    $route('get', '/auth/session', 'AuthController@session');
+
+    $route('get', '/integrations/github/status', 'AuthController@githubStatus');
+    $route('post', '/integrations/github/sync', 'AuthController@githubSync');
+
+    $route('get', '/me/profile', 'ProfileController@show');
+    $route('put', '/me/profile', 'ProfileController@update');
+    $route('post', '/me/import-local-data', 'ProfileController@importLocalData');
+    $route('get', '/me/export', 'ProfileController@export');
+    $route('delete', '/me/account', 'AccountController@delete');
+
+    $route('get', '/catalog/technologies', 'CatalogController@technologies');
+    $route('get', '/catalog/technologies/:slug', 'CatalogController@technology');
+    $route('get', '/me/technologies', 'TechnologyController@mine');
+    $route('put', '/me/technologies', 'TechnologyController@replace');
+
+    $route('get', '/me/preferences', 'PreferencesController@show');
+    $route('put', '/me/preferences', 'PreferencesController@update');
+
+    $route('get', '/matches', 'MatchController@index');
+    $route('post', '/matches/refresh', 'MatchController@refresh');
+    $route('get', '/matches/:githubRepositoryId', 'MatchController@show');
+
+    $route('get', '/repositories/:owner/:repo', 'RepositoryController@show');
+    $route('get', '/repositories/:owner/:repo/issues', 'RepositoryController@issues');
+    $route('post', '/repositories/:owner/:repo/activity', 'RepositoryController@activity');
+
+    $route('get', '/me/repositories', 'UserRepositoryStateController@index');
+    $route('put', '/me/repositories/:githubRepositoryId/state', 'UserRepositoryStateController@setState');
+    $route('delete', '/me/repositories/:githubRepositoryId/state', 'UserRepositoryStateController@deleteState');
+    $route('post', '/me/repositories/:githubRepositoryId/restore', 'UserRepositoryStateController@restore');
+
+    $route('get', '/me/history', 'ActivityController@history');
+    $route('delete', '/me/history', 'ActivityController@clearHistory');
+}
+
+function configureCors()
+{
+    $origin = $_SERVER['HTTP_ORIGIN'] ?? null;
+    $allowedOrigins = array_filter(array_map('trim', explode(',', $_ENV['CORS_ALLOWED_ORIGINS'] ?? 'https://dotti.work,http://localhost:3000')));
+
+    if ($origin && in_array($origin, $allowedOrigins, true)) {
+        header('Access-Control-Allow-Origin: ' . $origin);
+        header('Access-Control-Allow-Credentials: true');
+        header('Vary: Origin');
+    }
+
+    header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
+    header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
+}

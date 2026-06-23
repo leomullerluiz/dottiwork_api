@@ -1,105 +1,161 @@
 <?php
-/**
- * Classe para manipular requisições HTTP
- */
+
 class Request
 {
     private $method;
     private $uri;
     private $body;
     private $headers;
+    private $query;
+    private $cookies;
 
     public function __construct()
     {
-        $this->method = $_SERVER['REQUEST_METHOD'];
+        $this->method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
         $this->uri = $this->parseUri();
-        $this->body = $this->parseBody();
+        $this->query = $_GET ?? [];
+        $this->cookies = $_COOKIE ?? [];
         $this->headers = $this->parseHeaders();
+        $this->body = $this->parseBody();
     }
 
-    /**
-     * Retorna o método HTTP (GET, POST, etc)
-     */
     public function getMethod()
     {
         return $this->method;
     }
 
-    /**
-     * Retorna a URI limpa
-     */
     public function getUri()
     {
         return $this->uri;
     }
 
-    /**
-     * Retorna o corpo da requisição (parsed JSON)
-     */
     public function getBody()
     {
         return $this->body;
     }
 
-    /**
-     * Retorna um header específico
-     */
-    public function getHeader($name)
+    public function getJsonBody()
     {
-        $name = strtoupper(str_replace('-', '_', $name));
-        return $this->headers[$name] ?? null;
+        return $this->body;
     }
 
-    /**
-     * Retorna o token Bearer do Authorization header
-     */
-    public function getBearerToken()
+    public function getQuery($key = null, $default = null)
     {
-        return $this->getHeader('key');
-    }
-
-    /**
-     * Parse da URI removendo query strings
-     */
-    private function parseUri()
-    {
-        $uri = $_SERVER['REQUEST_URI'];
-
-        // Remove a base path se estiver em subpasta
-        $scriptName = dirname($_SERVER['SCRIPT_NAME']);
-        if ($scriptName !== '/') {
-            $uri = str_replace($scriptName, '', $uri);
+        if ($key === null) {
+            return $this->query;
         }
 
-        // Remove query string
-        if (($pos = strpos($uri, '?')) !== false) {
-            $uri = substr($uri, 0, $pos);
+        return array_key_exists($key, $this->query) ? $this->query[$key] : $default;
+    }
+
+    public function getHeader($name)
+    {
+        $normalized = strtoupper(str_replace('-', '_', $name));
+        return $this->headers[$normalized] ?? null;
+    }
+
+    public function getAuthorizationBearerToken()
+    {
+        $authorization = $this->getHeader('Authorization');
+
+        if (!$authorization) {
+            return null;
+        }
+
+        if (preg_match('/^Bearer\s+(.+)$/i', trim($authorization), $matches)) {
+            return trim($matches[1]);
+        }
+
+        return null;
+    }
+
+    public function getCookie($name)
+    {
+        return $this->cookies[$name] ?? null;
+    }
+
+    public function getClientIp()
+    {
+        $candidates = [
+            $_SERVER['HTTP_CF_CONNECTING_IP'] ?? null,
+            $_SERVER['HTTP_X_FORWARDED_FOR'] ?? null,
+            $_SERVER['HTTP_X_REAL_IP'] ?? null,
+            $_SERVER['REMOTE_ADDR'] ?? null,
+        ];
+
+        foreach ($candidates as $candidate) {
+            if (!$candidate) {
+                continue;
+            }
+
+            $parts = explode(',', $candidate);
+            $ip = trim($parts[0]);
+
+            if (filter_var($ip, FILTER_VALIDATE_IP)) {
+                return $ip;
+            }
+        }
+
+        return null;
+    }
+
+    public function getOrigin()
+    {
+        return $this->getHeader('Origin');
+    }
+
+    private function parseUri()
+    {
+        $uri = $_SERVER['REQUEST_URI'] ?? '/';
+
+        $scriptName = dirname($_SERVER['SCRIPT_NAME'] ?? '/');
+        if ($scriptName && $scriptName !== '/' && strpos($uri, $scriptName) === 0) {
+            $uri = substr($uri, strlen($scriptName));
+        }
+
+        $queryPosition = strpos($uri, '?');
+        if ($queryPosition !== false) {
+            $uri = substr($uri, 0, $queryPosition);
         }
 
         return '/' . trim($uri, '/');
     }
 
-    /**
-     * Parse do corpo da requisição (JSON)
-     */
     private function parseBody()
     {
         $rawBody = file_get_contents('php://input');
+        if ($rawBody === false || trim($rawBody) === '') {
+            return [];
+        }
+
         $data = json_decode($rawBody, true);
-        return $data ?? [];
+        return is_array($data) ? $data : [];
     }
 
-    /**
-     * Parse dos headers
-     */
     private function parseHeaders()
     {
         $headers = [];
+
         foreach ($_SERVER as $key => $value) {
             if (strpos($key, 'HTTP_') === 0) {
                 $headers[substr($key, 5)] = $value;
             }
         }
+
+        if (isset($_SERVER['CONTENT_TYPE'])) {
+            $headers['CONTENT_TYPE'] = $_SERVER['CONTENT_TYPE'];
+        }
+
+        if (isset($_SERVER['CONTENT_LENGTH'])) {
+            $headers['CONTENT_LENGTH'] = $_SERVER['CONTENT_LENGTH'];
+        }
+
+        if (isset($_SERVER['HTTP_AUTHORIZATION'])) {
+            $headers['AUTHORIZATION'] = $_SERVER['HTTP_AUTHORIZATION'];
+        } elseif (isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+            $headers['AUTHORIZATION'] = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
+        }
+
         return $headers;
     }
 }

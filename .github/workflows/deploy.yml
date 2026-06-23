@@ -17,12 +17,34 @@ jobs:
 
       - name: Create .env
         run: |
-          echo "DB_HOST=${{ secrets.DB_HOST }}" > .env
+          echo "APP_ENV=${{ secrets.APP_ENV }}" > .env
+          echo 'APP_SECRET="${{ secrets.APP_SECRET }}"' >> .env
+          echo 'APP_ENCRYPTION_KEY="${{ secrets.APP_ENCRYPTION_KEY }}"' >> .env
+          echo "FRONTEND_URL=${{ secrets.FRONTEND_URL }}" >> .env
+          echo "API_BASE_URL=${{ secrets.API_BASE_URL }}" >> .env
+          echo "CORS_ALLOWED_ORIGINS=${{ secrets.CORS_ALLOWED_ORIGINS }}" >> .env
+          echo "SESSION_COOKIE_NAME=${{ secrets.SESSION_COOKIE_NAME }}" >> .env
+          echo "SESSION_COOKIE_DOMAIN=${{ secrets.SESSION_COOKIE_DOMAIN }}" >> .env
+          echo "SESSION_COOKIE_SECURE=${{ secrets.SESSION_COOKIE_SECURE }}" >> .env
+          echo "SESSION_TOKEN_TTL_SECONDS=${{ secrets.SESSION_TOKEN_TTL_SECONDS }}" >> .env
+          echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
           echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
           echo "DB_USER=${{ secrets.DB_USER }}" >> .env
           echo 'DB_PASSWORD="${{ secrets.DB_PASSWORD }}"' >> .env
           echo "DOCS_USER=${{ secrets.DOCS_USER }}" >> .env
           echo 'DOCS_PASSWORD="${{ secrets.DOCS_PASSWORD }}"' >> .env
+          echo "GITHUB_CLIENT_ID=${{ secrets.GITHUB_CLIENT_ID }}" >> .env
+          echo 'GITHUB_CLIENT_SECRET="${{ secrets.GITHUB_CLIENT_SECRET }}"' >> .env
+          echo "GITHUB_REDIRECT_URI=${{ secrets.GITHUB_REDIRECT_URI }}" >> .env
+          echo "GITHUB_OAUTH_SCOPES=${{ secrets.GITHUB_OAUTH_SCOPES }}" >> .env
+          echo "GITHUB_API_VERSION=${{ secrets.GITHUB_API_VERSION }}" >> .env
+          echo "GITHUB_USER_AGENT=${{ secrets.GITHUB_USER_AGENT }}" >> .env
+          echo "GITHUB_CONNECT_TIMEOUT=${{ secrets.GITHUB_CONNECT_TIMEOUT }}" >> .env
+          echo "GITHUB_TIMEOUT=${{ secrets.GITHUB_TIMEOUT }}" >> .env
+          echo "REPOSITORY_CACHE_TTL_SECONDS=${{ secrets.REPOSITORY_CACHE_TTL_SECONDS }}" >> .env
+          echo "ISSUES_CACHE_TTL_SECONDS=${{ secrets.ISSUES_CACHE_TTL_SECONDS }}" >> .env
+          echo "MATCH_CACHE_TTL_SECONDS=${{ secrets.MATCH_CACHE_TTL_SECONDS }}" >> .env
+          echo "MATCH_REFRESH_COOLDOWN_SECONDS=${{ secrets.MATCH_REFRESH_COOLDOWN_SECONDS }}" >> .env
           echo "MAIL_HOST=${{ secrets.MAIL_HOST }}" >> .env
           echo "MAIL_PORT=${{ secrets.MAIL_PORT }}" >> .env
           echo "MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}" >> .env
@@ -30,6 +52,7 @@ jobs:
           echo "MAIL_ENCRYPTION=${{ secrets.MAIL_ENCRYPTION }}" >> .env
           echo "MAIL_FROM_EMAIL=${{ secrets.MAIL_FROM_EMAIL }}" >> .env
           echo "MAIL_FROM_NAME=${{ secrets.MAIL_FROM_NAME }}" >> .env
+          echo "SENTRY_DSN=${{ secrets.SENTRY_DSN }}" >> .env
 
       - name: Deploy files via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5

@@ -1,1100 +1,950 @@
-openapi: 3.0.0
+openapi: 3.0.3
 info:
-  title: dotti.work - api
-  version: 1.0.0
-  description: API REST para autenticação e gerenciamento de usuários
+  title: dotti.work API
+  version: 2.0.0
+  description: API PHP nativa para descoberta de projetos open source com OAuth GitHub, perfil tecnico, preferencias, cache e matching deterministico.
 
 servers:
+  - url: https://api.dotti.work
+    description: Producao
   - url: http://localhost/dottiwork_api/api
-    description: local
+    description: Local
 
-  - url: https://api.dottiwork.com/api
-    description: Ambiente
+tags:
+  - name: Sistema
+  - name: Autenticacao
+  - name: Perfil
+  - name: Catalogo
+  - name: Tecnologias
+  - name: Preferencias
+  - name: Matches
+  - name: Repositorios
+  - name: Estados
+  - name: Historico
+  - name: Conta
 
 paths:
-  /:
+  /health:
     get:
-      summary: Verifica status da API
-      description: Retorna informações básicas sobre a API
-      tags:
-        - Sistema
+      tags: [Sistema]
+      summary: Status da API
       responses:
-        '200':
-          description: API funcionando
+        "200":
+          description: API online
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "API online"
-                  version:
-                    type: string
-                    example: "1.0.0"
+                $ref: "#/components/schemas/SuccessResponse"
 
-  /auth/login:
-    post:
-      summary: Realiza login
-      description: Autentica um usuário e retorna um token de acesso
-      tags:
-        - Autenticação
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - email
-                - senha
-              properties:
-                email:
-                  type: string
-                  format: email
-                  example: "usuario@exemplo.com"
-                senha:
-                  type: string
-                  format: password
-                  example: "senha123"
-      responses:
-        '200':
-          description: Login realizado com sucesso
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  token:
-                    type: string
-                    example: "abc123def456..."
-                  expires_in:
-                    type: integer
-                    example: 3600
-                  user:
-                    $ref: '#/components/schemas/User'
-        '400':
-          description: Dados inválidos
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Credenciais inválidas
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-  /auth/signup:
-    post:
-      summary: Cadastra novo usuário
-      description: Cria uma nova conta de usuário
-      tags:
-        - Autenticação
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - email
-                - password
-                - password_confirm
-              properties:
-                email:
-                  type: string
-                  format: email
-                  example: "novousuario@exemplo.com"
-                password:
-                  type: string
-                  format: password
-                  example: "senha123"
-                password_confirm:
-                  type: string
-                  format: password
-                  example: "senha123"
-      responses:
-        '201':
-          description: Usuário criado com sucesso
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Usuário criado com sucesso"
-                  user:
-                    $ref: '#/components/schemas/User'
-        '400':
-          description: Dados inválidos
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '409':
-          description: Email já está em uso
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-  /auth/logout:
-    post:
-      summary: Realiza logout
-      description: Invalida o token de acesso atual
-      tags:
-        - Autenticação
+  /health/database:
+    get:
+      tags: [Sistema]
+      summary: Status do banco de dados
+      description: Em producao, pode exigir sessao autenticada.
       security:
-        - ApiKeyAuth: []
+        - BearerAuth: []
+        - CookieAuth: []
       responses:
-        '200':
-          description: Logout realizado com sucesso
+        "200":
+          description: Banco online
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  message:
-                    type: string
-                    example: "Logout realizado com sucesso"
-        '401':
-          description: Token inválido ou expirado
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/SuccessResponse"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+
+  /auth/github/start:
+    get:
+      tags: [Autenticacao]
+      summary: Inicia OAuth com GitHub
+      parameters:
+        - in: query
+          name: return_to
+          schema:
+            type: string
+            example: /onboarding
+          description: Caminho interno seguro para retorno apos login.
+      responses:
+        "302":
+          description: Redireciona para GitHub.
+
+  /auth/github/callback:
+    get:
+      tags: [Autenticacao]
+      summary: Callback OAuth GitHub
+      parameters:
+        - in: query
+          name: code
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: state
+          required: true
+          schema:
+            type: string
+      responses:
+        "302":
+          description: Grava cookie HttpOnly e redireciona para o front-end.
 
   /auth/me:
     get:
-      summary: Retorna dados do usuário autenticado
-      description: Obtém informações do usuário logado
-      tags:
-        - Autenticação
+      tags: [Autenticacao]
+      summary: Usuario autenticado
       security:
-        - ApiKeyAuth: []
+        - BearerAuth: []
+        - CookieAuth: []
       responses:
-        '200':
-          description: Dados do usuário
+        "200":
+          description: Usuario atual sem tokens internos.
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  user:
-                    $ref: '#/components/schemas/User'
-        '401':
-          description: Token inválido ou expirado
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+                allOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          user:
+                            $ref: "#/components/schemas/User"
+                          profile:
+                            $ref: "#/components/schemas/UserProfile"
+                          github:
+                            $ref: "#/components/schemas/GitHubIntegration"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
-  /auth/password_reset:
+  /auth/logout:
     post:
-      summary: Solicita reset de senha
-      description: Gera um código de 5 dígitos e envia para o e-mail informado. O código expira em 1 hora.
-      tags:
-        - Autenticação
+      tags: [Autenticacao]
+      summary: Revoga sessao atual
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+
+  /auth/logout-all:
+    post:
+      tags: [Autenticacao]
+      summary: Revoga todas as sessoes do usuario
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+
+  /auth/session:
+    get:
+      tags: [Autenticacao]
+      summary: Valida sessao atual
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /integrations/github/status:
+    get:
+      tags: [Autenticacao]
+      summary: Status da integracao GitHub
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+
+  /integrations/github/sync:
+    post:
+      tags: [Autenticacao]
+      summary: Sincroniza perfil publico do GitHub
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "502":
+          $ref: "#/components/responses/BadGateway"
+
+  /me/profile:
+    get:
+      tags: [Perfil]
+      summary: Perfil completo do usuario
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+    put:
+      tags: [Perfil]
+      summary: Atualiza perfil e objetivos
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - email
-              properties:
-                email:
-                  type: string
-                  format: email
-                  example: "usuario@exemplo.com"
+              $ref: "#/components/schemas/ProfileUpdateInput"
       responses:
-        '200':
-          description: Código enviado com sucesso (resposta genérica por segurança)
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Se este e-mail estiver cadastrado, você receberá o código em instantes."
-        '400':
-          description: Dados inválidos
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Erro ao enviar e-mail
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+        "200":
+          $ref: "#/components/responses/Success"
+        "422":
+          $ref: "#/components/responses/ValidationError"
 
-  /auth/password_reset/{resetToken}/{email}:
-    get:
-      summary: Valida token de reset de senha
-      description: Verifica se o código de reset é válido, não expirado e não utilizado
-      tags:
-        - Autenticação
-      parameters:
-        - in: path
-          name: resetToken
-          required: true
-          schema:
-            type: string
-          description: Código de 5 dígitos de reset
-          example: "12345"
-        - in: path
-          name: email
-          required: true
-          schema:
-            type: string
-            format: email
-          description: E-mail do usuário
-          example: "usuario@exemplo.com"
-      responses:
-        '200':
-          description: Validação do token
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  valid:
-                    type: boolean
-                    example: true
-        '400':
-          description: Parâmetros obrigatórios não fornecidos
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-  /auth/password_reset/credentials:
+  /me/import-local-data:
     post:
-      summary: Reseta a senha do usuário
-      description: Valida o token e atualiza a senha do usuário
-      tags:
-        - Autenticação
+      tags: [Perfil]
+      summary: Importa dados do MVP em localStorage
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - email
-                - token
-                - password
-                - password_confirm
-              properties:
-                email:
-                  type: string
-                  format: email
-                  example: "usuario@exemplo.com"
-                token:
-                  type: string
-                  example: "12345"
-                  description: Código de 5 dígitos recebido por e-mail
-                password:
-                  type: string
-                  format: password
-                  example: "novaSenha123"
-                  description: Nova senha
-                password_confirm:
-                  type: string
-                  format: password
-                  example: "novaSenha123"
-                  description: Confirmação da nova senha
+              $ref: "#/components/schemas/LocalDataImport"
       responses:
-        '200':
-          description: Senha atualizada com sucesso
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Senha atualizada com sucesso"
-        '400':
-          description: Dados inválidos ou token inválido/expirado
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+        "200":
+          $ref: "#/components/responses/Success"
 
-  /task/list:
+  /me/export:
     get:
-      summary: Lista todas as tarefas do usuário
-      description: Retorna todas as tarefas do usuário autenticado
-      tags:
-        - Tarefas
+      tags: [Perfil]
+      summary: Exporta dados persistidos do usuario
       security:
-        - ApiKeyAuth: []
+        - BearerAuth: []
+        - CookieAuth: []
       responses:
-        '200':
-          description: Lista de tarefas
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  tasks:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Task'
-        '401':
-          description: Token inválido ou expirado
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+        "200":
+          $ref: "#/components/responses/Success"
 
-  /task/{id}:
-    get:
-      summary: Busca tarefa por ID
-      description: Retorna informações de uma tarefa específica
-      tags:
-        - Tarefas
-      security:
-        - ApiKeyAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: integer
-          description: ID da tarefa
-          example: 1
-      responses:
-        '200':
-          description: Tarefa encontrada
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  task:
-                    $ref: '#/components/schemas/Task'
-        '401':
-          description: Token inválido ou expirado
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Tarefa não encontrada
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-  /task/filter/category/{category_id}:
-    get:
-      summary: Lista tarefas por categoria
-      description: Retorna todas as tarefas de uma categoria específica do usuário
-      tags:
-        - Tarefas
-      security:
-        - ApiKeyAuth: []
-      parameters:
-        - in: path
-          name: category_id
-          required: true
-          schema:
-            type: integer
-          description: ID da categoria
-          example: 1
-      responses:
-        '200':
-          description: Lista de tarefas da categoria
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  tasks:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Task'
-        '401':
-          description: Token inválido ou expirado
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Categoria não encontrada
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-  /task/filter:
-    get:
-      summary: Filtra tarefas
-      description: Retorna tarefas do usuário autenticado com filtros opcionais por data de vencimento, prioridade, status, categoria e texto livre
-      tags:
-        - Tarefas
-      security:
-        - ApiKeyAuth: []
-      parameters:
-        - in: query
-          name: category_id
-          required: false
-          schema:
-            type: integer
-          description: Filtra por ID da categoria
-          example: 1
-        - in: query
-          name: priority
-          required: false
-          schema:
-            type: string
-            enum: ["baixa", "media", "alta"]
-          description: Filtra por prioridade
-          example: "alta"
-        - in: query
-          name: is_completed
-          required: false
-          schema:
-            type: integer
-            enum: [0, 1]
-          description: Filtra por status de conclusão (0 = pendente, 1 = concluída)
-          example: 0
-        - in: query
-          name: due_date
-          required: false
-          schema:
-            type: string
-            format: date-time
-          description: Retorna tarefas com data de vencimento até a data informada
-          example: "2026-12-31 23:59:59"
-        - in: query
-          name: search
-          required: false
-          schema:
-            type: string
-          description: Texto livre para busca no título e descrição
-          example: "relatório"
-      responses:
-        '200':
-          description: Lista de tarefas filtradas
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  tasks:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Task'
-        '401':
-          description: Token inválido ou expirado
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-  /task/create:
-    post:
-      summary: Cria uma nova tarefa
-      description: Cria uma nova tarefa para o usuário autenticado
-      tags:
-        - Tarefas
-      security:
-        - ApiKeyAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - title
-                - priority
-              properties:
-                category_id:
-                  type: integer
-                  example: 1
-                  description: ID da categoria (opcional)
-                title:
-                  type: string
-                  example: "string"
-                  description: Título da tarefa
-                description:
-                  type: string
-                  example: "string"
-                  description: Descrição detalhada (opcional)
-                is_completed:
-                  type: integer
-                  enum: [0, 1]
-                  example: 0
-                  description: Status de conclusão
-                priority:
-                  type: string
-                  enum: ["baixa", "media", "alta"]
-                  example: "string"
-                  description: Prioridade da tarefa
-                display_order:
-                  type: integer
-                  example: 1
-                  description: Ordem de exibição
-                due_date:
-                  type: string
-                  format: date-time
-                  example: "2026-03-05 18:00:00"
-                  description: Data de vencimento (opcional)
-      responses:
-        '201':
-          description: Tarefa criada com sucesso
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Tarefa criada com sucesso"
-                  task:
-                    $ref: '#/components/schemas/Task'
-        '400':
-          description: Dados inválidos
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Token inválido ou expirado
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-  /task/update:
-    post:
-      summary: Atualiza uma tarefa existente
-      description: Atualiza informações de uma tarefa do usuário autenticado
-      tags:
-        - Tarefas
-      security:
-        - ApiKeyAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - task_id
-                - title
-                - priority
-              properties:
-                task_id:
-                  type: integer
-                  example: 1
-                  description: ID da tarefa a ser atualizada
-                category_id:
-                  type: integer
-                  nullable: true
-                  example: 1
-                  description: ID da categoria (opcional)
-                title:
-                  type: string
-                  example: "Finalizar relatório"
-                  description: Título da tarefa
-                description:
-                  type: string
-                  nullable: true
-                  example: "Completar e revisar o relatório de desempenho"
-                  description: Descrição detalhada (opcional)
-                is_completed:
-                  type: integer
-                  enum: [0, 1]
-                  example: 0
-                  description: Status de conclusão
-                priority:
-                  type: string
-                  enum: ["baixa", "media", "alta"]
-                  example: "alta"
-                  description: Prioridade da tarefa
-                display_order:
-                  type: integer
-                  example: 1
-                  description: Ordem de exibição
-                due_date:
-                  type: string
-                  format: date-time
-                  nullable: true
-                  example: "2026-03-05 18:00:00"
-                  description: Data de vencimento (opcional)
-      responses:
-        '200':
-          description: Tarefa atualizada com sucesso
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Tarefa atualizada com sucesso"
-                  task:
-                    $ref: '#/components/schemas/Task'
-        '400':
-          description: Dados inválidos
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Token inválido ou expirado
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-  /task/delete:
+  /me/account:
     delete:
-      summary: Deleta uma tarefa
-      description: Remove uma tarefa do usuário autenticado
-      tags:
-        - Tarefas
+      tags: [Conta]
+      summary: Exclui conta do usuario autenticado
       security:
-        - ApiKeyAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - task_id
-              properties:
-                task_id:
-                  type: integer
-                  example: 1
-                  description: ID da tarefa a ser deletada
+        - BearerAuth: []
+        - CookieAuth: []
       responses:
-        '200':
-          description: Tarefa excluída com sucesso
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Tarefa excluída com sucesso"
-        '400':
-          description: Dados inválidos
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Token inválido ou expirado
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+        "200":
+          $ref: "#/components/responses/Success"
 
-  /task/category/:
+  /catalog/technologies:
     get:
-      summary: Lista categorias de tarefas
-      description: Retorna todas as categorias de tarefas do usuário autenticado
-      tags:
-        - Categorias
-      security:
-        - ApiKeyAuth: []
+      tags: [Catalogo]
+      summary: Lista catalogo de tecnologias
+      parameters:
+        - $ref: "#/components/parameters/Category"
+        - $ref: "#/components/parameters/Search"
+        - $ref: "#/components/parameters/Active"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Cursor"
       responses:
-        '200':
-          description: Lista de categorias
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  categories:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: integer
-                          example: 1
-                        name:
-                          type: string
-                          example: "Trabalho"
-                        color:
-                          type: string
-                          example: "#FF5733"
-                        display_order:
-                          type: integer
-                          example: 1
-        '401':
-          description: Token inválido ou expirado
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+        "200":
+          $ref: "#/components/responses/Success"
 
-  /task/category/{id}:
+  /catalog/technologies/{slug}:
     get:
-      summary: Busca categoria por ID
-      description: Retorna informações de uma categoria específica do usuário autenticado
-      tags:
-        - Categorias
-      security:
-        - ApiKeyAuth: []
+      tags: [Catalogo]
+      summary: Detalhe de tecnologia
       parameters:
         - in: path
-          name: id
+          name: slug
           required: true
           schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /me/technologies:
+    get:
+      tags: [Tecnologias]
+      summary: Stacks do usuario
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+    put:
+      tags: [Tecnologias]
+      summary: Substitui stacks do usuario
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserTechnologyReplaceInput"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  /me/preferences:
+    get:
+      tags: [Preferencias]
+      summary: Preferencias do usuario
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+    put:
+      tags: [Preferencias]
+      summary: Atualiza preferencias e invalida matches
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserPreferenceInput"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  /matches:
+    get:
+      tags: [Matches]
+      summary: Lista matches armazenados
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      parameters:
+        - in: query
+          name: state
+          schema:
+            type: string
+        - in: query
+          name: minimum_score
+          schema:
+            type: number
+        - in: query
+          name: sort_by
+          schema:
+            type: string
+            enum: [best_match, most_active, most_stars, beginner_friendly, recently_updated]
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Cursor"
+      responses:
+        "200":
+          description: Lista paginada de matches.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MatchListResponse"
+
+  /matches/refresh:
+    post:
+      tags: [Matches]
+      summary: Recalcula matches usando GitHub e cache
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "502":
+          $ref: "#/components/responses/BadGateway"
+
+  /matches/{githubRepositoryId}:
+    get:
+      tags: [Matches]
+      summary: Retorna match especifico
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      parameters:
+        - $ref: "#/components/parameters/GitHubRepositoryId"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /repositories/{owner}/{repo}:
+    get:
+      tags: [Repositorios]
+      summary: Detalhe de repositorio
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Owner"
+        - $ref: "#/components/parameters/Repo"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "502":
+          $ref: "#/components/responses/BadGateway"
+
+  /repositories/{owner}/{repo}/issues:
+    get:
+      tags: [Repositorios]
+      summary: Issues recomendadas
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Owner"
+        - $ref: "#/components/parameters/Repo"
+        - in: query
+          name: difficulty
+          schema:
+            type: string
+            enum: [beginner, intermediate, advanced]
+        - in: query
+          name: label
+          schema:
+            type: string
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Cursor"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "502":
+          $ref: "#/components/responses/BadGateway"
+
+  /repositories/{owner}/{repo}/activity:
+    post:
+      tags: [Repositorios]
+      summary: Registra interacao com repositorio
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Owner"
+        - $ref: "#/components/parameters/Repo"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [event_type]
+              properties:
+                event_type:
+                  type: string
+                  enum: [viewed_project, opened_github, started_contributing, sent_pull_request, marked_contributed]
+      responses:
+        "201":
+          $ref: "#/components/responses/Success"
+
+  /me/repositories:
+    get:
+      tags: [Estados]
+      summary: Lista projetos por estado
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      parameters:
+        - in: query
+          name: state
+          schema:
+            type: string
+            enum: [saved, ignored, researching, working, pull_request_sent, contributed, archived]
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Cursor"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+
+  /me/repositories/{githubRepositoryId}/state:
+    put:
+      tags: [Estados]
+      summary: Define estado de projeto
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      parameters:
+        - $ref: "#/components/parameters/GitHubRepositoryId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [state]
+              properties:
+                state:
+                  type: string
+                  enum: [saved, ignored, researching, working, pull_request_sent, contributed, archived]
+                notes:
+                  type: string
+                  nullable: true
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+    delete:
+      tags: [Estados]
+      summary: Remove estado salvo
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      parameters:
+        - $ref: "#/components/parameters/GitHubRepositoryId"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+
+  /me/repositories/{githubRepositoryId}/restore:
+    post:
+      tags: [Estados]
+      summary: Restaura projeto ignorado
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      parameters:
+        - $ref: "#/components/parameters/GitHubRepositoryId"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+
+  /me/history:
+    get:
+      tags: [Historico]
+      summary: Historico paginado
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      parameters:
+        - in: query
+          name: event_type
+          schema:
+            type: string
+        - in: query
+          name: github_repository_id
+          schema:
             type: integer
-          description: ID da categoria
-          example: 1
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Cursor"
       responses:
-        '200':
-          description: Categoria encontrada
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  category:
-                    type: object
-                    properties:
-                      id:
-                        type: integer
-                        example: 1
-                      name:
-                        type: string
-                        example: "Trabalho"
-                      color:
-                        type: string
-                        example: "#FF5733"
-                      display_order:
-                        type: integer
-                        example: 1
-        '401':
-          description: Token inválido ou expirado
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Categoria não encontrada
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-  /task/category/create:
-    post:
-      summary: Cria uma nova categoria
-      description: Cria uma nova categoria de tarefas para o usuário autenticado
-      tags:
-        - Categorias
+        "200":
+          $ref: "#/components/responses/Success"
+    delete:
+      tags: [Historico]
+      summary: Limpa historico do usuario
       security:
-        - ApiKeyAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - name
-              properties:
-                name:
-                  type: string
-                  example: "Trabalho"
-                  description: Nome da categoria
-                color:
-                  type: string
-                  example: "#FF5733"
-                  description: Cor da categoria em formato hexadecimal
-                display_order:
-                  type: integer
-                  example: 1
-                  description: Ordem de exibição
+        - BearerAuth: []
+        - CookieAuth: []
       responses:
-        '201':
-          description: Categoria criada com sucesso
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Categoria criada com sucesso"
-                  category:
-                    type: object
-                    properties:
-                      id:
-                        type: integer
-                        example: 1
-                      name:
-                        type: string
-                        example: "Trabalho"
-                      color:
-                        type: string
-                        example: "#FF5733"
-                      display_order:
-                        type: integer
-                        example: 1
-        '400':
-          description: Dados inválidos
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Token inválido ou expirado
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-  /task/category/update:
-    post:
-      summary: Atualiza uma categoria existente
-      description: Atualiza informações de uma categoria do usuário autenticado
-      tags:
-        - Categorias
-      security:
-        - ApiKeyAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - id
-                - name
-              properties:
-                id:
-                  type: integer
-                  example: 1
-                  description: ID da categoria a ser atualizada
-                name:
-                  type: string
-                  example: "Trabalho"
-                  description: Nome da categoria
-                color:
-                  type: string
-                  example: "#FF5733"
-                  description: Cor da categoria em formato hexadecimal
-                display_order:
-                  type: integer
-                  example: 1
-                  description: Ordem de exibição
-      responses:
-        '200':
-          description: Categoria atualizada com sucesso
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Categoria atualizada com sucesso"
-                  category:
-                    type: object
-                    properties:
-                      id:
-                        type: integer
-                        example: 1
-                      name:
-                        type: string
-                        example: "Trabalho"
-                      color:
-                        type: string
-                        example: "#FF5733"
-                      display_order:
-                        type: integer
-                        example: 1
-        '400':
-          description: Dados inválidos
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Token inválido ou expirado
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Categoria não encontrada
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-  /task/category/delete:
-    post:
-      summary: Deleta uma categoria
-      description: Remove uma categoria de tarefas do usuário autenticado
-      tags:
-        - Categorias
-      security:
-        - ApiKeyAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - id
-              properties:
-                id:
-                  type: integer
-                  example: 1
-                  description: ID da categoria a ser deletada
-      responses:
-        '200':
-          description: Categoria excluída com sucesso
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Categoria excluída com sucesso"
-        '400':
-          description: Dados inválidos
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Token inválido ou expirado
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Categoria não encontrada
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+        "200":
+          $ref: "#/components/responses/Success"
 
 components:
   securitySchemes:
-    ApiKeyAuth:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: opaque-session-token
+      description: Token local opaco da API. O token GitHub nunca e exposto.
+    CookieAuth:
       type: apiKey
-      in: header
-      name: key
-      description: Token de autenticação obtido no endpoint /auth/login. Envie o token no header 'key'
+      in: cookie
+      name: dotti_session
+      description: Cookie HttpOnly/Secure/SameSite=Lax usado pelo front-end com credentials include.
+
+  parameters:
+    Owner:
+      in: path
+      name: owner
+      required: true
+      schema:
+        type: string
+    Repo:
+      in: path
+      name: repo
+      required: true
+      schema:
+        type: string
+    GitHubRepositoryId:
+      in: path
+      name: githubRepositoryId
+      required: true
+      schema:
+        type: integer
+    Limit:
+      in: query
+      name: limit
+      schema:
+        type: integer
+        default: 30
+        maximum: 100
+    Cursor:
+      in: query
+      name: cursor
+      schema:
+        type: string
+    Search:
+      in: query
+      name: search
+      schema:
+        type: string
+    Active:
+      in: query
+      name: active
+      schema:
+        type: boolean
+    Category:
+      in: query
+      name: category
+      schema:
+        type: string
+        enum: [language, framework, library, tool, platform, database, devops_cloud]
+
+  responses:
+    Success:
+      description: Operacao concluida
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/SuccessResponse"
+    Unauthorized:
+      description: Sessao ausente, invalida ou expirada
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    NotFound:
+      description: Recurso nao encontrado
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    ValidationError:
+      description: Dados invalidos
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    RateLimited:
+      description: Limite de atualizacao ou GitHub atingido
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    BadGateway:
+      description: Falha em servico externo
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    ServiceUnavailable:
+      description: Servico indisponivel
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
 
   schemas:
-    Task:
+    SuccessResponse:
       type: object
+      required: [success, data]
       properties:
-        id:
-          type: integer
-          example: 1
-        user_id:
-          type: integer
-          example: 1
-        category_id:
-          type: integer
-          nullable: true
-          example: 1
-        title:
-          type: string
-          example: "Finalizar relatório"
-        description:
-          type: string
-          nullable: true
-          example: "Completar e revisar o relatório de desempenho"
-        is_completed:
-          type: integer
-          enum: [0, 1]
-          example: 0
-        priority:
-          type: string
-          enum: ["baixa", "media", "alta"]
-          example: "alta"
-        display_order:
-          type: integer
-          example: 1
-        due_date:
-          type: string
-          format: date-time
-          nullable: true
-          example: "2026-03-05 18:00:00"
-        completed_at:
-          type: string
-          format: date-time
-          nullable: true
-          example: null
-        created_at:
-          type: string
-          format: date-time
-          example: "2026-03-02 17:30:00"
-        updated_at:
-          type: string
-          format: date-time
-          example: "2026-03-02 17:30:00"
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+
+    ErrorResponse:
+      type: object
+      required: [success, error]
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          required: [code, message, details]
+          properties:
+            code:
+              type: string
+              example: VALIDATION_ERROR
+            message:
+              type: string
+              example: Dados invalidos.
+            details:
+              type: array
+              items:
+                type: object
 
     User:
       type: object
       properties:
         id:
           type: integer
-          example: 1
+        login:
+          type: string
+          nullable: true
+        display_name:
+          type: string
+          nullable: true
         email:
           type: string
-          format: email
-          example: "usuario@exemplo.com"
-        name:
+          nullable: true
+        avatar_url:
           type: string
-          example: "João Silva"
+          nullable: true
+        github_profile_url:
+          type: string
+          nullable: true
         created_at:
           type: string
-          format: date-time
-          example: "2026-03-02 17:00:00"
+          nullable: true
+
+    UserProfile:
+      type: object
+      properties:
+        role:
+          type: string
+          nullable: true
+        seniority:
+          type: string
+          enum: [junior, mid, senior]
+          nullable: true
+        onboarding_completed:
+          type: boolean
+        goals:
+          type: array
+          items:
+            type: string
+
+    GitHubIntegration:
+      type: object
+      properties:
+        connected:
+          type: boolean
+        login:
+          type: string
+          nullable: true
+        provider:
+          type: string
+          example: github
+
+    ProfileUpdateInput:
+      type: object
+      properties:
+        display_name:
+          type: string
+          maxLength: 150
+        role:
+          type: string
+          maxLength: 100
+        seniority:
+          type: string
+          enum: [junior, mid, senior]
+        goals:
+          type: array
+          items:
+            type: string
+            enum: [first_contribution, build_portfolio, practical_experience, join_communities, long_term_projects]
+        onboarding_completed:
+          type: boolean
+
+    UserTechnologyReplaceInput:
+      type: object
+      required: [technologies]
+      properties:
+        technologies:
+          type: array
+          maxItems: 50
+          items:
+            type: object
+            required: [technology_id, proficiency_level]
+            properties:
+              technology_id:
+                type: integer
+              proficiency_level:
+                type: string
+                enum: [learning, basic, daily, advanced]
+              interest_level:
+                type: string
+                enum: [learn, contribute, mentor]
+
+    UserPreferenceInput:
+      type: object
+      required:
+        - contribution_types
+        - difficulty_levels
+        - project_sizes
+        - documentation_languages
+        - organization_types
+      properties:
+        contribution_types:
+          type: array
+          items:
+            type: string
+            enum: [bug_fix, feature, documentation, tests, performance, refactor, accessibility, translation]
+        difficulty_levels:
+          type: array
+          items:
+            type: string
+            enum: [beginner, intermediate, advanced]
+        project_sizes:
+          type: array
+          items:
+            type: string
+            enum: [small, medium, large]
+        documentation_languages:
+          type: array
+          items:
+            type: string
+            enum: [en, pt, es, any]
+        organization_types:
+          type: array
+          items:
+            type: string
+            enum: [independent, startup, company, community, foundation, any]
+        activity_window_days:
+          type: integer
+          minimum: 1
+          maximum: 3650
+        minimum_stars:
+          type: integer
+          minimum: 0
+        require_good_first_issue:
+          type: boolean
+        require_help_wanted:
+          type: boolean
+        default_sort_by:
+          type: string
+          enum: [best_match, most_active, most_stars, beginner_friendly, recently_updated]
+
+    LocalDataImport:
+      type: object
+      properties:
+        profile:
+          type: object
+        technologies:
+          type: array
+          items:
+            type: object
+        preferences:
+          type: object
+        repository_states:
+          type: array
+          items:
+            type: object
+        history:
+          type: array
+          items:
+            type: object
+
+    RepositorySummary:
+      type: object
+      properties:
+        github_repository_id:
+          type: integer
+        owner:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        html_url:
+          type: string
+        stars:
+          type: integer
+        forks:
+          type: integer
+        open_issues:
+          type: integer
+        languages:
+          type: array
+          items:
+            type: string
+        topics:
+          type: array
+          items:
+            type: string
         updated_at:
           type: string
-          format: date-time
-          example: "2026-03-02 17:00:00"
 
-    Error:
+    Match:
+      type: object
+      properties:
+        score:
+          type: number
+          example: 92.5
+        recommended_seniority:
+          type: string
+        breakdown:
+          type: object
+          properties:
+            stack:
+              type: number
+            difficulty:
+              type: number
+            issues:
+              type: number
+            activity:
+              type: number
+            health:
+              type: number
+            contribution_readiness:
+              type: number
+        reasons:
+          type: array
+          items:
+            type: string
+
+    MatchListResponse:
       type: object
       properties:
         success:
           type: boolean
-          example: false
-        message:
-          type: string
-          example: "Erro na requisição"
-
-tags:
-  - name: Sistema
-    description: Endpoints de sistema e status
-  - name: Autenticação
-    description: Endpoints de autenticação e gestão de sessão
-  - name: Tarefas
-    description: Endpoints de gerenciamento de tarefas (to-dos)
-  - name: Categorias
-    description: Endpoints de gerenciamento de categorias de tarefas
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                type: object
+                properties:
+                  repository:
+                    $ref: "#/components/schemas/RepositorySummary"
+                  match:
+                    $ref: "#/components/schemas/Match"
+                  user_state:
+                    type: string
+                    nullable: true
+            pagination:
+              type: object
+              properties:
+                next_cursor:
+                  type: string
+                  nullable: true
+            metadata:
+              type: object
