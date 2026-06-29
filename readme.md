@@ -30,9 +30,9 @@ DB_HOST=
 DB_NAME=
 DB_USER=
 DB_PASSWORD=
-GITHUB_CLIENT_ID=
-GITHUB_CLIENT_SECRET=
-GITHUB_REDIRECT_URI=http://localhost/dottiwork_api/api/auth/github/callback
+OAUTH_GITHUB_CLIENT_ID=
+OAUTH_GITHUB_CLIENT_SECRET=
+OAUTH_GITHUB_REDIRECT_URI=http://localhost/dottiwork_api/api/auth/github/callback
 ```
 
 3. Aplique a migration:

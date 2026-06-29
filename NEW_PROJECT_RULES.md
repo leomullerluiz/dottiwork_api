@@ -258,18 +258,18 @@ SESSION_COOKIE_DOMAIN=.dotti.work
 SESSION_COOKIE_SECURE=true
 SESSION_TOKEN_TTL_SECONDS=2592000
 
-GITHUB_CLIENT_ID=
-GITHUB_CLIENT_SECRET=
-GITHUB_REDIRECT_URI=https://api.dotti.work/auth/github/callback
-GITHUB_OAUTH_SCOPES=read:user,user:email
-GITHUB_API_VERSION=
+OAUTH_GITHUB_CLIENT_ID=
+OAUTH_GITHUB_CLIENT_SECRET=
+OAUTH_GITHUB_REDIRECT_URI=https://api.dotti.work/auth/github/callback
+OAUTH_GITHUB_SCOPES=read:user,user:email
+OAUTH_GITHUB_API_VERSION=
 
 SENTRY_DSN=
 ```
 
 Regras:
 
-* Nunca expor `GITHUB_CLIENT_SECRET` ao Next.js.
+* Nunca expor `OAUTH_GITHUB_CLIENT_SECRET` ao Next.js.
 * Nunca salvar `APP_SECRET` no repositório.
 * Nunca colocar token OAuth em logs.
 * Nunca devolver token do GitHub em resposta JSON.
