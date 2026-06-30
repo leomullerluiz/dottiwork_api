@@ -1,0 +1,66 @@
+# dotti.work API - production Apache rules
+
+Options -Indexes
+ServerSignature Off
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Preserve Authorization header for PHP/FastCGI environments.
+    SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
+
+    # Force HTTPS in production hosts, but keep local XAMPP over HTTP usable.
+    RewriteCond %{HTTPS} !=on
+    RewriteCond %{HTTP_HOST} !^(localhost|127\.0\.0\.1)(:\d+)?$ [NC]
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+    # Allow ACME/SSL validation files.
+    RewriteRule ^\.well-known/ - [L]
+
+    # Block dotfiles and internal project directories.
+    RewriteRule (^|/)\. - [F,L]
+    RewriteRule ^(\.git|\.github|vendor|tests|migrations)(/|$) - [F,L]
+    RewriteRule ^api/(config|core|controller|model|service|templates)(/|$) - [F,L]
+
+    # Block sensitive project files and local/database artifacts.
+    RewriteRule (^|/)(composer\.(json|lock)|package(-lock)?\.json|phpunit\.xml|db_dump\.sql|dotti_api\.sql|todo\.md|NEW_PROJECT_RULES\.md|documentation\.md|readme\.md)$ - [F,L,NC]
+    RewriteRule (^|/).*\.(sql|sqlite|bak|backup|env|ini|log|sh|bat|ps1)$ - [F,L,NC]
+
+    # Public documentation assets.
+    RewriteRule ^docs(/.*)?$ - [L]
+    RewriteRule ^openapi\.yaml$ - [L]
+
+    # Existing public files can be served directly.
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule ^ - [L]
+
+    # Support both /health and /api/health style entrypoints.
+    RewriteRule ^api/?$ api/index.php [QSA,L]
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^api/ api/index.php [QSA,L]
+
+    # Route all clean API URLs to the PHP front controller.
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ api/index.php [QSA,L]
+</IfModule>
+
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+</IfModule>
+
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE application/json application/javascript application/x-javascript text/css text/html text/javascript text/plain text/xml
+</IfModule>
+
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 7 days"
+    ExpiresByType application/javascript "access plus 7 days"
+    ExpiresByType image/png "access plus 30 days"
+    ExpiresByType image/svg+xml "access plus 30 days"
+    ExpiresDefault "access plus 0 seconds"
+</IfModule>

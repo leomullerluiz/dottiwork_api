@@ -76,7 +76,13 @@ jobs:
         run: |
           HOST=$(echo "$FTP_HOST" | xargs)
           PATH_DIR=$(echo "$FTP_PATH" | xargs | sed 's|^/||; s|/$||')
-          echo "::notice::FTP Host='$HOST' | Path='$PATH_DIR'"
-          curl -T .env --ftp-create-dirs \
-            "ftp://${HOST}/${PATH_DIR}/public_html/.env" \
+          if [ ! -s .env ]; then
+            echo "::error::.env was not generated"
+            exit 1
+          fi
+
+          REMOTE_ENV_PATH="${PATH_DIR:+${PATH_DIR}/}.env"
+          echo "::notice::Uploading .env to FTP Host='$HOST' | Path='$REMOTE_ENV_PATH'"
+          curl --fail --show-error --silent -T .env --ftp-create-dirs \
+            "ftp://${HOST}/${REMOTE_ENV_PATH}" \
             --user "${FTP_USER}:${FTP_PASSWORD}"

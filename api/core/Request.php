@@ -109,8 +109,26 @@ class Request
         $uri = $_SERVER['REQUEST_URI'] ?? '/';
 
         $scriptName = dirname($_SERVER['SCRIPT_NAME'] ?? '/');
-        if ($scriptName && $scriptName !== '/' && strpos($uri, $scriptName) === 0) {
-            $uri = substr($uri, strlen($scriptName));
+        $basePaths = array_values(array_unique(array_filter([
+            $scriptName,
+            dirname($scriptName),
+        ], function ($path) {
+            return $path && $path !== '.' && $path !== '/';
+        })));
+
+        usort($basePaths, function ($a, $b) {
+            return strlen($b) <=> strlen($a);
+        });
+
+        foreach ($basePaths as $basePath) {
+            if (strpos($uri, $basePath) === 0) {
+                $uri = substr($uri, strlen($basePath));
+                break;
+            }
+        }
+
+        if ($uri === '/v1' || strpos($uri, '/v1/') === 0) {
+            $uri = '/api' . $uri;
         }
 
         $queryPosition = strpos($uri, '?');
