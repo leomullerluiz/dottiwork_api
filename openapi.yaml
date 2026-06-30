@@ -2,61 +2,98 @@ openapi: 3.0.3
 info:
   title: dotti.work API
   version: 2.0.0
-  description: API PHP nativa para descoberta de projetos open source com OAuth GitHub, perfil tecnico, preferencias, cache e matching deterministico.
+  description: >
+    API PHP nativa para descoberta de projetos open source com OAuth GitHub,
+    perfil tecnico, preferencias, cache de repositorios/issues e matching
+    deterministico. Todas as rotas listadas tambem sao registradas com o
+    prefixo /api/v1.
 
 servers:
-  - url: https://api.dotti.work
+  - url: https://api.dottiwork.com
     description: Producao
+  - url: https://api.dottiwork.com/api/v1
+    description: Producao com prefixo versionado
   - url: http://localhost/dottiwork_api/api
     description: Local
+  - url: http://localhost/dottiwork_api/api/api/v1
+    description: Local com prefixo versionado
 
 tags:
   - name: Sistema
+    description: Rotas de disponibilidade da API.
   - name: Autenticacao
+    description: Login GitHub OAuth, sessao local e integracao GitHub.
   - name: Perfil
+    description: Perfil profissional, onboarding, importacao e exportacao.
   - name: Catalogo
+    description: Catalogos publicos usados pelo produto.
   - name: Tecnologias
+    description: Stack tecnica do usuario.
   - name: Preferencias
+    description: Preferencias usadas no matching.
   - name: Matches
+    description: Recomendacoes de repositorios.
   - name: Repositorios
+    description: Dados, issues e atividade de repositorios GitHub.
   - name: Estados
+    description: Projetos salvos, ignorados e em andamento.
   - name: Historico
+    description: Historico de interacoes do usuario.
   - name: Conta
+    description: Operacoes de conta do usuario autenticado.
 
 paths:
-  /health:
+  /:
     get:
       tags: [Sistema]
+      operationId: getRootHealth
       summary: Status da API
       responses:
         "200":
-          description: API online
+          description: API online.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SuccessResponse"
+                $ref: "#/components/schemas/HealthResponse"
+
+  /health:
+    get:
+      tags: [Sistema]
+      operationId: getHealth
+      summary: Status da API
+      responses:
+        "200":
+          description: API online.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
 
   /health/database:
     get:
       tags: [Sistema]
+      operationId: getDatabaseHealth
       summary: Status do banco de dados
-      description: Em producao, pode exigir sessao autenticada.
+      description: Em producao exige sessao autenticada; em ambiente local pode ser publico.
       security:
         - BearerAuth: []
         - CookieAuth: []
       responses:
         "200":
-          description: Banco online
+          description: Banco online.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SuccessResponse"
+                $ref: "#/components/schemas/DatabaseHealthResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
 
   /auth/github/start:
     get:
       tags: [Autenticacao]
+      operationId: startGitHubOAuth
       summary: Inicia OAuth com GitHub
       parameters:
         - in: query
@@ -67,11 +104,19 @@ paths:
           description: Caminho interno seguro para retorno apos login.
       responses:
         "302":
-          description: Redireciona para GitHub.
+          description: Redireciona para a tela de autorizacao do GitHub.
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /auth/github/callback:
     get:
       tags: [Autenticacao]
+      operationId: handleGitHubOAuthCallback
       summary: Callback OAuth GitHub
       parameters:
         - in: query
@@ -87,108 +132,151 @@ paths:
       responses:
         "302":
           description: Grava cookie HttpOnly e redireciona para o front-end.
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri
 
   /auth/me:
     get:
       tags: [Autenticacao]
+      operationId: getAuthenticatedUser
       summary: Usuario autenticado
       security:
         - BearerAuth: []
         - CookieAuth: []
       responses:
         "200":
-          description: Usuario atual sem tokens internos.
+          description: Usuario atual, perfil resumido e status GitHub.
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: "#/components/schemas/SuccessResponse"
-                  - type: object
-                    properties:
-                      data:
-                        type: object
-                        properties:
-                          user:
-                            $ref: "#/components/schemas/User"
-                          profile:
-                            $ref: "#/components/schemas/UserProfile"
-                          github:
-                            $ref: "#/components/schemas/GitHubIntegration"
+                $ref: "#/components/schemas/AuthMeResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
 
   /auth/logout:
     post:
       tags: [Autenticacao]
+      operationId: logoutCurrentSession
       summary: Revoga sessao atual
       security:
         - BearerAuth: []
         - CookieAuth: []
       responses:
         "200":
-          $ref: "#/components/responses/Success"
+          description: Sessao atual revogada.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LogoutResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
   /auth/logout-all:
     post:
       tags: [Autenticacao]
+      operationId: logoutAllSessions
       summary: Revoga todas as sessoes do usuario
       security:
         - BearerAuth: []
         - CookieAuth: []
       responses:
         "200":
-          $ref: "#/components/responses/Success"
+          description: Todas as sessoes foram revogadas.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LogoutAllResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
   /auth/session:
     get:
       tags: [Autenticacao]
+      operationId: getCurrentSession
       summary: Valida sessao atual
       security:
         - BearerAuth: []
         - CookieAuth: []
       responses:
         "200":
-          $ref: "#/components/responses/Success"
+          description: Sessao autenticada.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthSessionResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
 
   /integrations/github/status:
     get:
       tags: [Autenticacao]
+      operationId: getGitHubIntegrationStatus
       summary: Status da integracao GitHub
       security:
         - BearerAuth: []
         - CookieAuth: []
       responses:
         "200":
-          $ref: "#/components/responses/Success"
+          description: Status da conta GitHub vinculada.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GitHubStatusResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
   /integrations/github/sync:
     post:
       tags: [Autenticacao]
+      operationId: syncGitHubProfile
       summary: Sincroniza perfil publico do GitHub
       security:
         - BearerAuth: []
         - CookieAuth: []
       responses:
         "200":
-          $ref: "#/components/responses/Success"
+          description: Perfil sincronizado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
         "502":
           $ref: "#/components/responses/BadGateway"
 
   /me/profile:
     get:
       tags: [Perfil]
+      operationId: getMyProfile
       summary: Perfil completo do usuario
       security:
         - BearerAuth: []
         - CookieAuth: []
       responses:
         "200":
-          $ref: "#/components/responses/Success"
+          description: Usuario e perfil completos.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfileResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
     put:
       tags: [Perfil]
-      summary: Atualiza perfil e objetivos
+      operationId: updateMyProfile
+      summary: Atualiza perfil, nome publico e objetivos
       security:
         - BearerAuth: []
         - CookieAuth: []
@@ -200,14 +288,23 @@ paths:
               $ref: "#/components/schemas/ProfileUpdateInput"
       responses:
         "200":
-          $ref: "#/components/responses/Success"
+          description: Perfil atualizado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfileResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "422":
           $ref: "#/components/responses/ValidationError"
 
   /me/import-local-data:
     post:
       tags: [Perfil]
-      summary: Importa dados do MVP em localStorage
+      operationId: importLocalData
+      summary: Importa dados do MVP/localStorage
       security:
         - BearerAuth: []
         - CookieAuth: []
@@ -219,47 +316,80 @@ paths:
               $ref: "#/components/schemas/LocalDataImport"
       responses:
         "200":
-          $ref: "#/components/responses/Success"
+          description: Dados importados e exportacao consolidada retornada.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDataExportResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/ValidationError"
 
   /me/export:
     get:
       tags: [Perfil]
+      operationId: exportMyData
       summary: Exporta dados persistidos do usuario
       security:
         - BearerAuth: []
         - CookieAuth: []
       responses:
         "200":
-          $ref: "#/components/responses/Success"
+          description: Exportacao dos dados do usuario.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDataExportResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
   /me/account:
     delete:
       tags: [Conta]
-      summary: Exclui conta do usuario autenticado
+      operationId: deleteMyAccount
+      summary: Exclui a conta do usuario autenticado
+      description: Revoga sessoes e marca o usuario com soft delete.
       security:
         - BearerAuth: []
         - CookieAuth: []
       responses:
         "200":
-          $ref: "#/components/responses/Success"
+          description: Conta excluida.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteAccountResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
   /catalog/technologies:
     get:
       tags: [Catalogo]
+      operationId: listTechnologies
       summary: Lista catalogo de tecnologias
       parameters:
-        - $ref: "#/components/parameters/Category"
+        - $ref: "#/components/parameters/TechnologyCategory"
         - $ref: "#/components/parameters/Search"
         - $ref: "#/components/parameters/Active"
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Cursor"
       responses:
         "200":
-          $ref: "#/components/responses/Success"
+          description: Lista paginada de tecnologias.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TechnologyListResponse"
 
   /catalog/technologies/{slug}:
     get:
       tags: [Catalogo]
+      operationId: getTechnologyBySlug
       summary: Detalhe de tecnologia
       parameters:
         - in: path
@@ -267,25 +397,38 @@ paths:
           required: true
           schema:
             type: string
+          example: typescript
       responses:
         "200":
-          $ref: "#/components/responses/Success"
+          description: Tecnologia encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TechnologyResponse"
         "404":
           $ref: "#/components/responses/NotFound"
 
   /me/technologies:
     get:
       tags: [Tecnologias]
-      summary: Stacks do usuario
+      operationId: getMyTechnologies
+      summary: Stack tecnica do usuario
       security:
         - BearerAuth: []
         - CookieAuth: []
       responses:
         "200":
-          $ref: "#/components/responses/Success"
+          description: Tecnologias escolhidas pelo usuario.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserTechnologyListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
     put:
       tags: [Tecnologias]
-      summary: Substitui stacks do usuario
+      operationId: replaceMyTechnologies
+      summary: Substitui stack tecnica do usuario
       security:
         - BearerAuth: []
         - CookieAuth: []
@@ -297,22 +440,38 @@ paths:
               $ref: "#/components/schemas/UserTechnologyReplaceInput"
       responses:
         "200":
-          $ref: "#/components/responses/Success"
+          description: Tecnologias substituidas.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserTechnologyListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "422":
           $ref: "#/components/responses/ValidationError"
 
   /me/preferences:
     get:
       tags: [Preferencias]
+      operationId: getMyPreferences
       summary: Preferencias do usuario
       security:
         - BearerAuth: []
         - CookieAuth: []
       responses:
         "200":
-          $ref: "#/components/responses/Success"
+          description: Preferencias atuais.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserPreferenceResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
     put:
       tags: [Preferencias]
+      operationId: updateMyPreferences
       summary: Atualiza preferencias e invalida matches
       security:
         - BearerAuth: []
@@ -325,13 +484,22 @@ paths:
               $ref: "#/components/schemas/UserPreferenceInput"
       responses:
         "200":
-          $ref: "#/components/responses/Success"
+          description: Preferencias atualizadas.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserPreferenceResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "422":
           $ref: "#/components/responses/ValidationError"
 
   /matches:
     get:
       tags: [Matches]
+      operationId: listMatches
       summary: Lista matches armazenados
       security:
         - BearerAuth: []
@@ -340,36 +508,49 @@ paths:
         - in: query
           name: state
           schema:
-            type: string
+            $ref: "#/components/schemas/RepositoryStateValue"
         - in: query
           name: minimum_score
           schema:
             type: number
+            format: float
+            minimum: 0
+            maximum: 100
         - in: query
           name: sort_by
           schema:
-            type: string
-            enum: [best_match, most_active, most_stars, beginner_friendly, recently_updated]
+            $ref: "#/components/schemas/SortBy"
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Cursor"
       responses:
         "200":
-          description: Lista paginada de matches.
+          description: Lista de matches em cache.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/MatchListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
   /matches/refresh:
     post:
       tags: [Matches]
+      operationId: refreshMatches
       summary: Recalcula matches usando GitHub e cache
       security:
         - BearerAuth: []
         - CookieAuth: []
       responses:
         "200":
-          $ref: "#/components/responses/Success"
+          description: Matches recalculados.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MatchRefreshResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "429":
           $ref: "#/components/responses/RateLimited"
         "502":
@@ -378,6 +559,7 @@ paths:
   /matches/{githubRepositoryId}:
     get:
       tags: [Matches]
+      operationId: getMatchByRepositoryId
       summary: Retorna match especifico
       security:
         - BearerAuth: []
@@ -386,13 +568,20 @@ paths:
         - $ref: "#/components/parameters/GitHubRepositoryId"
       responses:
         "200":
-          $ref: "#/components/responses/Success"
+          description: Match encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MatchResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
 
   /repositories/{owner}/{repo}:
     get:
       tags: [Repositorios]
+      operationId: getRepository
       summary: Detalhe de repositorio
       security:
         - BearerAuth: []
@@ -402,14 +591,21 @@ paths:
         - $ref: "#/components/parameters/Repo"
       responses:
         "200":
-          $ref: "#/components/responses/Success"
+          description: Repositorio, saude, estado do usuario e match quando existir.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RepositoryDetailResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
         "502":
           $ref: "#/components/responses/BadGateway"
 
   /repositories/{owner}/{repo}/issues:
     get:
       tags: [Repositorios]
-      summary: Issues recomendadas
+      operationId: listRepositoryIssues
+      summary: Lista issues de repositorio com estimativa de dificuldade
       security:
         - BearerAuth: []
         - CookieAuth: []
@@ -419,23 +615,30 @@ paths:
         - in: query
           name: difficulty
           schema:
-            type: string
-            enum: [beginner, intermediate, advanced]
+            $ref: "#/components/schemas/DifficultyLevel"
         - in: query
           name: label
           schema:
             type: string
+          example: good first issue
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Cursor"
       responses:
         "200":
-          $ref: "#/components/responses/Success"
+          description: Issues em cache ou carregadas do GitHub.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RepositoryIssueListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
         "502":
           $ref: "#/components/responses/BadGateway"
 
   /repositories/{owner}/{repo}/activity:
     post:
       tags: [Repositorios]
+      operationId: createRepositoryActivity
       summary: Registra interacao com repositorio
       security:
         - BearerAuth: []
@@ -448,19 +651,25 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required: [event_type]
-              properties:
-                event_type:
-                  type: string
-                  enum: [viewed_project, opened_github, started_contributing, sent_pull_request, marked_contributed]
+              $ref: "#/components/schemas/RepositoryActivityInput"
       responses:
         "201":
-          $ref: "#/components/responses/Success"
+          description: Evento criado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActivityEventResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/ValidationError"
 
   /me/repositories:
     get:
       tags: [Estados]
+      operationId: listMyRepositoryStates
       summary: Lista projetos por estado
       security:
         - BearerAuth: []
@@ -469,17 +678,23 @@ paths:
         - in: query
           name: state
           schema:
-            type: string
-            enum: [saved, ignored, researching, working, pull_request_sent, contributed, archived]
+            $ref: "#/components/schemas/RepositoryStateValue"
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Cursor"
       responses:
         "200":
-          $ref: "#/components/responses/Success"
+          description: Estados de repositorio do usuario.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RepositoryStateListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
   /me/repositories/{githubRepositoryId}/state:
     put:
       tags: [Estados]
+      operationId: setRepositoryState
       summary: Define estado de projeto
       security:
         - BearerAuth: []
@@ -491,22 +706,23 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required: [state]
-              properties:
-                state:
-                  type: string
-                  enum: [saved, ignored, researching, working, pull_request_sent, contributed, archived]
-                notes:
-                  type: string
-                  nullable: true
+              $ref: "#/components/schemas/RepositoryStateInput"
       responses:
         "200":
-          $ref: "#/components/responses/Success"
+          description: Estado salvo.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RepositoryStateResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "422":
           $ref: "#/components/responses/ValidationError"
     delete:
       tags: [Estados]
+      operationId: deleteRepositoryState
       summary: Remove estado salvo
       security:
         - BearerAuth: []
@@ -515,12 +731,21 @@ paths:
         - $ref: "#/components/parameters/GitHubRepositoryId"
       responses:
         "200":
-          $ref: "#/components/responses/Success"
+          description: Estado removido.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RemoveRepositoryStateResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
   /me/repositories/{githubRepositoryId}/restore:
     post:
       tags: [Estados]
-      summary: Restaura projeto ignorado
+      operationId: restoreRepositoryState
+      summary: Restaura projeto ignorado como salvo
       security:
         - BearerAuth: []
         - CookieAuth: []
@@ -528,12 +753,21 @@ paths:
         - $ref: "#/components/parameters/GitHubRepositoryId"
       responses:
         "200":
-          $ref: "#/components/responses/Success"
+          description: Projeto restaurado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RepositoryStateResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
   /me/history:
     get:
       tags: [Historico]
-      summary: Historico paginado
+      operationId: listMyHistory
+      summary: Historico paginado do usuario
       security:
         - BearerAuth: []
         - CookieAuth: []
@@ -541,25 +775,41 @@ paths:
         - in: query
           name: event_type
           schema:
-            type: string
+            $ref: "#/components/schemas/ActivityEventType"
         - in: query
           name: github_repository_id
           schema:
             type: integer
+            format: int64
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Cursor"
       responses:
         "200":
-          $ref: "#/components/responses/Success"
+          description: Eventos recentes do usuario.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActivityEventListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
     delete:
       tags: [Historico]
+      operationId: clearMyHistory
       summary: Limpa historico do usuario
       security:
         - BearerAuth: []
         - CookieAuth: []
       responses:
         "200":
-          $ref: "#/components/responses/Success"
+          description: Historico limpo.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClearHistoryResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
 components:
   securitySchemes:
@@ -581,25 +831,30 @@ components:
       required: true
       schema:
         type: string
+      example: facebook
     Repo:
       in: path
       name: repo
       required: true
       schema:
         type: string
+      example: react
     GitHubRepositoryId:
       in: path
       name: githubRepositoryId
       required: true
       schema:
         type: integer
+        format: int64
+      example: 10270250
     Limit:
       in: query
       name: limit
       schema:
         type: integer
-        default: 30
+        minimum: 1
         maximum: 100
+        default: 30
     Cursor:
       in: query
       name: cursor
@@ -615,52 +870,64 @@ components:
       name: active
       schema:
         type: boolean
-    Category:
+        default: true
+    TechnologyCategory:
       in: query
       name: category
       schema:
-        type: string
-        enum: [language, framework, library, tool, platform, database, devops_cloud]
+        $ref: "#/components/schemas/TechnologyCategory"
 
   responses:
     Success:
-      description: Operacao concluida
+      description: Operacao concluida.
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/SuccessResponse"
     Unauthorized:
-      description: Sessao ausente, invalida ou expirada
+      description: Sessao ausente, invalida ou expirada.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Forbidden:
+      description: Origem nao autorizada ou acesso negado.
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
     NotFound:
-      description: Recurso nao encontrado
+      description: Recurso nao encontrado.
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
     ValidationError:
-      description: Dados invalidos
+      description: Dados invalidos.
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
     RateLimited:
-      description: Limite de atualizacao ou GitHub atingido
+      description: Limite de atualizacao ou limite da API do GitHub atingido.
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
     BadGateway:
-      description: Falha em servico externo
+      description: Falha ao consultar servico externo.
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
     ServiceUnavailable:
-      description: Servico indisponivel
+      description: Servico indisponivel.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    InternalServerError:
+      description: Erro interno do servidor.
       content:
         application/json:
           schema:
@@ -676,6 +943,7 @@ components:
           example: true
         data:
           type: object
+          additionalProperties: true
 
     ErrorResponse:
       type: object
@@ -697,13 +965,195 @@ components:
             details:
               type: array
               items:
-                type: object
+                $ref: "#/components/schemas/ErrorDetail"
+
+    ErrorDetail:
+      type: object
+      additionalProperties: true
+      properties:
+        field:
+          type: string
+          example: technologies.0.technology_id
+        message:
+          type: string
+          example: technology_id deve ser inteiro.
+
+    HealthResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          required: [service, status, version]
+          properties:
+            service:
+              type: string
+              example: dotti.work API
+            status:
+              type: string
+              example: online
+            version:
+              type: string
+              example: 2.0.0
+
+    DatabaseHealthResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          required: [database]
+          properties:
+            database:
+              type: string
+              example: online
+
+    AuthMeResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          required: [user, profile, github]
+          properties:
+            user:
+              $ref: "#/components/schemas/User"
+            profile:
+              $ref: "#/components/schemas/AuthProfile"
+            github:
+              $ref: "#/components/schemas/GitHubIntegration"
+
+    AuthSessionResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          required: [authenticated, user]
+          properties:
+            authenticated:
+              type: boolean
+              example: true
+            user:
+              $ref: "#/components/schemas/User"
+
+    LogoutResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          required: [logged_out]
+          properties:
+            logged_out:
+              type: boolean
+              example: true
+
+    LogoutAllResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          required: [revoked]
+          properties:
+            revoked:
+              type: boolean
+              example: true
+
+    GitHubStatusResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          required: [github]
+          properties:
+            github:
+              $ref: "#/components/schemas/GitHubIntegration"
+
+    UserResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          required: [user]
+          properties:
+            user:
+              $ref: "#/components/schemas/User"
+
+    ProfileResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          required: [user, profile]
+          properties:
+            user:
+              $ref: "#/components/schemas/User"
+            profile:
+              $ref: "#/components/schemas/UserProfile"
+
+    UserDataExportResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: "#/components/schemas/UserDataExport"
+
+    DeleteAccountResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          required: [deleted]
+          properties:
+            deleted:
+              type: boolean
+              example: true
 
     User:
       type: object
       properties:
         id:
           type: integer
+          format: int64
         login:
           type: string
           nullable: true
@@ -715,30 +1165,66 @@ components:
           nullable: true
         avatar_url:
           type: string
+          format: uri
+          nullable: true
+        bio:
+          type: string
+          nullable: true
+        location:
+          type: string
+          nullable: true
+        company:
+          type: string
+          nullable: true
+        website_url:
+          type: string
           nullable: true
         github_profile_url:
           type: string
+          format: uri
           nullable: true
         created_at:
           type: string
           nullable: true
+        updated_at:
+          type: string
+          nullable: true
 
-    UserProfile:
+    AuthProfile:
       type: object
       properties:
         role:
           type: string
           nullable: true
         seniority:
-          type: string
-          enum: [junior, mid, senior]
+          allOf:
+            - $ref: "#/components/schemas/Seniority"
           nullable: true
         onboarding_completed:
           type: boolean
         goals:
           type: array
           items:
-            type: string
+            $ref: "#/components/schemas/ProfileGoal"
+
+    UserProfile:
+      allOf:
+        - $ref: "#/components/schemas/AuthProfile"
+        - type: object
+          properties:
+            id:
+              type: integer
+              format: int64
+            user_id:
+              type: integer
+              format: int64
+            onboarding_completed_at:
+              type: string
+              nullable: true
+            created_at:
+              type: string
+            updated_at:
+              type: string
 
     GitHubIntegration:
       type: object
@@ -751,6 +1237,12 @@ components:
         provider:
           type: string
           example: github
+        scope:
+          type: string
+          nullable: true
+        token_last_verified_at:
+          type: string
+          nullable: true
 
     ProfileUpdateInput:
       type: object
@@ -758,19 +1250,177 @@ components:
         display_name:
           type: string
           maxLength: 150
+          nullable: true
         role:
           type: string
           maxLength: 100
+          nullable: true
         seniority:
-          type: string
-          enum: [junior, mid, senior]
+          allOf:
+            - $ref: "#/components/schemas/Seniority"
+          nullable: true
         goals:
+          type: array
+          uniqueItems: true
+          items:
+            $ref: "#/components/schemas/ProfileGoal"
+        onboarding_completed:
+          type: boolean
+
+    UserDataExport:
+      type: object
+      required: [user, profile, technologies, preferences, repository_states, history]
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        profile:
+          $ref: "#/components/schemas/UserProfile"
+        technologies:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserTechnology"
+        preferences:
+          $ref: "#/components/schemas/UserPreference"
+        repository_states:
+          type: array
+          items:
+            $ref: "#/components/schemas/RepositoryState"
+        history:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActivityEvent"
+
+    LocalDataImport:
+      type: object
+      properties:
+        profile:
+          $ref: "#/components/schemas/ProfileUpdateInput"
+        technologies:
+          type: array
+          maxItems: 50
+          items:
+            $ref: "#/components/schemas/UserTechnologyInput"
+        preferences:
+          $ref: "#/components/schemas/UserPreferenceInput"
+        repository_states:
+          type: array
+          maxItems: 200
+          items:
+            $ref: "#/components/schemas/RepositoryStateImportInput"
+        history:
+          type: array
+          maxItems: 300
+          items:
+            $ref: "#/components/schemas/ActivityEventImportInput"
+
+    TechnologyListResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          required: [items, pagination]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/Technology"
+            pagination:
+              $ref: "#/components/schemas/Pagination"
+
+    TechnologyResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          required: [technology]
+          properties:
+            technology:
+              $ref: "#/components/schemas/Technology"
+
+    Technology:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        slug:
+          type: string
+          example: typescript
+        name:
+          type: string
+          example: TypeScript
+        category:
+          $ref: "#/components/schemas/TechnologyCategory"
+        github_language:
+          type: string
+          nullable: true
+          example: TypeScript
+        github_topics:
           type: array
           items:
             type: string
-            enum: [first_contribution, build_portfolio, practical_experience, join_communities, long_term_projects]
-        onboarding_completed:
+          example: [typescript]
+        is_active:
           type: boolean
+        display_order:
+          type: integer
+        created_at:
+          type: string
+        updated_at:
+          type: string
+
+    UserTechnologyListResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          required: [technologies]
+          properties:
+            technologies:
+              type: array
+              items:
+                $ref: "#/components/schemas/UserTechnology"
+
+    UserTechnology:
+      allOf:
+        - $ref: "#/components/schemas/UserTechnologyInput"
+        - type: object
+          properties:
+            id:
+              type: integer
+              format: int64
+            user_id:
+              type: integer
+              format: int64
+            slug:
+              type: string
+            name:
+              type: string
+            category:
+              $ref: "#/components/schemas/TechnologyCategory"
+            github_language:
+              type: string
+              nullable: true
+            github_topics:
+              type: array
+              items:
+                type: string
+            created_at:
+              type: string
+            updated_at:
+              type: string
 
     UserTechnologyReplaceInput:
       type: object
@@ -780,17 +1430,49 @@ components:
           type: array
           maxItems: 50
           items:
-            type: object
-            required: [technology_id, proficiency_level]
-            properties:
-              technology_id:
-                type: integer
-              proficiency_level:
-                type: string
-                enum: [learning, basic, daily, advanced]
-              interest_level:
-                type: string
-                enum: [learn, contribute, mentor]
+            $ref: "#/components/schemas/UserTechnologyInput"
+
+    UserTechnologyInput:
+      type: object
+      required: [technology_id, proficiency_level]
+      properties:
+        technology_id:
+          type: integer
+          format: int64
+        proficiency_level:
+          $ref: "#/components/schemas/ProficiencyLevel"
+        interest_level:
+          $ref: "#/components/schemas/InterestLevel"
+
+    UserPreferenceResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          required: [preferences]
+          properties:
+            preferences:
+              $ref: "#/components/schemas/UserPreference"
+
+    UserPreference:
+      allOf:
+        - $ref: "#/components/schemas/UserPreferenceInput"
+        - type: object
+          properties:
+            id:
+              type: integer
+              format: int64
+            user_id:
+              type: integer
+              format: int64
+            created_at:
+              type: string
+            updated_at:
+              type: string
 
     UserPreferenceInput:
       type: object
@@ -803,78 +1485,195 @@ components:
       properties:
         contribution_types:
           type: array
+          maxItems: 20
           items:
-            type: string
-            enum: [bug_fix, feature, documentation, tests, performance, refactor, accessibility, translation]
+            $ref: "#/components/schemas/ContributionType"
         difficulty_levels:
           type: array
+          maxItems: 20
           items:
-            type: string
-            enum: [beginner, intermediate, advanced]
+            $ref: "#/components/schemas/DifficultyLevel"
         project_sizes:
           type: array
+          maxItems: 20
           items:
-            type: string
-            enum: [small, medium, large]
+            $ref: "#/components/schemas/ProjectSize"
         documentation_languages:
           type: array
+          maxItems: 20
           items:
-            type: string
-            enum: [en, pt, es, any]
+            $ref: "#/components/schemas/DocumentationLanguage"
         organization_types:
           type: array
+          maxItems: 20
           items:
-            type: string
-            enum: [independent, startup, company, community, foundation, any]
+            $ref: "#/components/schemas/OrganizationType"
         activity_window_days:
           type: integer
           minimum: 1
           maximum: 3650
+          default: 90
         minimum_stars:
           type: integer
           minimum: 0
+          default: 0
         require_good_first_issue:
           type: boolean
+          default: false
         require_help_wanted:
           type: boolean
+          default: false
         default_sort_by:
-          type: string
-          enum: [best_match, most_active, most_stars, beginner_friendly, recently_updated]
+          $ref: "#/components/schemas/SortBy"
 
-    LocalDataImport:
+    MatchListResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          required: [items, pagination, metadata]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/RepositoryMatchItem"
+            pagination:
+              $ref: "#/components/schemas/Pagination"
+            metadata:
+              type: object
+              properties:
+                cached:
+                  type: boolean
+
+    MatchRefreshResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          required: [refreshed, items]
+          properties:
+            refreshed:
+              type: boolean
+              example: true
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/RepositoryMatchItem"
+
+    MatchResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: "#/components/schemas/RepositoryMatchItem"
+
+    RepositoryMatchItem:
+      type: object
+      required: [repository, match, user_state]
+      properties:
+        repository:
+          $ref: "#/components/schemas/RepositorySummary"
+        match:
+          $ref: "#/components/schemas/Match"
+        user_state:
+          allOf:
+            - $ref: "#/components/schemas/RepositoryStateValue"
+          nullable: true
+
+    Match:
       type: object
       properties:
-        profile:
+        score:
+          type: number
+          format: float
+          example: 92.5
+        recommended_seniority:
+          type: string
+          enum: [junior, mid, senior]
+        breakdown:
+          $ref: "#/components/schemas/MatchBreakdown"
+        reasons:
+          type: array
+          items:
+            type: string
+        generated_at:
+          type: string
+        expires_at:
+          type: string
+
+    MatchBreakdown:
+      type: object
+      properties:
+        stack:
+          type: number
+        difficulty:
+          type: number
+        issues:
+          type: number
+        activity:
+          type: number
+        health:
+          type: number
+        contribution_readiness:
+          type: number
+
+    RepositoryDetailResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
           type: object
-        technologies:
-          type: array
-          items:
-            type: object
-        preferences:
-          type: object
-        repository_states:
-          type: array
-          items:
-            type: object
-        history:
-          type: array
-          items:
-            type: object
+          required: [repository, health, user_state, match]
+          properties:
+            repository:
+              $ref: "#/components/schemas/RepositorySummary"
+            health:
+              allOf:
+                - $ref: "#/components/schemas/RepositoryHealth"
+              nullable: true
+            user_state:
+              allOf:
+                - $ref: "#/components/schemas/RepositoryStateValue"
+              nullable: true
+            match:
+              allOf:
+                - $ref: "#/components/schemas/Match"
+              nullable: true
 
     RepositorySummary:
       type: object
       properties:
         github_repository_id:
           type: integer
+          format: int64
+          nullable: true
         owner:
           type: string
+          nullable: true
         name:
           type: string
+          nullable: true
         description:
           type: string
           nullable: true
         html_url:
           type: string
+          format: uri
+          nullable: true
         stars:
           type: integer
         forks:
@@ -891,60 +1690,362 @@ components:
             type: string
         updated_at:
           type: string
+          nullable: true
+        license:
+          type: string
+          nullable: true
+        homepage:
+          type: string
+          nullable: true
 
-    Match:
+    RepositoryHealth:
       type: object
       properties:
         score:
-          type: number
-          example: 92.5
-        recommended_seniority:
-          type: string
-        breakdown:
+          type: integer
+          minimum: 0
+          maximum: 100
+        has_readme:
+          type: boolean
+        has_contributing:
+          type: boolean
+        has_code_of_conduct:
+          type: boolean
+        has_ci:
+          type: boolean
+        has_tests:
+          type: boolean
+        has_contribution_labels:
+          type: boolean
+
+    RepositoryIssueListResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
           type: object
+          required: [items, pagination]
           properties:
-            stack:
-              type: number
-            difficulty:
-              type: number
-            issues:
-              type: number
-            activity:
-              type: number
-            health:
-              type: number
-            contribution_readiness:
-              type: number
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/RepositoryIssue"
+            pagination:
+              $ref: "#/components/schemas/Pagination"
+
+    RepositoryIssue:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        github_repository_id:
+          type: integer
+          format: int64
+        github_issue_id:
+          type: integer
+          format: int64
+        issue_number:
+          type: integer
+        issue_data:
+          type: object
+          additionalProperties: true
+        difficulty_estimation:
+          allOf:
+            - $ref: "#/components/schemas/IssueDifficulty"
+          nullable: true
+        fetched_at:
+          type: string
+        expires_at:
+          type: string
+        created_at:
+          type: string
+        updated_at:
+          type: string
+
+    IssueDifficulty:
+      type: object
+      properties:
+        level:
+          $ref: "#/components/schemas/DifficultyLevel"
+        confidence:
+          type: number
+          format: float
         reasons:
           type: array
           items:
             type: string
 
-    MatchListResponse:
+    RepositoryActivityInput:
       type: object
+      required: [event_type]
+      properties:
+        event_type:
+          type: string
+          enum: [viewed_project, opened_github, started_contributing, sent_pull_request, marked_contributed]
+
+    ActivityEventResponse:
+      type: object
+      required: [success, data]
       properties:
         success:
           type: boolean
+          example: true
         data:
           type: object
+          required: [event]
+          properties:
+            event:
+              $ref: "#/components/schemas/ActivityEvent"
+
+    RepositoryStateListResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          required: [items, pagination]
           properties:
             items:
               type: array
               items:
-                type: object
-                properties:
-                  repository:
-                    $ref: "#/components/schemas/RepositorySummary"
-                  match:
-                    $ref: "#/components/schemas/Match"
-                  user_state:
-                    type: string
-                    nullable: true
+                $ref: "#/components/schemas/RepositoryState"
             pagination:
-              type: object
-              properties:
-                next_cursor:
-                  type: string
-                  nullable: true
-            metadata:
-              type: object
+              $ref: "#/components/schemas/Pagination"
+
+    RepositoryStateResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          required: [state]
+          properties:
+            state:
+              $ref: "#/components/schemas/RepositoryState"
+
+    RemoveRepositoryStateResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          required: [removed]
+          properties:
+            removed:
+              type: boolean
+              example: true
+
+    RepositoryState:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        user_id:
+          type: integer
+          format: int64
+        github_repository_id:
+          type: integer
+          format: int64
+        owner_login:
+          type: string
+        repository_name:
+          type: string
+        state:
+          $ref: "#/components/schemas/RepositoryStateValue"
+        notes:
+          type: string
+          nullable: true
+        saved_at:
+          type: string
+          nullable: true
+        ignored_at:
+          type: string
+          nullable: true
+        contributed_at:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+        updated_at:
+          type: string
+
+    RepositoryStateInput:
+      type: object
+      required: [state]
+      properties:
+        state:
+          $ref: "#/components/schemas/RepositoryStateValue"
+        notes:
+          type: string
+          nullable: true
+
+    RepositoryStateImportInput:
+      allOf:
+        - $ref: "#/components/schemas/RepositoryStateInput"
+        - type: object
+          required: [github_repository_id]
+          properties:
+            github_repository_id:
+              type: integer
+              format: int64
+            owner_login:
+              type: string
+            repository_name:
+              type: string
+
+    ActivityEventListResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          required: [items, pagination]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/ActivityEvent"
+            pagination:
+              $ref: "#/components/schemas/Pagination"
+
+    ClearHistoryResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          required: [deleted]
+          properties:
+            deleted:
+              type: integer
+              example: 12
+
+    ActivityEvent:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        user_id:
+          type: integer
+          format: int64
+        github_repository_id:
+          type: integer
+          format: int64
+          nullable: true
+        event_type:
+          $ref: "#/components/schemas/ActivityEventType"
+        metadata:
+          type: object
+          nullable: true
+          additionalProperties: true
+        created_at:
+          type: string
+
+    ActivityEventImportInput:
+      type: object
+      required: [event_type]
+      properties:
+        event_type:
+          $ref: "#/components/schemas/ActivityEventType"
+        github_repository_id:
+          type: integer
+          format: int64
+          nullable: true
+
+    Pagination:
+      type: object
+      properties:
+        next_cursor:
+          oneOf:
+            - type: string
+            - type: integer
+              format: int64
+          nullable: true
+
+    Seniority:
+      type: string
+      enum: [junior, mid, senior]
+
+    ProfileGoal:
+      type: string
+      enum:
+        - first_contribution
+        - build_portfolio
+        - practical_experience
+        - join_communities
+        - long_term_projects
+
+    TechnologyCategory:
+      type: string
+      enum: [language, framework, library, tool, platform, database, devops_cloud]
+
+    ProficiencyLevel:
+      type: string
+      enum: [learning, basic, daily, advanced]
+
+    InterestLevel:
+      type: string
+      enum: [learn, contribute, mentor]
+      default: contribute
+
+    ContributionType:
+      type: string
+      enum: [bug_fix, feature, documentation, tests, performance, refactor, accessibility, translation]
+
+    DifficultyLevel:
+      type: string
+      enum: [beginner, intermediate, advanced]
+
+    ProjectSize:
+      type: string
+      enum: [small, medium, large]
+
+    DocumentationLanguage:
+      type: string
+      enum: [en, pt, es, any]
+
+    OrganizationType:
+      type: string
+      enum: [independent, startup, company, community, foundation, any]
+
+    SortBy:
+      type: string
+      enum: [best_match, most_active, most_stars, beginner_friendly, recently_updated]
+      default: best_match
+
+    RepositoryStateValue:
+      type: string
+      enum: [saved, ignored, researching, working, pull_request_sent, contributed, archived]
+
+    ActivityEventType:
+      type: string
+      enum:
+        - viewed_project
+        - saved_project
+        - ignored_project
+        - opened_github
+        - started_contributing
+        - sent_pull_request
+        - marked_contributed
+        - restored_project
