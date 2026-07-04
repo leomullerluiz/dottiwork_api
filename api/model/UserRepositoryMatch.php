@@ -45,7 +45,10 @@ class UserRepositoryMatch
 
         $stmt = $db->prepare($sql);
         $stmt->execute($params);
-        return array_map([self::class, 'decodeJoined'], $stmt->fetchAll());
+        $userTechnologies = UserTechnology::findByUserId($userId);
+        return array_map(function ($row) use ($userTechnologies) {
+            return self::decodeJoined($row, $userTechnologies);
+        }, $stmt->fetchAll());
     }
 
     public static function findByUserAndRepository($userId, $githubRepositoryId)
@@ -64,7 +67,7 @@ class UserRepositoryMatch
             'user_id' => $userId,
             'github_repository_id' => $githubRepositoryId,
         ]);
-        return self::decodeJoined($stmt->fetch());
+        return self::decodeJoined($stmt->fetch(), UserTechnology::findByUserId($userId));
     }
 
     public static function upsertMany($userId, array $matches, $ttlSeconds)
@@ -120,7 +123,7 @@ class UserRepositoryMatch
         return $row ? $row['generated_at'] : null;
     }
 
-    private static function decodeJoined($row)
+    private static function decodeJoined($row, array $userTechnologies = [])
     {
         if (!$row) {
             return null;
@@ -132,18 +135,14 @@ class UserRepositoryMatch
         $breakdown = $row['score_breakdown'] ? json_decode($row['score_breakdown'], true) : [];
         $reasons = $row['reasons'] ? json_decode($row['reasons'], true) : [];
 
-        return [
-            'repository' => self::normalizeRepository($repository, $health, $issueStats),
-            'match' => [
-                'score' => (float) $row['match_score'],
-                'recommended_seniority' => self::recommendedSeniority((float) $row['match_score']),
-                'breakdown' => $breakdown,
-                'reasons' => $reasons,
-                'generated_at' => $row['generated_at'],
-                'expires_at' => $row['expires_at'],
-            ],
-            'user_state' => $row['user_state'] ?? null,
-        ];
+        return RepositoryMatchDto::fromComponents($repository, $health, $issueStats, [
+            'github_repository_id' => (int) $row['github_repository_id'],
+            'score' => (float) $row['match_score'],
+            'breakdown' => $breakdown,
+            'reasons' => $reasons,
+            'generated_at' => $row['generated_at'],
+            'expires_at' => $row['expires_at'],
+        ], $row['user_state'] ?? null, $userTechnologies);
     }
 
     public static function normalizeRepository(array $repository, array $health = null, array $issueStats = null)
@@ -151,16 +150,4 @@ class UserRepositoryMatch
         return RepositorySummary::fromGitHubRepository($repository, $health, $issueStats);
     }
 
-    private static function recommendedSeniority($score)
-    {
-        if ($score >= 85) {
-            return 'mid';
-        }
-
-        if ($score >= 70) {
-            return 'junior';
-        }
-
-        return 'senior';
-    }
 }
