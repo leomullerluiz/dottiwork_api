@@ -506,11 +506,53 @@ paths:
         - CookieAuth: []
       parameters:
         - in: query
+          name: q
+          schema:
+            type: string
+        - in: query
           name: state
           schema:
             $ref: "#/components/schemas/RepositoryStateValue"
         - in: query
           name: minimum_score
+          schema:
+            type: number
+            format: float
+            minimum: 0
+            maximum: 100
+        - in: query
+          name: technology
+          schema:
+            type: string
+        - in: query
+          name: language
+          schema:
+            type: string
+        - in: query
+          name: difficulty
+          schema:
+            type: string
+            enum: [easy, medium, hard, unknown, beginner, intermediate, advanced]
+        - in: query
+          name: project_size
+          schema:
+            type: string
+            enum: [small, medium, large]
+        - in: query
+          name: activity
+          schema:
+            type: string
+            enum: [low, moderate, active, very_active]
+        - in: query
+          name: has_good_first_issue
+          schema:
+            type: boolean
+        - in: query
+          name: has_help_wanted
+          schema:
+            type: boolean
+        - in: query
+          name: minimum_health_score
           schema:
             type: number
             format: float
@@ -531,6 +573,8 @@ paths:
                 $ref: "#/components/schemas/MatchListResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "422":
+          $ref: "#/components/responses/ValidationError"
 
   /matches/refresh:
     post:
@@ -2221,8 +2265,8 @@ components:
 
     SortBy:
       type: string
-      enum: [best_match, most_active, most_stars, beginner_friendly, recently_updated]
-      default: best_match
+      enum: [score, best_match, most_active, most_stars, beginner_friendly, recently_updated]
+      default: score
 
     RepositoryStateValue:
       type: string

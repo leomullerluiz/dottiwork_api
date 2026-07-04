@@ -26,9 +26,13 @@ class UserRepositoryMatch
         }
 
         $sort = $filters['sort_by'] ?? 'best_match';
-        $order = $sort === 'recently_updated'
-            ? 'r.updated_at DESC, m.match_score DESC'
-            : 'm.match_score DESC, m.id DESC';
+        if ($sort === 'recently_updated') {
+            $order = 'r.updated_at DESC, m.match_score DESC, m.id DESC';
+        } elseif ($sort === 'most_stars') {
+            $order = "CAST(JSON_UNQUOTE(JSON_EXTRACT(r.repository_data, '$.stargazers_count')) AS UNSIGNED) DESC, m.match_score DESC, m.id DESC";
+        } else {
+            $order = 'm.match_score DESC, m.id DESC';
+        }
 
         $limit = isset($filters['limit']) ? min(max((int) $filters['limit'], 1), 100) : 30;
 

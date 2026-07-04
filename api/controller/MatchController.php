@@ -6,21 +6,31 @@ class MatchController extends BaseController
     {
         $user = $this->requireToken($request);
         $service = new MatchService();
+        $filters = MatchFilterService::fromRequest($request);
+        $errors = MatchFilterService::validate($filters);
+        if ($errors) {
+            Response::validationError($errors);
+        }
+
         $items = $service->listMatches($user['id'], [
             'state' => $request->getQuery('state'),
             'minimum_score' => $request->getQuery('minimum_score'),
-            'sort_by' => $request->getQuery('sort_by', 'best_match'),
-            'limit' => $this->limit($request, 30, 100),
-            'cursor' => $request->getQuery('cursor'),
+            'sort_by' => $request->getQuery('sort_by', 'score'),
+            'limit' => 100,
         ]);
+        $page = MatchFilterService::paginate($items, $filters);
 
         Response::success([
-            'items' => $items,
+            'items' => $page['items'],
+            'next_cursor' => $page['next_cursor'],
             'pagination' => [
-                'next_cursor' => count($items) ? null : null,
+                'next_cursor' => $page['next_cursor'],
             ],
             'metadata' => [
                 'cached' => true,
+                'sort_by' => $filters['sort_by'] ?: 'score',
+                'default_sort_by' => 'score',
+                'total_filtered' => $page['total_filtered'],
             ],
         ]);
     }
