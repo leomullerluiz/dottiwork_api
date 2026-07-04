@@ -24,6 +24,7 @@ DROP TABLE IF EXISTS
   `repository_cache`,
   `user_activity_events`,
   `user_repository_states`,
+  `user_consents`,
   `user_preferences`,
   `user_technologies`,
   `technologies`,
@@ -184,6 +185,23 @@ CREATE TABLE `user_preferences` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_user_preferences_user_id` (`user_id`),
   CONSTRAINT `fk_user_preferences_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `user_consents` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` bigint(20) UNSIGNED NOT NULL,
+  `type` enum('essential','analytics','sentry_replay','marketing','github_oauth_notice') NOT NULL,
+  `status` enum('granted','revoked') NOT NULL DEFAULT 'granted',
+  `policy_version` varchar(50) NOT NULL,
+  `source` enum('cookie_banner','settings','login_notice','onboarding') NOT NULL,
+  `created_at` datetime NOT NULL,
+  `updated_at` datetime NOT NULL,
+  `revoked_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_user_consents_user_type` (`user_id`,`type`),
+  KEY `idx_user_consents_user_status` (`user_id`,`status`),
+  KEY `idx_user_consents_type_status` (`type`,`status`),
+  CONSTRAINT `fk_user_consents_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `user_repository_states` (

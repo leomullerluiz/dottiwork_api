@@ -87,6 +87,9 @@ function registerRoutes(Router $router)
 
     $route('get', '/me/preferences', 'PreferencesController@show');
     $route('put', '/me/preferences', 'PreferencesController@update');
+    $route('get', '/me/consents', 'ConsentController@index');
+    $route('post', '/me/consents', 'ConsentController@store');
+    $route('delete', '/me/consents/:type', 'ConsentController@revoke');
 
     $route('get', '/matches', 'MatchController@index');
     $route('post', '/matches/refresh', 'MatchController@refresh');

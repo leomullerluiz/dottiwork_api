@@ -518,6 +518,80 @@ paths:
         "422":
           $ref: "#/components/responses/ValidationError"
 
+  /me/consents:
+    get:
+      tags: [Privacidade]
+      operationId: listMyConsents
+      summary: Lista consentimentos LGPD do usuario
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      responses:
+        "200":
+          description: Consentimentos atuais.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserConsentListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      tags: [Privacidade]
+      operationId: grantMyConsent
+      summary: Registra ou reativa consentimento LGPD
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserConsentInput"
+      responses:
+        "200":
+          description: Consentimento registrado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserConsentResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  /me/consents/{type}:
+    delete:
+      tags: [Privacidade]
+      operationId: revokeMyConsent
+      summary: Revoga consentimento LGPD opcional
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      parameters:
+        - in: path
+          name: type
+          required: true
+          schema:
+            $ref: "#/components/schemas/ConsentType"
+      responses:
+        "200":
+          description: Consentimento revogado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserConsentResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
   /matches:
     get:
       tags: [Matches]
@@ -1606,6 +1680,87 @@ components:
           default: false
         default_sort_by:
           $ref: "#/components/schemas/SortBy"
+
+    UserConsentListResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          required: [consents]
+          properties:
+            consents:
+              type: array
+              items:
+                $ref: "#/components/schemas/UserConsent"
+
+    UserConsentResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          required: [consent]
+          properties:
+            consent:
+              $ref: "#/components/schemas/UserConsent"
+
+    UserConsent:
+      type: object
+      required: [type, status, policy_version, source, created_at, revoked_at]
+      properties:
+        type:
+          $ref: "#/components/schemas/ConsentType"
+        status:
+          $ref: "#/components/schemas/ConsentStatus"
+        policy_version:
+          type: string
+          maxLength: 50
+          example: "2026-07-04"
+        source:
+          $ref: "#/components/schemas/ConsentSource"
+        created_at:
+          type: string
+          example: "2026-07-04 12:00:00"
+        revoked_at:
+          type: string
+          nullable: true
+          example: null
+
+    UserConsentInput:
+      type: object
+      required: [type, policy_version, source]
+      properties:
+        type:
+          $ref: "#/components/schemas/ConsentType"
+        status:
+          type: string
+          enum: [granted]
+          default: granted
+        policy_version:
+          type: string
+          maxLength: 50
+          example: "2026-07-04"
+        source:
+          $ref: "#/components/schemas/ConsentSource"
+
+    ConsentType:
+      type: string
+      enum: [essential, analytics, sentry_replay, marketing, github_oauth_notice]
+
+    ConsentSource:
+      type: string
+      enum: [cookie_banner, settings, login_notice, onboarding]
+
+    ConsentStatus:
+      type: string
+      enum: [granted, revoked]
 
     MatchListResponse:
       type: object
