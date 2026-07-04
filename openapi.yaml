@@ -232,6 +232,28 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
 
+  /integrations/github:
+    delete:
+      tags: [Autenticacao]
+      operationId: disconnectGitHubIntegration
+      summary: Desconecta a integracao GitHub
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      responses:
+        "200":
+          description: Integracao GitHub desconectada.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GitHubDisconnectResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
   /integrations/github/sync:
     post:
       tags: [Autenticacao]
@@ -1136,6 +1158,21 @@ components:
           properties:
             github:
               $ref: "#/components/schemas/GitHubIntegration"
+
+    GitHubDisconnectResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          required: [connected]
+          properties:
+            connected:
+              type: boolean
+              example: false
 
     UserResponse:
       type: object

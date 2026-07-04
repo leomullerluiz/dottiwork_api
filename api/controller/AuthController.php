@@ -79,4 +79,16 @@ class AuthController extends BaseController
             Response::badGateway('Nao foi possivel sincronizar com o GitHub.');
         }
     }
+
+    public function githubDisconnect(Request $request)
+    {
+        $user = $this->requireToken($request);
+        $result = (new GitHubDisconnectService())->disconnect($user['id']);
+
+        if (!$result['found']) {
+            Response::notFound('Conta GitHub nao vinculada.');
+        }
+
+        Response::success($result['data']);
+    }
 }

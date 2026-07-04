@@ -101,6 +101,21 @@ class OAuthAccount
         return Crypto::decrypt($account['access_token_encrypted']);
     }
 
+    public static function deleteByUserAndProvider($userId, $provider)
+    {
+        $db = Database::getInstance()->getConnection();
+        $stmt = $db->prepare("
+            DELETE FROM oauth_accounts
+            WHERE user_id = :user_id AND provider = :provider
+        ");
+        $stmt->execute([
+            'user_id' => $userId,
+            'provider' => $provider,
+        ]);
+
+        return $stmt->rowCount();
+    }
+
     public static function toPublic($account)
     {
         return [

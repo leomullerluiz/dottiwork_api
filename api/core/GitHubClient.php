@@ -87,6 +87,52 @@ class GitHubClient
         return $this->request('GET', 'https://api.github.com/rate_limit');
     }
 
+    public function revokeOAuthToken($accessToken)
+    {
+        if (!$accessToken || empty($this->config['client_id']) || empty($this->config['client_secret'])) {
+            return false;
+        }
+
+        if (!function_exists('curl_init')) {
+            throw new RuntimeException('Extensao cURL nao esta disponivel.');
+        }
+
+        $url = 'https://api.github.com/applications/' . rawurlencode($this->config['client_id']) . '/token';
+        $headers = [
+            'Accept: application/vnd.github+json',
+            'Content-Type: application/json',
+            'User-Agent: ' . $this->config['user_agent'],
+            'X-GitHub-Api-Version: ' . $this->config['api_version'],
+        ];
+
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $this->config['connect_timeout']);
+        curl_setopt($ch, CURLOPT_TIMEOUT, $this->config['timeout']);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_USERPWD, $this->config['client_id'] . ':' . $this->config['client_secret']);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode(['access_token' => $accessToken]));
+
+        $raw = curl_exec($ch);
+        $error = curl_error($ch);
+        $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($raw === false) {
+            throw new RuntimeException('Falha ao revogar token GitHub: ' . $error);
+        }
+
+        if (in_array($status, [200, 204, 404], true)) {
+            return true;
+        }
+
+        $decoded = json_decode($raw, true);
+        $message = is_array($decoded) && isset($decoded['message']) ? $decoded['message'] : 'Erro ao revogar token GitHub.';
+
+        throw new RuntimeException('GitHub HTTP ' . $status . ': ' . $message, $status);
+    }
+
     private function request($method, $url, $payload = null, $useBearer = true)
     {
         if (!function_exists('curl_init')) {

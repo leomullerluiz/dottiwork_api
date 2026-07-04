@@ -72,6 +72,7 @@ function registerRoutes(Router $router)
 
     $route('get', '/integrations/github/status', 'AuthController@githubStatus');
     $route('post', '/integrations/github/sync', 'AuthController@githubSync');
+    $route('delete', '/integrations/github', 'AuthController@githubDisconnect');
 
     $route('get', '/me/profile', 'ProfileController@show');
     $route('put', '/me/profile', 'ProfileController@update');
