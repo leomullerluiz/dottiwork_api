@@ -2085,6 +2085,8 @@ components:
           type: integer
           format: int64
           nullable: true
+        type:
+          $ref: "#/components/schemas/ActivityEventType"
         event_type:
           $ref: "#/components/schemas/ActivityEventType"
         metadata:

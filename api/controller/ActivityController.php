@@ -5,9 +5,14 @@ class ActivityController extends BaseController
     public function history(Request $request)
     {
         $user = $this->requireToken($request);
+        $eventType = $request->getQuery('event_type');
+        if ($eventType && !Validator::enum($eventType, UserActivityEvent::$allowedTypes)) {
+            Response::validationError([['field' => 'event_type', 'message' => 'Tipo de evento invalido.']]);
+        }
+
         Response::success([
             'items' => UserActivityEvent::listByUser($user['id'], [
-                'event_type' => $request->getQuery('event_type'),
+                'event_type' => $eventType,
                 'github_repository_id' => $request->getQuery('github_repository_id'),
                 'limit' => $this->limit($request, 50, 100),
                 'cursor' => $request->getQuery('cursor'),

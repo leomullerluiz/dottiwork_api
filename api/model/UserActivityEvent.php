@@ -2,6 +2,17 @@
 
 class UserActivityEvent
 {
+    public static $allowedTypes = [
+        'viewed_project',
+        'saved_project',
+        'ignored_project',
+        'opened_github',
+        'started_contributing',
+        'sent_pull_request',
+        'marked_contributed',
+        'restored_project',
+    ];
+
     public static function create($userId, $eventType, $githubRepositoryId = null, array $metadata = [])
     {
         $db = Database::getInstance()->getConnection();
@@ -86,18 +97,27 @@ class UserActivityEvent
             return null;
         }
 
-        $row['id'] = (int) $row['id'];
-        $row['user_id'] = (int) $row['user_id'];
-        $row['github_repository_id'] = $row['github_repository_id'] !== null ? (int) $row['github_repository_id'] : null;
-        $row['metadata'] = $row['metadata'] ? json_decode($row['metadata'], true) : [];
-
         $repositoryData = !empty($row['repository_data']) ? json_decode($row['repository_data'], true) : null;
         $healthData = !empty($row['health_data']) ? json_decode($row['health_data'], true) : null;
         unset($row['repository_data'], $row['health_data']);
 
+        return self::toResponse($row, $repositoryData, $healthData);
+    }
+
+    public static function toResponse(array $row, array $repositoryData = null, array $healthData = null, array $issueStats = null)
+    {
+        $row['id'] = (int) $row['id'];
+        $row['user_id'] = (int) $row['user_id'];
+        $row['github_repository_id'] = $row['github_repository_id'] !== null ? (int) $row['github_repository_id'] : null;
+        $row['event_type'] = (string) $row['event_type'];
+        $row['type'] = $row['event_type'];
+        $row['metadata'] = self::normalizeMetadata($row['metadata'] ?? []);
+
         $row['repository'] = null;
         if ($row['github_repository_id'] !== null) {
-            $issueStats = RepositoryIssueCache::statsByRepositoryId($row['github_repository_id']);
+            if ($issueStats === null) {
+                $issueStats = RepositoryIssueCache::statsByRepositoryId($row['github_repository_id']);
+            }
             $row['repository'] = RepositorySummary::fromGitHubRepository($repositoryData ?: [
                 'id' => $row['github_repository_id'],
                 'owner_login' => $row['metadata']['owner'] ?? null,
@@ -106,5 +126,15 @@ class UserActivityEvent
         }
 
         return $row;
+    }
+
+    private static function normalizeMetadata($metadata)
+    {
+        if (is_string($metadata)) {
+            $decoded = $metadata ? json_decode($metadata, true) : [];
+            return is_array($decoded) ? $decoded : [];
+        }
+
+        return is_array($metadata) ? $metadata : [];
     }
 }
