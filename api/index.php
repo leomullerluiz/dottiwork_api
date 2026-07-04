@@ -61,6 +61,7 @@ function registerRoutes(Router $router)
     $route('get', '/', 'HealthController@health');
     $route('get', '/health', 'HealthController@health');
     $route('get', '/health/database', 'HealthController@database');
+    $route('get', '/health/sentry', 'HealthController@sentry');
 
     $route('get', '/auth/github/start', 'AuthController@githubStart');
     $route('get', '/auth/github/callback', 'AuthController@githubCallback');

@@ -26,4 +26,29 @@ class HealthController extends BaseController
             Response::serviceUnavailable('Banco de dados indisponivel.');
         }
     }
+
+    public function sentry(Request $request)
+    {
+        $enabled = ($_ENV['APP_ENV'] ?? 'local') !== 'production'
+            || filter_var($_ENV['SENTRY_TEST_ENABLED'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
+        if (!$enabled) {
+            Response::forbidden('Teste do Sentry desabilitado neste ambiente.');
+        }
+
+        if (empty($_ENV['SENTRY_DSN'])) {
+            Response::serviceUnavailable('Sentry nao configurado.');
+        }
+
+        $message = 'Sentry test event from dotti.work API';
+        $eventId = \Sentry\captureMessage($message, \Sentry\Severity::info());
+        \Sentry\flush();
+
+        Response::success([
+            'configured' => true,
+            'sent' => $eventId !== null,
+            'event_id' => $eventId ? (string) $eventId : null,
+            'message' => $message,
+        ]);
+    }
 }
