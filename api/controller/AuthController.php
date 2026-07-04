@@ -4,11 +4,13 @@ class AuthController extends BaseController
 {
     public function githubStart(Request $request)
     {
+        RateLimiter::enforce($request, 'auth.github.start', 20, 300);
         GitHubOAuth::start($request);
     }
 
     public function githubCallback(Request $request)
     {
+        RateLimiter::enforce($request, 'auth.github.callback', 30, 300);
         GitHubOAuth::callback($request);
     }
 
@@ -64,6 +66,7 @@ class AuthController extends BaseController
     public function githubSync(Request $request)
     {
         $user = $this->requireToken($request);
+        RateLimiter::enforce($request, 'integrations.github.sync', 10, 300, 'user:' . $user['id']);
         $account = OAuthAccount::findByUserAndProvider($user['id'], 'github');
 
         if (!$account) {
@@ -83,6 +86,7 @@ class AuthController extends BaseController
     public function githubDisconnect(Request $request)
     {
         $user = $this->requireToken($request);
+        RateLimiter::enforce($request, 'integrations.github.disconnect', 5, 300, 'user:' . $user['id']);
         $result = (new GitHubDisconnectService())->disconnect($user['id']);
 
         if (!$result['found']) {

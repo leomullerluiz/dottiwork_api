@@ -88,15 +88,18 @@ Aplicar:
 
 ```bash
 mysql -u usuario -p banco < migrations/202606230001_open_source_portal.sql
+mysql -u usuario -p banco < migrations/202607040001_user_consents.sql
+mysql -u usuario -p banco < migrations/202607040002_rate_limit_buckets.sql
 ```
 
 Ela preserva tabelas antigas e cria/adapta as estruturas da API v2.
 
 ## Seguranca
 
-- CORS usa origens configuradas em `CORS_ALLOWED_ORIGINS`.
-- Cookies usam `HttpOnly`, `SameSite=Lax` e `Secure` em producao.
-- Mutacoes validam `Origin` quando presente.
+- CORS usa origens configuradas em `CORS_ALLOWED_ORIGINS`; em producao, configure apenas dominios do front.
+- Cookies usam `HttpOnly`, `Secure` via `SESSION_COOKIE_SECURE`, `SameSite` via `SESSION_COOKIE_SAMESITE` e dominio opcional via `SESSION_COOKIE_DOMAIN`.
+- Mutacoes autenticadas por cookie exigem `Origin` permitido para reduzir risco de CSRF.
+- Rate limit usa `rate_limit_buckets` com chaves SHA-256; IPs, tokens, cookies e headers sensiveis nao sao armazenados.
 - SQL usa prepared statements.
 - `return_to` OAuth aceita apenas caminhos internos.
 - `.htaccess` bloqueia acesso direto a `config`, `core`, `controller`, `model`, `service`, `tests`, `vendor`, `migrations` e `templates`.

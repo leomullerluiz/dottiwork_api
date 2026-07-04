@@ -33,6 +33,7 @@ DROP TABLE IF EXISTS
   `oauth_authorization_states`,
   `oauth_accounts`,
   `auth_tokens`,
+  `rate_limit_buckets`,
   `users`;
 
 SET FOREIGN_KEY_CHECKS = 1;
@@ -108,6 +109,16 @@ CREATE TABLE `oauth_authorization_states` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_oauth_state_hash` (`state_hash`),
   KEY `idx_oauth_state_expires_at` (`expires_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `rate_limit_buckets` (
+  `key_hash` char(64) NOT NULL,
+  `attempts` int(11) NOT NULL DEFAULT 0,
+  `reset_at` datetime NOT NULL,
+  `created_at` datetime NOT NULL,
+  `updated_at` datetime NOT NULL,
+  PRIMARY KEY (`key_hash`),
+  KEY `idx_rate_limit_reset_at` (`reset_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `user_profiles` (

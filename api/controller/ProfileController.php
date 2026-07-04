@@ -68,6 +68,7 @@ class ProfileController extends BaseController
     public function importLocalData(Request $request)
     {
         $user = $this->requireToken($request);
+        RateLimiter::enforce($request, 'profile.import_local_data', 5, 300, 'user:' . $user['id']);
         $body = $this->jsonBody($request);
 
         foreach (['profile', 'technologies', 'preferences', 'repository_states', 'history'] as $key) {
@@ -83,6 +84,7 @@ class ProfileController extends BaseController
     public function export(Request $request)
     {
         $user = $this->requireToken($request);
+        RateLimiter::enforce($request, 'profile.export', 5, 300, 'user:' . $user['id']);
         $service = new UserProfileService();
         Response::success($service->export($user['id']));
     }

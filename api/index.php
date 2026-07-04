@@ -111,7 +111,7 @@ function registerRoutes(Router $router)
 function configureCors()
 {
     $origin = $_SERVER['HTTP_ORIGIN'] ?? null;
-    $allowedOrigins = array_filter(array_map('trim', explode(',', $_ENV['CORS_ALLOWED_ORIGINS'] ?? 'https://dotti.work,http://localhost:3000')));
+    $allowedOrigins = allowedCorsOrigins();
 
     if ($origin && in_array($origin, $allowedOrigins, true)) {
         header('Access-Control-Allow-Origin: ' . $origin);
@@ -120,5 +120,17 @@ function configureCors()
     }
 
     header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
-    header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
+    header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-CSRF-Token');
+}
+
+function allowedCorsOrigins()
+{
+    $configured = $_ENV['CORS_ALLOWED_ORIGINS'] ?? '';
+    if ($configured === '') {
+        $configured = ($_ENV['APP_ENV'] ?? 'local') === 'production'
+            ? 'https://dotti.work,https://dottiwork.com'
+            : 'https://dotti.work,https://dottiwork.com,http://localhost:3000';
+    }
+
+    return array_values(array_filter(array_map('trim', explode(',', $configured))));
 }

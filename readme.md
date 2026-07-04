@@ -26,6 +26,10 @@ APP_SECRET=
 APP_ENCRYPTION_KEY=
 FRONTEND_URL=http://localhost:3000
 CORS_ALLOWED_ORIGINS=http://localhost:3000
+SESSION_COOKIE_DOMAIN=
+SESSION_COOKIE_SECURE=false
+SESSION_COOKIE_SAMESITE=Lax
+RATE_LIMIT_ENABLED=true
 DB_HOST=
 DB_NAME=
 DB_USER=
@@ -39,6 +43,8 @@ OAUTH_GITHUB_REDIRECT_URI=http://localhost/dottiwork_api/api/auth/github/callbac
 
 ```bash
 mysql -u usuario -p banco < migrations/202606230001_open_source_portal.sql
+mysql -u usuario -p banco < migrations/202607040001_user_consents.sql
+mysql -u usuario -p banco < migrations/202607040002_rate_limit_buckets.sql
 ```
 
 4. Acesse:

@@ -27,6 +27,10 @@ class UserRepositoryStateController extends BaseController
             Response::validationError([['field' => 'state', 'message' => 'Estado invalido.']]);
         }
 
+        if (isset($body['notes']) && !Validator::maxLength($body['notes'], 2000)) {
+            Response::validationError([['field' => 'notes', 'message' => 'Notas devem ter ate 2000 caracteres.']]);
+        }
+
         $githubRepositoryId = (int) $params['githubRepositoryId'];
         $cached = RepositoryCache::findByGitHubRepositoryId($githubRepositoryId);
         $repository = $cached ? $cached['repository_data'] : [];

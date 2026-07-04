@@ -106,30 +106,22 @@ class Auth
 
     public static function setSessionCookie($token)
     {
-        $params = [
-            'expires' => time() + self::sessionTtlSeconds(),
-            'path' => '/',
-            'secure' => self::cookieSecure(),
-            'httponly' => true,
-            'samesite' => 'Lax',
-        ];
-
-        $domain = self::env('SESSION_COOKIE_DOMAIN');
-        if ($domain) {
-            $params['domain'] = $domain;
-        }
-
-        setcookie(self::cookieName(), $token, $params);
+        setcookie(self::cookieName(), $token, self::sessionCookieParams(time() + self::sessionTtlSeconds()));
     }
 
     public static function clearSessionCookie()
     {
+        setcookie(self::cookieName(), '', self::sessionCookieParams(time() - 3600));
+    }
+
+    public static function sessionCookieParams($expires)
+    {
         $params = [
-            'expires' => time() - 3600,
+            'expires' => $expires,
             'path' => '/',
             'secure' => self::cookieSecure(),
             'httponly' => true,
-            'samesite' => 'Lax',
+            'samesite' => self::cookieSameSite(),
         ];
 
         $domain = self::env('SESSION_COOKIE_DOMAIN');
@@ -137,7 +129,12 @@ class Auth
             $params['domain'] = $domain;
         }
 
-        setcookie(self::cookieName(), '', $params);
+        return $params;
+    }
+
+    public static function isCookieAuthRequest(Request $request)
+    {
+        return !$request->getAuthorizationBearerToken() && (bool) $request->getCookie(self::cookieName());
     }
 
     public static function cookieName()
@@ -158,6 +155,22 @@ class Auth
         }
 
         return self::env('APP_ENV') === 'production';
+    }
+
+    private static function cookieSameSite()
+    {
+        $value = self::env('SESSION_COOKIE_SAMESITE') ?: 'Lax';
+        $normalized = ucfirst(strtolower($value));
+
+        if (!in_array($normalized, ['Lax', 'Strict', 'None'], true)) {
+            return 'Lax';
+        }
+
+        if ($normalized === 'None' && !self::cookieSecure()) {
+            return 'Lax';
+        }
+
+        return $normalized;
     }
 
     private static function env($key)

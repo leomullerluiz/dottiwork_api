@@ -53,6 +53,8 @@ jobs:
           echo "MAIL_FROM_EMAIL=${{ secrets.MAIL_FROM_EMAIL }}" >> .env
           echo "MAIL_FROM_NAME=${{ secrets.MAIL_FROM_NAME }}" >> .env
           echo "SENTRY_DSN=${{ secrets.SENTRY_DSN }}" >> .env
+          echo "SESSION_COOKIE_SAMESITE=${{ secrets.SESSION_COOKIE_SAMESITE }}" >> .env
+          echo "RATE_LIMIT_ENABLED=${{ secrets.RATE_LIMIT_ENABLED }}" >> .env
 
       - name: Deploy files via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
