@@ -30,8 +30,8 @@ class UserRepositoryStateController extends BaseController
         $githubRepositoryId = (int) $params['githubRepositoryId'];
         $cached = RepositoryCache::findByGitHubRepositoryId($githubRepositoryId);
         $repository = $cached ? $cached['repository_data'] : [];
-        $owner = $repository['owner']['login'] ?? ($repository['owner_login'] ?? '');
-        $name = $repository['name'] ?? '';
+        $owner = $repository['owner']['login'] ?? ($repository['owner_login'] ?? ($cached['owner_login'] ?? ''));
+        $name = $repository['name'] ?? ($cached['repository_name'] ?? '');
 
         $saved = UserRepositoryState::upsert(
             $user['id'],
@@ -59,12 +59,14 @@ class UserRepositoryStateController extends BaseController
         $githubRepositoryId = (int) $params['githubRepositoryId'];
         $cached = RepositoryCache::findByGitHubRepositoryId($githubRepositoryId);
         $repository = $cached ? $cached['repository_data'] : [];
+        $owner = $repository['owner']['login'] ?? ($repository['owner_login'] ?? ($cached['owner_login'] ?? ''));
+        $name = $repository['name'] ?? ($cached['repository_name'] ?? '');
 
         $state = UserRepositoryState::upsert(
             $user['id'],
             $githubRepositoryId,
-            $repository['owner']['login'] ?? '',
-            $repository['name'] ?? '',
+            $owner,
+            $name,
             'saved',
             null
         );

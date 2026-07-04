@@ -18,6 +18,23 @@ class UserRepositoryState
         return $stmt->fetch();
     }
 
+    public static function findDetailedByUserAndRepository($userId, $githubRepositoryId)
+    {
+        $db = Database::getInstance()->getConnection();
+        $stmt = $db->prepare("
+            SELECT s.*, r.repository_data, r.health_data
+            FROM user_repository_states s
+            LEFT JOIN repository_cache r ON r.github_repository_id = s.github_repository_id
+            WHERE s.user_id = :user_id AND s.github_repository_id = :github_repository_id
+            LIMIT 1
+        ");
+        $stmt->execute([
+            'user_id' => $userId,
+            'github_repository_id' => $githubRepositoryId,
+        ]);
+        return self::decodeListRow($stmt->fetch());
+    }
+
     public static function listByUser($userId, array $filters = [])
     {
         $db = Database::getInstance()->getConnection();
@@ -95,7 +112,7 @@ class UserRepositoryState
             'notes' => $notes,
         ]);
 
-        return self::findByUserAndRepository($userId, $githubRepositoryId);
+        return self::findDetailedByUserAndRepository($userId, $githubRepositoryId);
     }
 
     public static function delete($userId, $githubRepositoryId)
@@ -129,10 +146,15 @@ class UserRepositoryState
         $healthData = $row['health_data'] ? json_decode($row['health_data'], true) : null;
         unset($row['repository_data'], $row['health_data']);
 
+        $issueStats = RepositoryIssueCache::statsByRepositoryId($row['github_repository_id']);
+        return self::toResponse($row, $repositoryData, $healthData, $issueStats);
+    }
+
+    public static function toResponse(array $row, array $repositoryData = null, array $healthData = null, array $issueStats = null)
+    {
         $row['id'] = (int) $row['id'];
         $row['user_id'] = (int) $row['user_id'];
         $row['github_repository_id'] = (int) $row['github_repository_id'];
-        $issueStats = RepositoryIssueCache::statsByRepositoryId($row['github_repository_id']);
         $row['repository'] = RepositorySummary::fromGitHubRepository($repositoryData ?: [
             'id' => $row['github_repository_id'],
             'owner_login' => $row['owner_login'] ?? null,
