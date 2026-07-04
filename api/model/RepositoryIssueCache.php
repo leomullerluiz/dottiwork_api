@@ -21,6 +21,46 @@ class RepositoryIssueCache
         return array_map([self::class, 'decode'], $stmt->fetchAll());
     }
 
+    public static function statsByRepositoryId($githubRepositoryId)
+    {
+        $db = Database::getInstance()->getConnection();
+        $stmt = $db->prepare("
+            SELECT issue_data
+            FROM repository_issue_cache
+            WHERE github_repository_id = :github_repository_id
+              AND expires_at > NOW()
+        ");
+        $stmt->execute(['github_repository_id' => $githubRepositoryId]);
+
+        $stats = [
+            'total_issues' => 0,
+            'good_first_issues' => 0,
+            'help_wanted_issues' => 0,
+        ];
+
+        foreach ($stmt->fetchAll() as $row) {
+            $issue = $row['issue_data'] ? json_decode($row['issue_data'], true) : [];
+            if (!is_array($issue)) {
+                continue;
+            }
+
+            $stats['total_issues']++;
+            $labels = array_map(function ($label) {
+                return strtolower($label['name'] ?? '');
+            }, $issue['labels'] ?? []);
+
+            if (in_array('good first issue', $labels, true)) {
+                $stats['good_first_issues']++;
+            }
+
+            if (in_array('help wanted', $labels, true)) {
+                $stats['help_wanted_issues']++;
+            }
+        }
+
+        return $stats;
+    }
+
     public static function upsertMany($githubRepositoryId, array $issues, $ttlSeconds, IssueDifficultyService $difficultyService)
     {
         $db = Database::getInstance()->getConnection();

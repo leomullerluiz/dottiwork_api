@@ -1667,19 +1667,27 @@ components:
         name:
           type: string
           nullable: true
+        full_name:
+          type: string
+          nullable: true
         description:
           type: string
           nullable: true
-        html_url:
+        url:
           type: string
           format: uri
           nullable: true
-        stars:
-          type: integer
-        forks:
-          type: integer
-        open_issues:
-          type: integer
+        homepage_url:
+          type: string
+          format: uri
+          nullable: true
+        avatar_url:
+          type: string
+          format: uri
+          nullable: true
+        primary_language:
+          type: string
+          nullable: true
         languages:
           type: array
           items:
@@ -1688,15 +1696,56 @@ components:
           type: array
           items:
             type: string
-        updated_at:
-          type: string
-          nullable: true
+        stars:
+          type: integer
+        forks:
+          type: integer
+        watchers:
+          type: integer
+        open_issues:
+          type: integer
+        good_first_issues:
+          type: integer
+        help_wanted_issues:
+          type: integer
         license:
           type: string
           nullable: true
-        homepage:
+        last_pushed_at:
           type: string
           nullable: true
+        last_updated_at:
+          type: string
+          nullable: true
+        project_size:
+          type: string
+          enum: [small, medium, large]
+        activity_score:
+          type: integer
+          minimum: 0
+          maximum: 100
+        activity_label:
+          type: string
+          enum: [low, moderate, active, very_active]
+        health_score:
+          type: integer
+          minimum: 0
+          maximum: 100
+          nullable: true
+        html_url:
+          type: string
+          format: uri
+          nullable: true
+          deprecated: true
+        updated_at:
+          type: string
+          nullable: true
+          deprecated: true
+        homepage:
+          type: string
+          format: uri
+          nullable: true
+          deprecated: true
 
     RepositoryHealth:
       type: object
@@ -1882,6 +1931,10 @@ components:
           type: string
         updated_at:
           type: string
+        repository:
+          allOf:
+            - $ref: "#/components/schemas/RepositorySummary"
+          nullable: true
 
     RepositoryStateInput:
       type: object
@@ -1959,6 +2012,10 @@ components:
           type: object
           nullable: true
           additionalProperties: true
+        repository:
+          allOf:
+            - $ref: "#/components/schemas/RepositorySummary"
+          nullable: true
         created_at:
           type: string
 

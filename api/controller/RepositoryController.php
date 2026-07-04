@@ -9,7 +9,10 @@ class RepositoryController extends BaseController
         $repo = $params['repo'];
         $cached = $this->loadRepositoryCache($user['id'], $owner, $repo);
 
-        $repository = UserRepositoryMatch::normalizeRepository($cached['repository_data']);
+        $repository = RepositorySummary::fromCacheRow(
+            $cached,
+            RepositoryIssueCache::statsByRepositoryId($cached['github_repository_id'])
+        );
         $state = UserRepositoryState::findByUserAndRepository($user['id'], $cached['github_repository_id']);
         $match = UserRepositoryMatch::findByUserAndRepository($user['id'], $cached['github_repository_id']);
 

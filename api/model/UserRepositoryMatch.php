@@ -127,11 +127,13 @@ class UserRepositoryMatch
         }
 
         $repository = $row['repository_data'] ? json_decode($row['repository_data'], true) : [];
+        $health = $row['health_data'] ? json_decode($row['health_data'], true) : null;
+        $issueStats = RepositoryIssueCache::statsByRepositoryId($row['github_repository_id']);
         $breakdown = $row['score_breakdown'] ? json_decode($row['score_breakdown'], true) : [];
         $reasons = $row['reasons'] ? json_decode($row['reasons'], true) : [];
 
         return [
-            'repository' => self::normalizeRepository($repository),
+            'repository' => self::normalizeRepository($repository, $health, $issueStats),
             'match' => [
                 'score' => (float) $row['match_score'],
                 'recommended_seniority' => self::recommendedSeniority((float) $row['match_score']),
@@ -144,25 +146,9 @@ class UserRepositoryMatch
         ];
     }
 
-    public static function normalizeRepository(array $repository)
+    public static function normalizeRepository(array $repository, array $health = null, array $issueStats = null)
     {
-        $owner = $repository['owner']['login'] ?? ($repository['owner_login'] ?? null);
-
-        return [
-            'github_repository_id' => isset($repository['id']) ? (int) $repository['id'] : null,
-            'owner' => $owner,
-            'name' => $repository['name'] ?? null,
-            'description' => $repository['description'] ?? null,
-            'html_url' => $repository['html_url'] ?? null,
-            'stars' => (int) ($repository['stargazers_count'] ?? $repository['stars'] ?? 0),
-            'forks' => (int) ($repository['forks_count'] ?? $repository['forks'] ?? 0),
-            'open_issues' => (int) ($repository['open_issues_count'] ?? $repository['open_issues'] ?? 0),
-            'languages' => $repository['languages'] ?? [],
-            'topics' => $repository['topics'] ?? [],
-            'updated_at' => $repository['updated_at'] ?? null,
-            'license' => $repository['license']['spdx_id'] ?? null,
-            'homepage' => $repository['homepage'] ?? null,
-        ];
+        return RepositorySummary::fromGitHubRepository($repository, $health, $issueStats);
     }
 
     private static function recommendedSeniority($score)

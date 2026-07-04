@@ -40,26 +40,32 @@ class UserActivityEvent
     public static function listByUser($userId, array $filters = [])
     {
         $db = Database::getInstance()->getConnection();
-        $conditions = ['user_id = :user_id'];
+        $conditions = ['e.user_id = :user_id'];
         $params = ['user_id' => $userId];
 
         if (!empty($filters['event_type'])) {
-            $conditions[] = 'event_type = :event_type';
+            $conditions[] = 'e.event_type = :event_type';
             $params['event_type'] = $filters['event_type'];
         }
 
         if (!empty($filters['github_repository_id'])) {
-            $conditions[] = 'github_repository_id = :github_repository_id';
+            $conditions[] = 'e.github_repository_id = :github_repository_id';
             $params['github_repository_id'] = (int) $filters['github_repository_id'];
         }
 
         if (!empty($filters['cursor'])) {
-            $conditions[] = 'id < :cursor';
+            $conditions[] = 'e.id < :cursor';
             $params['cursor'] = (int) $filters['cursor'];
         }
 
         $limit = isset($filters['limit']) ? min(max((int) $filters['limit'], 1), 100) : 50;
-        $sql = 'SELECT * FROM user_activity_events WHERE ' . implode(' AND ', $conditions) . ' ORDER BY id DESC LIMIT ' . $limit;
+        $sql = '
+            SELECT e.*, r.repository_data, r.health_data
+            FROM user_activity_events e
+            LEFT JOIN repository_cache r ON r.github_repository_id = e.github_repository_id
+            WHERE ' . implode(' AND ', $conditions) . '
+            ORDER BY e.id DESC
+            LIMIT ' . $limit;
         $stmt = $db->prepare($sql);
         $stmt->execute($params);
 
@@ -84,6 +90,21 @@ class UserActivityEvent
         $row['user_id'] = (int) $row['user_id'];
         $row['github_repository_id'] = $row['github_repository_id'] !== null ? (int) $row['github_repository_id'] : null;
         $row['metadata'] = $row['metadata'] ? json_decode($row['metadata'], true) : [];
+
+        $repositoryData = !empty($row['repository_data']) ? json_decode($row['repository_data'], true) : null;
+        $healthData = !empty($row['health_data']) ? json_decode($row['health_data'], true) : null;
+        unset($row['repository_data'], $row['health_data']);
+
+        $row['repository'] = null;
+        if ($row['github_repository_id'] !== null) {
+            $issueStats = RepositoryIssueCache::statsByRepositoryId($row['github_repository_id']);
+            $row['repository'] = RepositorySummary::fromGitHubRepository($repositoryData ?: [
+                'id' => $row['github_repository_id'],
+                'owner_login' => $row['metadata']['owner'] ?? null,
+                'name' => $row['metadata']['repo'] ?? null,
+            ], $healthData, $issueStats);
+        }
+
         return $row;
     }
 }
