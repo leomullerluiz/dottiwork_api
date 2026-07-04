@@ -1867,32 +1867,84 @@ components:
     RepositoryIssue:
       type: object
       properties:
-        id:
-          type: integer
-          format: int64
-        github_repository_id:
-          type: integer
-          format: int64
         github_issue_id:
           type: integer
           format: int64
+          nullable: true
+        github_repository_id:
+          type: integer
+          format: int64
+          nullable: true
+        number:
+          type: integer
+          nullable: true
+        title:
+          type: string
+          nullable: true
+        body_excerpt:
+          type: string
+          nullable: true
+        url:
+          type: string
+          format: uri
+          nullable: true
+        state:
+          type: string
+          example: open
+        labels:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              color:
+                type: string
+                nullable: true
+        comments:
+          type: integer
+        created_at:
+          type: string
+          nullable: true
+        updated_at:
+          type: string
+          nullable: true
+        is_good_first_issue:
+          type: boolean
+        is_help_wanted:
+          type: boolean
+        difficulty:
+          type: string
+          enum: [easy, medium, hard, unknown]
+        confidence:
+          type: number
+          format: float
+          nullable: true
+          minimum: 0
+          maximum: 1
+        contribution_type:
+          type: string
+          enum: [bugfix, documentation, feature, test, refactor, unknown]
         issue_number:
           type: integer
-        issue_data:
-          type: object
-          additionalProperties: true
+          nullable: true
+          deprecated: true
         difficulty_estimation:
           allOf:
             - $ref: "#/components/schemas/IssueDifficulty"
           nullable: true
         fetched_at:
           type: string
+          nullable: true
         expires_at:
           type: string
-        created_at:
+          nullable: true
+        created_cache_at:
           type: string
-        updated_at:
+          nullable: true
+        updated_cache_at:
           type: string
+          nullable: true
 
     IssueDifficulty:
       type: object

@@ -107,8 +107,6 @@ class RepositoryIssueCache
         $row['github_repository_id'] = (int) $row['github_repository_id'];
         $row['github_issue_id'] = (int) $row['github_issue_id'];
         $row['issue_number'] = (int) $row['issue_number'];
-        $row['issue_data'] = $row['issue_data'] ? json_decode($row['issue_data'], true) : [];
-        $row['difficulty_estimation'] = $row['difficulty_estimation'] ? json_decode($row['difficulty_estimation'], true) : null;
-        return $row;
+        return RepositoryIssueDto::fromCacheRow($row);
     }
 }

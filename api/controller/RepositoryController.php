@@ -126,14 +126,14 @@ class RepositoryController extends BaseController
         $label = $request->getQuery('label');
 
         return array_values(array_filter($issues, function ($item) use ($difficulty, $label) {
-            if ($difficulty && (($item['difficulty_estimation']['level'] ?? null) !== $difficulty)) {
+            if ($difficulty && !$this->issueMatchesDifficulty($item, $difficulty)) {
                 return false;
             }
 
             if ($label) {
                 $labels = array_map(function ($raw) {
                     return strtolower($raw['name'] ?? '');
-                }, $item['issue_data']['labels'] ?? []);
+                }, $item['labels'] ?? []);
                 if (!in_array(strtolower($label), $labels, true)) {
                     return false;
                 }
@@ -141,5 +141,18 @@ class RepositoryController extends BaseController
 
             return true;
         }));
+    }
+
+    private function issueMatchesDifficulty(array $item, $difficulty)
+    {
+        $difficulty = strtolower((string) $difficulty);
+        $aliases = [
+            'beginner' => 'easy',
+            'intermediate' => 'medium',
+            'advanced' => 'hard',
+        ];
+
+        $normalized = $aliases[$difficulty] ?? $difficulty;
+        return ($item['difficulty'] ?? 'unknown') === $normalized;
     }
 }
