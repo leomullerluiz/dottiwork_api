@@ -6,9 +6,6 @@ class AccountController extends BaseController
     {
         $user = $this->requireToken($request);
         RateLimiter::enforce($request, 'account.delete', 3, 3600, 'user:' . $user['id']);
-        Auth::revokeAllUserTokens($user['id']);
-        User::softDelete($user['id']);
-        Auth::clearSessionCookie();
-        Response::success(['deleted' => true]);
+        Response::success((new AccountDeletionService())->delete($user['id']));
     }
 }

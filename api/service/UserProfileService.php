@@ -2,15 +2,41 @@
 
 class UserProfileService
 {
+    private $deps;
+
+    public function __construct(array $deps = [])
+    {
+        $this->deps = array_merge([
+            'user_public' => function ($userId) {
+                return User::toPublic(User::findById($userId));
+            },
+            'profile_get' => ['UserProfile', 'getComplete'],
+            'technologies_find' => ['UserTechnology', 'findByUserId'],
+            'preferences_find' => ['UserPreference', 'findByUserId'],
+            'repository_states_list' => function ($userId) {
+                return UserRepositoryState::listByUser($userId, ['limit' => 100]);
+            },
+            'history_list' => function ($userId) {
+                return UserActivityEvent::listByUser($userId, ['limit' => 100]);
+            },
+            'profile_upsert' => ['UserProfile', 'upsertWithGoals'],
+            'preferences_upsert' => ['UserPreference', 'upsert'],
+            'technology_find_active_by_ids' => ['Technology', 'findActiveByIds'],
+            'technology_replace_all' => ['UserTechnology', 'replaceAll'],
+            'repository_state_upsert' => ['UserRepositoryState', 'upsert'],
+            'activity_create' => ['UserActivityEvent', 'create'],
+        ], $deps);
+    }
+
     public function export($userId)
     {
         return [
-            'user' => User::toPublic(User::findById($userId)),
-            'profile' => UserProfile::getComplete($userId),
-            'technologies' => UserTechnology::findByUserId($userId),
-            'preferences' => UserPreference::findByUserId($userId),
-            'repository_states' => UserRepositoryState::listByUser($userId, ['limit' => 100]),
-            'history' => UserActivityEvent::listByUser($userId, ['limit' => 100]),
+            'user' => $this->call('user_public', $userId),
+            'profile' => $this->call('profile_get', $userId),
+            'technologies' => $this->call('technologies_find', $userId),
+            'preferences' => $this->call('preferences_find', $userId),
+            'repository_states' => $this->call('repository_states_list', $userId),
+            'history' => $this->call('history_list', $userId),
         ];
     }
 
@@ -18,7 +44,8 @@ class UserProfileService
     {
         if (isset($payload['profile']) && is_array($payload['profile'])) {
             $profile = $payload['profile'];
-            UserProfile::upsertWithGoals(
+            $this->call(
+                'profile_upsert',
                 $userId,
                 $profile['role'] ?? null,
                 $profile['seniority'] ?? null,
@@ -28,7 +55,7 @@ class UserProfileService
         }
 
         if (isset($payload['preferences']) && is_array($payload['preferences'])) {
-            UserPreference::upsert($userId, $payload['preferences']);
+            $this->call('preferences_upsert', $userId, $payload['preferences']);
         }
 
         if (isset($payload['technologies']) && is_array($payload['technologies'])) {
@@ -63,9 +90,9 @@ class UserProfileService
             }
 
             $ids = array_values(array_unique($ids));
-            $active = Technology::findActiveByIds($ids);
+            $active = $this->call('technology_find_active_by_ids', $ids);
             if (count($active) === count($ids)) {
-                UserTechnology::replaceAll($userId, $normalized);
+                $this->call('technology_replace_all', $userId, $normalized);
             }
         }
 
@@ -74,7 +101,8 @@ class UserProfileService
                 if (empty($state['github_repository_id']) || empty($state['state'])) {
                     continue;
                 }
-                UserRepositoryState::upsert(
+                $this->call(
+                    'repository_state_upsert',
                     $userId,
                     (int) $state['github_repository_id'],
                     $state['owner_login'] ?? '',
@@ -90,7 +118,8 @@ class UserProfileService
                 if (empty($event['event_type'])) {
                     continue;
                 }
-                UserActivityEvent::create(
+                $this->call(
+                    'activity_create',
                     $userId,
                     $event['event_type'],
                     isset($event['github_repository_id']) ? (int) $event['github_repository_id'] : null,
@@ -99,7 +128,13 @@ class UserProfileService
             }
         }
 
-        UserActivityEvent::create($userId, 'restored_project', null, ['type' => 'local_storage_import']);
+        $this->call('activity_create', $userId, 'restored_project', null, ['type' => 'local_storage_import']);
         return $this->export($userId);
+    }
+
+    private function call($key)
+    {
+        $args = array_slice(func_get_args(), 1);
+        return call_user_func_array($this->deps[$key], $args);
     }
 }
