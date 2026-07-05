@@ -12,13 +12,6 @@ if (!empty($_ENV['SENTRY_DSN'])) {
 error_reporting(E_ALL);
 ini_set('display_errors', ($_ENV['APP_ENV'] ?? 'local') === 'production' ? 0 : 1);
 
-configureCors();
-
-if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
-
 spl_autoload_register(function ($class) {
     $paths = [
         __DIR__ . '/core/' . $class . '.php',
@@ -34,6 +27,13 @@ spl_autoload_register(function ($class) {
         }
     }
 });
+
+configureCors();
+
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
 
 set_exception_handler(function ($exception) {
     if (($_ENV['APP_ENV'] ?? 'local') !== 'production') {
