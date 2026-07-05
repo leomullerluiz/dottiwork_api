@@ -87,7 +87,7 @@ class AuthController extends BaseController
     {
         $user = $this->requireToken($request);
         RateLimiter::enforce($request, 'integrations.github.disconnect', 5, 300, 'user:' . $user['id']);
-        $result = (new GitHubDisconnectService())->disconnect($user['id']);
+        $result = (new GitHubDisconnectService())->disconnect($user);
 
         if (!$result['found']) {
             Response::notFound('Conta GitHub nao vinculada.');
