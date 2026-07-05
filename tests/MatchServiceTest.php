@@ -47,4 +47,91 @@ class MatchServiceTest extends TestCase
         $this->assertGreaterThan(0, $first['score']);
         $this->assertNotEmpty($first['reasons']);
     }
+
+    public function testFetchCandidatesOnlyReturnsRepositoriesWithOpenIssues(): void
+    {
+        $service = new MatchService();
+        $client = new MatchServiceSearchClient([
+            [
+                'id' => 1,
+                'name' => 'without-issues',
+                'open_issues_count' => 0,
+            ],
+            [
+                'id' => 2,
+                'name' => 'with-issues',
+                'open_issues_count' => 3,
+            ],
+            [
+                'id' => 3,
+                'name' => 'legacy-open-issues-field',
+                'open_issues' => 1,
+            ],
+        ]);
+
+        $candidates = $this->invokePrivate($service, 'fetchCandidates', [
+            $client,
+            [
+                [
+                    'github_language' => 'PHP',
+                    'github_topics' => [],
+                ],
+            ],
+            ['minimum_stars' => 10],
+        ]);
+
+        $this->assertSame(['with-issues', 'legacy-open-issues-field'], array_column($candidates, 'name'));
+        $this->assertSame('language:PHP archived:false is:public stars:>=10', $client->queries[0]);
+    }
+
+    public function testOpenIssueItemsIgnoresPullRequestsAndClosedIssues(): void
+    {
+        $service = new MatchService();
+
+        $issues = $this->invokePrivate($service, 'openIssueItems', [[
+            [
+                'id' => 1,
+                'number' => 10,
+                'state' => 'open',
+                'title' => 'Open issue',
+            ],
+            [
+                'id' => 2,
+                'number' => 11,
+                'state' => 'open',
+                'pull_request' => ['url' => 'https://api.github.com/pulls/11'],
+            ],
+            [
+                'id' => 3,
+                'number' => 12,
+                'state' => 'closed',
+            ],
+        ]]);
+
+        $this->assertSame([1], array_column($issues, 'id'));
+    }
+
+    private function invokePrivate($object, $method, array $args)
+    {
+        $reflection = new ReflectionMethod($object, $method);
+        $reflection->setAccessible(true);
+        return $reflection->invokeArgs($object, $args);
+    }
+}
+
+class MatchServiceSearchClient extends GitHubClient
+{
+    public $queries = [];
+    private $items;
+
+    public function __construct(array $items)
+    {
+        $this->items = $items;
+    }
+
+    public function searchRepositories($query, $page = 1, $perPage = 10)
+    {
+        $this->queries[] = $query;
+        return ['items' => $this->items];
+    }
 }

@@ -66,7 +66,11 @@ class MatchService
                 $health = $this->healthService->analyze($repository, $labels, $contents);
                 RepositoryCache::upsert($repository, $health, $this->githubConfig['repository_cache_ttl_seconds']);
 
-                $issues = $client->getRepositoryIssues($owner, $repo, ['per_page' => 20]);
+                $issues = $this->openIssueItems($client->getRepositoryIssues($owner, $repo, ['per_page' => 20]));
+                if (!$issues) {
+                    continue;
+                }
+
                 RepositoryIssueCache::upsertMany($repository['id'], $issues, $this->githubConfig['issues_cache_ttl_seconds'], $this->difficultyService);
 
                 $score = $this->calculateScore($repository, $issues, $health, $technologies, $profile, $preferences);
@@ -186,6 +190,10 @@ class MatchService
             $result = $client->searchRepositories($fullQuery, 1, 5);
 
             foreach ($result['items'] ?? [] as $repository) {
+                if (!$this->hasOpenIssues($repository)) {
+                    continue;
+                }
+
                 if (isset($seen[$repository['id']])) {
                     continue;
                 }
@@ -195,6 +203,21 @@ class MatchService
         }
 
         return array_slice($repositories, 0, 12);
+    }
+
+    private function hasOpenIssues(array $repository)
+    {
+        $openIssues = $repository['open_issues_count'] ?? $repository['open_issues'] ?? 0;
+        return (int) $openIssues > 0;
+    }
+
+    private function openIssueItems(array $issues)
+    {
+        return array_values(array_filter($issues, function ($issue) {
+            return is_array($issue)
+                && !isset($issue['pull_request'])
+                && (($issue['state'] ?? 'open') === 'open');
+        }));
     }
 
     private function countHelpfulIssues(array $issues)
