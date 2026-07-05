@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Bem-vindo ao dotti.work</title>
+</head>
+<body style="margin:0;background:#f6f8fb;font-family:Arial,Helvetica,sans-serif;color:#1f2937;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f6f8fb;padding:28px 0;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
+          <tr>
+            <td style="padding:28px 32px 12px 32px;">
+              <h1 style="margin:0;font-size:24px;line-height:1.3;color:#111827;">Bem-vindo ao dotti.work</h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 32px 20px 32px;font-size:15px;line-height:1.6;color:#374151;">
+              <p>Ola, {{ name }}.</p>
+              <p>Sua conta foi criada com GitHub{{ github_login }}. Agora voce pode completar seu perfil, escolher sua stack e encontrar projetos open source alinhados com seus objetivos.</p>
+              <p style="margin-top:24px;">
+                <a href="{{ onboarding_url }}" style="display:inline-block;background:#111827;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:6px;font-weight:bold;">Completar onboarding</a>
+              </p>
+              <p>Quando terminar o onboarding, seus matches ficarao disponiveis em <a href="{{ matches_url }}" style="color:#2563eb;">{{ matches_url }}</a>.</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:18px 32px 28px 32px;font-size:12px;line-height:1.5;color:#6b7280;border-top:1px solid #e5e7eb;">
+              <p style="margin:0;">Este e-mail foi enviado porque sua conta foi criada no dotti.work usando GitHub OAuth.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

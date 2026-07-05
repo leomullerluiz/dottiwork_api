@@ -60,20 +60,12 @@ class GitHubOAuth
 
             $client = new GitHubClient($tokenResponse['access_token']);
             $githubUser = $client->getAuthenticatedUser();
-            $email = $githubUser['email'] ?? null;
-
-            if (!$email) {
-                $emails = $client->getAuthenticatedUserEmails();
-
-                foreach ($emails as $candidate) {
-                    if (!empty($candidate['primary']) && !empty($candidate['verified'])) {
-                        $email = $candidate['email'];
-                        break;
-                    }
-                }
-            }
+            $profileEmail = $githubUser['email'] ?? null;
+            $verifiedEmail = self::verifiedEmail($client, $profileEmail);
+            $email = $verifiedEmail ?: $profileEmail;
 
             $account = OAuthAccount::findByProviderAccount('github', (string) $githubUser['id']);
+            $createdUser = false;
 
             if ($account) {
                 $user = User::updateFromGitHub($account['user_id'], $githubUser, $email);
@@ -81,9 +73,14 @@ class GitHubOAuth
                 $user = User::updateFromGitHub($existingUser['id'], $githubUser, $email);
             } else {
                 $user = User::createFromGitHub($githubUser, $email);
+                $createdUser = true;
             }
 
             OAuthAccount::upsertGitHub($user['id'], $githubUser, $tokenResponse);
+
+            if ($createdUser) {
+                (new WelcomeEmailService())->sendAfterGitHubSignup($user, $githubUser, $verifiedEmail);
+            }
 
             $session = Auth::createSession($user['id'], $request);
 
@@ -120,6 +117,32 @@ class GitHubOAuth
         }
 
         return substr($trimmed, 0, 255);
+    }
+
+    private static function verifiedEmail(GitHubClient $client, $profileEmail = null)
+    {
+        try {
+            $emails = $client->getAuthenticatedUserEmails();
+        } catch (Throwable $e) {
+            return null;
+        }
+
+        $primaryVerified = null;
+        foreach ($emails as $candidate) {
+            if (empty($candidate['email']) || empty($candidate['verified'])) {
+                continue;
+            }
+
+            if ($profileEmail && strcasecmp($candidate['email'], $profileEmail) === 0) {
+                return $candidate['email'];
+            }
+
+            if (!empty($candidate['primary'])) {
+                $primaryVerified = $candidate['email'];
+            }
+        }
+
+        return $primaryVerified;
     }
 
     private static function frontendCallbackUrl($status, $reason = null, $returnTo = null)
