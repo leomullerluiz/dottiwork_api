@@ -6,6 +6,7 @@ class UserProfileServiceTest extends TestCase
 {
     public function testExportReturnsStableDataShape(): void
     {
+        $emailSent = false;
         $service = new UserProfileService([
             'user_public' => function ($userId) {
                 return ['id' => $userId, 'login' => 'ana'];
@@ -25,6 +26,9 @@ class UserProfileServiceTest extends TestCase
             'history_list' => function () {
                 return [['type' => 'viewed_project']];
             },
+            'export_email' => function () use (&$emailSent) {
+                $emailSent = true;
+            },
         ]);
 
         $this->assertSame([
@@ -35,6 +39,79 @@ class UserProfileServiceTest extends TestCase
             'repository_states' => [['state' => 'saved']],
             'history' => [['type' => 'viewed_project']],
         ], $service->export(7));
+        $this->assertFalse($emailSent);
+    }
+
+    public function testExportSendsAlertWhenUserArrayIsProvided(): void
+    {
+        $calls = [];
+        $service = new UserProfileService([
+            'user_public' => function ($userId) {
+                return ['id' => $userId, 'login' => 'ana'];
+            },
+            'profile_get' => function () {
+                return ['role' => 'frontend'];
+            },
+            'technologies_find' => function () {
+                return [];
+            },
+            'preferences_find' => function () {
+                return [];
+            },
+            'repository_states_list' => function () {
+                return [];
+            },
+            'history_list' => function () {
+                return [];
+            },
+            'export_email' => function ($user) use (&$calls) {
+                $calls[] = ['export_email', $user['id'], $user['email']];
+            },
+        ]);
+
+        $result = $service->export([
+            'id' => 7,
+            'email' => 'ana@example.test',
+        ]);
+
+        $this->assertSame(['id' => 7, 'login' => 'ana'], $result['user']);
+        $this->assertSame([
+            ['export_email', 7, 'ana@example.test'],
+        ], $calls);
+    }
+
+    public function testExportSuppressesEmailFailures(): void
+    {
+        $service = new UserProfileService([
+            'user_public' => function ($userId) {
+                return ['id' => $userId];
+            },
+            'profile_get' => function () {
+                return [];
+            },
+            'technologies_find' => function () {
+                return [];
+            },
+            'preferences_find' => function () {
+                return [];
+            },
+            'repository_states_list' => function () {
+                return [];
+            },
+            'history_list' => function () {
+                return [];
+            },
+            'export_email' => function () {
+                throw new RuntimeException('SMTP indisponivel.');
+            },
+        ]);
+
+        $result = $service->export([
+            'id' => 7,
+            'email' => 'ana@example.test',
+        ]);
+
+        $this->assertSame(['id' => 7], $result['user']);
     }
 
     public function testImportLocalDataNormalizesSupportedSectionsAndReturnsExport(): void

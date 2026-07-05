@@ -86,6 +86,6 @@ class ProfileController extends BaseController
         $user = $this->requireToken($request);
         RateLimiter::enforce($request, 'profile.export', 5, 300, 'user:' . $user['id']);
         $service = new UserProfileService();
-        Response::success($service->export($user['id']));
+        Response::success($service->export($user));
     }
 }

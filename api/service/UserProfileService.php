@@ -25,12 +25,16 @@ class UserProfileService
             'technology_replace_all' => ['UserTechnology', 'replaceAll'],
             'repository_state_upsert' => ['UserRepositoryState', 'upsert'],
             'activity_create' => ['UserActivityEvent', 'create'],
+            'export_email' => function (array $user) {
+                return (new UserDataExportEmailService())->sendExportRequestedAlert($user);
+            },
         ], $deps);
     }
 
-    public function export($userId)
+    public function export($user)
     {
-        return [
+        $userId = is_array($user) ? ($user['id'] ?? null) : $user;
+        $data = [
             'user' => $this->call('user_public', $userId),
             'profile' => $this->call('profile_get', $userId),
             'technologies' => $this->call('technologies_find', $userId),
@@ -38,6 +42,10 @@ class UserProfileService
             'repository_states' => $this->call('repository_states_list', $userId),
             'history' => $this->call('history_list', $userId),
         ];
+
+        $this->trySendExportEmail($user);
+
+        return $data;
     }
 
     public function importLocalData($userId, array $payload)
@@ -136,5 +144,20 @@ class UserProfileService
     {
         $args = array_slice(func_get_args(), 1);
         return call_user_func_array($this->deps[$key], $args);
+    }
+
+    private function trySendExportEmail($user)
+    {
+        if (!is_array($user)) {
+            return false;
+        }
+
+        try {
+            $this->call('export_email', $user);
+        } catch (Throwable $e) {
+            return false;
+        }
+
+        return true;
     }
 }
