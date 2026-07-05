@@ -31,14 +31,7 @@ class BaseController
 
     private function allowedOrigins()
     {
-        $configured = $_ENV['CORS_ALLOWED_ORIGINS'] ?? '';
-        if ($configured === '') {
-            $configured = ($_ENV['APP_ENV'] ?? 'local') === 'production'
-                ? 'https://dotti.work,https://dottiwork.com'
-                : 'https://dotti.work,https://dottiwork.com,http://localhost:3000';
-        }
-
-        return array_values(array_filter(array_map('trim', explode(',', $configured))));
+        return CorsPolicy::allowedOrigins();
     }
 
     protected function jsonBody(Request $request)
