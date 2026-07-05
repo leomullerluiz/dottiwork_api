@@ -6,6 +6,6 @@ class AccountController extends BaseController
     {
         $user = $this->requireToken($request);
         RateLimiter::enforce($request, 'account.delete', 3, 3600, 'user:' . $user['id']);
-        Response::success((new AccountDeletionService())->delete($user['id']));
+        Response::success((new AccountDeletionService())->delete($user));
     }
 }
