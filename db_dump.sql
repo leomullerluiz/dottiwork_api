@@ -30,6 +30,8 @@ DROP TABLE IF EXISTS
   `technologies`,
   `user_profile_goals`,
   `user_profiles`,
+  `user_referrals`,
+  `user_invite_links`,
   `oauth_authorization_states`,
   `oauth_accounts`,
   `auth_tokens`,
@@ -103,12 +105,54 @@ CREATE TABLE `oauth_authorization_states` (
   `return_to` varchar(255) NOT NULL,
   `ip_hash` char(64) DEFAULT NULL,
   `user_agent` varchar(500) DEFAULT NULL,
+  `invite_code` varchar(64) DEFAULT NULL,
+  `invite_link_id` bigint(20) UNSIGNED DEFAULT NULL,
   `expires_at` datetime NOT NULL,
   `used_at` datetime DEFAULT NULL,
   `created_at` datetime NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_oauth_state_hash` (`state_hash`),
-  KEY `idx_oauth_state_expires_at` (`expires_at`)
+  KEY `idx_oauth_state_expires_at` (`expires_at`),
+  KEY `idx_oauth_state_invite_link_id` (`invite_link_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `user_invite_links` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` bigint(20) UNSIGNED NOT NULL,
+  `code` varchar(64) NOT NULL,
+  `label` varchar(120) DEFAULT NULL,
+  `status` enum('active','revoked','expired') NOT NULL DEFAULT 'active',
+  `max_uses` int(10) UNSIGNED DEFAULT NULL,
+  `uses_count` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `expires_at` datetime DEFAULT NULL,
+  `last_used_at` datetime DEFAULT NULL,
+  `created_at` datetime NOT NULL,
+  `updated_at` datetime NOT NULL,
+  `revoked_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_user_invite_links_code` (`code`),
+  KEY `idx_user_invite_links_user_status` (`user_id`, `status`),
+  KEY `idx_user_invite_links_expires_at` (`expires_at`),
+  CONSTRAINT `fk_user_invite_links_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `user_referrals` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `referrer_user_id` bigint(20) UNSIGNED NOT NULL,
+  `referred_user_id` bigint(20) UNSIGNED NOT NULL,
+  `invite_link_id` bigint(20) UNSIGNED NOT NULL,
+  `invite_code` varchar(64) NOT NULL,
+  `source` varchar(50) NOT NULL DEFAULT 'github_oauth',
+  `registered_at` datetime NOT NULL,
+  `created_at` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_user_referrals_referred_user` (`referred_user_id`),
+  KEY `idx_user_referrals_referrer_user` (`referrer_user_id`),
+  KEY `idx_user_referrals_invite_link` (`invite_link_id`),
+  KEY `idx_user_referrals_registered_at` (`registered_at`),
+  CONSTRAINT `fk_user_referrals_referrer` FOREIGN KEY (`referrer_user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_user_referrals_referred` FOREIGN KEY (`referred_user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_user_referrals_invite_link` FOREIGN KEY (`invite_link_id`) REFERENCES `user_invite_links` (`id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `rate_limit_buckets` (

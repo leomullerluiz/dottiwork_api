@@ -79,6 +79,11 @@ function registerRoutes(Router $router)
     $route('post', '/me/import-local-data', 'ProfileController@importLocalData');
     $route('get', '/me/export', 'ProfileController@export');
     $route('delete', '/me/account', 'AccountController@delete');
+    $route('post', '/me/invite-links', 'InviteController@store');
+    $route('get', '/me/invite-links', 'InviteController@index');
+    $route('post', '/me/invite-links/:id/revoke', 'InviteController@revoke');
+    $route('get', '/me/referrals', 'ReferralController@index');
+    $route('get', '/invites/:code', 'InviteController@publicShow');
 
     $route('get', '/catalog/technologies', 'CatalogController@technologies');
     $route('get', '/catalog/technologies/:slug', 'CatalogController@technology');

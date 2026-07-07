@@ -6,12 +6,15 @@ class GitHubOAuth
     {
         $returnTo = self::sanitizeReturnTo($request->getQuery('return_to', '/matches'));
         $state = Crypto::randomBase64Url(32);
+        $invite = self::validInviteFromRequest($request);
 
         OAuthAuthorizationState::create(
             $state,
             $returnTo,
             Crypto::optionalIpHash($request->getClientIp()),
-            $request->getHeader('User-Agent')
+            $request->getHeader('User-Agent'),
+            $invite['code'] ?? null,
+            $invite['id'] ?? null
         );
 
         $config = require __DIR__ . '/../config/github.php';
@@ -79,6 +82,7 @@ class GitHubOAuth
             OAuthAccount::upsertGitHub($user['id'], $githubUser, $tokenResponse);
 
             if ($createdUser) {
+                self::registerReferralSafely($user['id'], $stateRecord['invite_code'] ?? null);
                 (new WelcomeEmailService())->sendAfterGitHubSignup($user, $githubUser, $verifiedEmail);
             }
 
@@ -143,6 +147,31 @@ class GitHubOAuth
         }
 
         return $primaryVerified;
+    }
+
+    private static function validInviteFromRequest(Request $request)
+    {
+        $inviteCode = $request->getQuery('invite_code');
+        if (!$inviteCode || !InviteLinkService::isValidCodeFormat($inviteCode)) {
+            return null;
+        }
+
+        return (new InviteLinkService())->validatePublicCode($inviteCode);
+    }
+
+    private static function registerReferralSafely($userId, $inviteCode)
+    {
+        if (!$inviteCode) {
+            return;
+        }
+
+        try {
+            (new ReferralService())->registerSignup($userId, $inviteCode, 'github_oauth');
+        } catch (Throwable $e) {
+            if (($_ENV['APP_ENV'] ?? 'local') !== 'production') {
+                error_log('REFERRAL REGISTER ERROR: ' . $e->getMessage());
+            }
+        }
     }
 
     private static function frontendCallbackUrl($status, $reason = null, $returnTo = null)
