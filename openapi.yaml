@@ -39,6 +39,8 @@ tags:
     description: Projetos salvos, ignorados e em andamento.
   - name: Historico
     description: Historico de interacoes do usuario.
+  - name: Convites
+    description: Links de convite, validacao publica e indicacoes efetivas.
   - name: Conta
     description: Operacoes de conta do usuario autenticado.
 
@@ -102,6 +104,13 @@ paths:
             type: string
             example: /onboarding
           description: Caminho interno seguro para retorno apos login.
+        - in: query
+          name: invite_code
+          schema:
+            type: string
+            pattern: "^[A-Za-z0-9_-]{12,64}$"
+            example: AbC123xYz_456789
+          description: Codigo opcional de convite a ser persistido no state OAuth.
       responses:
         "302":
           description: Redireciona para a tela de autorizacao do GitHub.
@@ -388,6 +397,124 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
+
+  /me/invite-links:
+    get:
+      tags: [Convites]
+      operationId: listMyInviteLinks
+      summary: Lista links de convite do usuario
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      responses:
+        "200":
+          description: Links de convite e resumo de indicacoes.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InviteLinkListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      tags: [Convites]
+      operationId: createMyInviteLink
+      summary: Cria ou retorna o link principal ativo
+      description: Operacao idempotente para garantir um link ativo principal por usuario.
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      responses:
+        "200":
+          description: Link de convite ativo.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InviteLinkResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /me/invite-links/{id}/revoke:
+    post:
+      tags: [Convites]
+      operationId: revokeMyInviteLink
+      summary: Revoga um link de convite do usuario
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: Link revogado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RevokeInviteLinkResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /me/referrals:
+    get:
+      tags: [Convites]
+      operationId: listMyReferrals
+      summary: Lista indicacoes efetivas do usuario
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Resumo e lista de indicacoes efetivas.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReferralListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /invites/{code}:
+    get:
+      tags: [Convites]
+      operationId: getPublicInvite
+      summary: Valida convite publico
+      security: []
+      parameters:
+        - in: path
+          name: code
+          required: true
+          schema:
+            type: string
+            pattern: "^[A-Za-z0-9_-]{12,64}$"
+          example: AbC123xYz_456789
+      responses:
+        "200":
+          description: Convite valido.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicInviteResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/RateLimited"
 
   /catalog/technologies:
     get:
@@ -1302,6 +1429,176 @@ components:
             deleted:
               type: boolean
               example: true
+
+    InviteLinkResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          required: [invite_link]
+          properties:
+            invite_link:
+              $ref: "#/components/schemas/InviteLink"
+
+    InviteLinkListResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          required: [invite_links, summary]
+          properties:
+            invite_links:
+              type: array
+              items:
+                $ref: "#/components/schemas/InviteLink"
+            summary:
+              $ref: "#/components/schemas/ReferralSummary"
+
+    RevokeInviteLinkResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          required: [revoked]
+          properties:
+            revoked:
+              type: boolean
+              example: true
+
+    PublicInviteResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          required: [invite]
+          properties:
+            invite:
+              $ref: "#/components/schemas/PublicInvite"
+
+    ReferralListResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          required: [summary, referrals]
+          properties:
+            summary:
+              $ref: "#/components/schemas/ReferralSummary"
+            referrals:
+              type: array
+              items:
+                $ref: "#/components/schemas/Referral"
+
+    InviteLink:
+      type: object
+      required: [id, code, url, status, uses_count, expires_at, created_at]
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 10
+        code:
+          type: string
+          pattern: "^[A-Za-z0-9_-]{12,64}$"
+          example: AbC123xYz_456789
+        url:
+          type: string
+          format: uri
+          example: https://dotti.work/invite/AbC123xYz_456789
+        status:
+          $ref: "#/components/schemas/InviteLinkStatus"
+        uses_count:
+          type: integer
+          minimum: 0
+          example: 2
+        expires_at:
+          type: string
+          nullable: true
+          example: null
+        created_at:
+          type: string
+          example: "2026-07-07 18:00:00"
+
+    PublicInvite:
+      type: object
+      required: [code, valid, inviter]
+      properties:
+        code:
+          type: string
+          pattern: "^[A-Za-z0-9_-]{12,64}$"
+          example: AbC123xYz_456789
+        valid:
+          type: boolean
+          example: true
+        inviter:
+          $ref: "#/components/schemas/PublicInviter"
+
+    PublicInviter:
+      type: object
+      properties:
+        display_name:
+          type: string
+          nullable: true
+          example: Leo
+        avatar_url:
+          type: string
+          format: uri
+          nullable: true
+
+    ReferralSummary:
+      type: object
+      required: [effective_referrals]
+      properties:
+        effective_referrals:
+          type: integer
+          minimum: 0
+          example: 2
+
+    Referral:
+      type: object
+      required: [registered_at, referred_user]
+      properties:
+        registered_at:
+          type: string
+          example: "2026-07-07 18:30:00"
+        referred_user:
+          $ref: "#/components/schemas/ReferredUser"
+
+    ReferredUser:
+      type: object
+      properties:
+        login:
+          type: string
+          nullable: true
+          example: octocat
+        display_name:
+          type: string
+          nullable: true
+          example: Octocat
+        avatar_url:
+          type: string
+          format: uri
+          nullable: true
 
     User:
       type: object
@@ -2454,6 +2751,10 @@ components:
     OrganizationType:
       type: string
       enum: [independent, startup, company, community, foundation, any]
+
+    InviteLinkStatus:
+      type: string
+      enum: [active, revoked, expired]
 
     SortBy:
       type: string
