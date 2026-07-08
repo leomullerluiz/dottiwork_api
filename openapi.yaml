@@ -25,6 +25,8 @@ tags:
     description: Login GitHub OAuth, sessao local e integracao GitHub.
   - name: Perfil
     description: Perfil profissional, onboarding, importacao e exportacao.
+  - name: Perfil Publico
+    description: Pagina publica compartilhavel do usuario.
   - name: Catalogo
     description: Catalogos publicos usados pelo produto.
   - name: Tecnologias
@@ -332,6 +334,80 @@ paths:
           $ref: "#/components/responses/Forbidden"
         "422":
           $ref: "#/components/responses/ValidationError"
+
+  /public/profiles/{login}:
+    get:
+      tags: [Perfil Publico]
+      operationId: getPublicUserProfile
+      summary: Perfil publico consolidado por login ou slug
+      description: Nao exige autenticacao e nunca expoe email, tokens, notas privadas ou historico bruto.
+      parameters:
+        - in: path
+          name: login
+          required: true
+          schema:
+            type: string
+            pattern: "^[A-Za-z0-9](?:[A-Za-z0-9-]{0,118}[A-Za-z0-9])?$"
+            example: ana-dev
+      responses:
+        "200":
+          description: Perfil publico encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicUserProfileResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /me/public-profile:
+    get:
+      tags: [Perfil Publico]
+      operationId: previewMyPublicProfile
+      summary: Preview autenticado do perfil publico
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      responses:
+        "200":
+          description: Preview do perfil publico e link de compartilhamento.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicProfilePreviewResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /me/public-profile/settings:
+    put:
+      tags: [Perfil Publico]
+      operationId: updateMyPublicProfileSettings
+      summary: Atualiza configuracoes do perfil publico
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PublicProfileSettingsInput"
+      responses:
+        "200":
+          description: Configuracoes publicas atualizadas.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicProfileSettingsResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "429":
+          $ref: "#/components/responses/RateLimited"
 
   /me/import-local-data:
     post:
@@ -1460,6 +1536,350 @@ components:
             profile:
               $ref: "#/components/schemas/UserProfile"
 
+    PublicUserProfileResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: "#/components/schemas/PublicUserProfileData"
+
+    PublicProfilePreviewResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          required: [is_public, share_url, profile]
+          properties:
+            is_public:
+              type: boolean
+              example: true
+            share_url:
+              type: string
+              format: uri
+              nullable: true
+              example: https://dotti.work/u/ana-dev
+            profile:
+              $ref: "#/components/schemas/PublicUserProfileData"
+            warnings:
+              type: array
+              items:
+                $ref: "#/components/schemas/PublicProfileWarning"
+
+    PublicProfileSettingsResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          required: [is_public, share_url, public_profile_slug]
+          properties:
+            is_public:
+              type: boolean
+              example: true
+            share_url:
+              type: string
+              format: uri
+              nullable: true
+              example: https://dotti.work/u/ana-dev
+            public_profile_slug:
+              type: string
+              nullable: true
+              example: ana-dev
+
+    PublicProfileSettingsInput:
+      type: object
+      required: [is_public]
+      properties:
+        is_public:
+          type: boolean
+          example: true
+        public_profile_slug:
+          type: string
+          nullable: true
+          maxLength: 120
+          pattern: "^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$"
+          example: ana-dev
+
+    PublicUserProfileData:
+      type: object
+      required: [profile, github, technologies, metrics, badges, featured_repositories, share]
+      properties:
+        profile:
+          $ref: "#/components/schemas/PublicProfileUser"
+        github:
+          $ref: "#/components/schemas/PublicGitHubProfile"
+        technologies:
+          type: array
+          items:
+            $ref: "#/components/schemas/PublicTechnology"
+        metrics:
+          $ref: "#/components/schemas/PublicProfileMetrics"
+        badges:
+          type: array
+          items:
+            $ref: "#/components/schemas/PublicUserBadge"
+        featured_repositories:
+          type: array
+          maxItems: 6
+          items:
+            $ref: "#/components/schemas/PublicFeaturedRepository"
+        share:
+          $ref: "#/components/schemas/PublicProfileShare"
+
+    PublicProfileUser:
+      type: object
+      properties:
+        login:
+          type: string
+          nullable: true
+          example: ana-dev
+        display_name:
+          type: string
+          nullable: true
+          example: Ana Silva
+        avatar_url:
+          type: string
+          format: uri
+          nullable: true
+        bio:
+          type: string
+          nullable: true
+        location:
+          type: string
+          nullable: true
+          example: Sao Paulo, BR
+        company:
+          type: string
+          nullable: true
+        website_url:
+          type: string
+          format: uri
+          nullable: true
+        github_profile_url:
+          type: string
+          format: uri
+          nullable: true
+        role:
+          type: string
+          nullable: true
+          example: frontend
+        seniority:
+          allOf:
+            - $ref: "#/components/schemas/Seniority"
+          nullable: true
+        goals:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProfileGoal"
+        joined_at:
+          type: string
+          nullable: true
+          example: "2026-06-23 10:00:00"
+
+    PublicGitHubProfile:
+      type: object
+      required: [login, url, connected]
+      properties:
+        login:
+          type: string
+          nullable: true
+          example: ana-dev
+        url:
+          type: string
+          format: uri
+          nullable: true
+          example: https://github.com/ana-dev
+        connected:
+          type: boolean
+          example: true
+
+    PublicTechnology:
+      type: object
+      required: [slug, name, category, proficiency_level, interest_level]
+      properties:
+        slug:
+          type: string
+          example: javascript
+        name:
+          type: string
+          example: JavaScript
+        category:
+          $ref: "#/components/schemas/TechnologyCategory"
+        proficiency_level:
+          $ref: "#/components/schemas/ProficiencyLevel"
+        interest_level:
+          $ref: "#/components/schemas/InterestLevel"
+
+    PublicProfileMetrics:
+      type: object
+      required:
+        - technologies_count
+        - badges_count
+        - repositories_saved_count
+        - repositories_contributed_count
+        - pull_requests_sent_count
+        - opened_github_count
+        - activity_days_count
+        - member_since
+        - last_activity_at
+      properties:
+        technologies_count:
+          type: integer
+          minimum: 0
+          example: 6
+        badges_count:
+          type: integer
+          minimum: 0
+          example: 4
+        repositories_saved_count:
+          type: integer
+          minimum: 0
+          example: 8
+        repositories_contributed_count:
+          type: integer
+          minimum: 0
+          example: 2
+        pull_requests_sent_count:
+          type: integer
+          minimum: 0
+          example: 1
+        opened_github_count:
+          type: integer
+          minimum: 0
+          example: 12
+        activity_days_count:
+          type: integer
+          minimum: 0
+          example: 5
+        member_since:
+          type: string
+          nullable: true
+          example: "2026-06-23 10:00:00"
+        last_activity_at:
+          type: string
+          nullable: true
+          example: "2026-07-08 08:12:00"
+
+    PublicUserBadge:
+      type: object
+      required: [slug, awarded_at, badge]
+      properties:
+        slug:
+          type: string
+          example: first_save
+        awarded_at:
+          type: string
+          nullable: true
+          example: "2026-07-01 19:20:00"
+        badge:
+          $ref: "#/components/schemas/PublicBadge"
+
+    PublicBadge:
+      type: object
+      required: [slug, name, description, category, level, image_url, image_alt, is_secret, display_order]
+      properties:
+        slug:
+          type: string
+          example: first_save
+        name:
+          type: string
+          example: Primeiro radar
+        description:
+          type: string
+          example: Salvou o primeiro projeto open source.
+        category:
+          type: string
+          example: discovery
+        level:
+          type: string
+          example: bronze
+        image_url:
+          type: string
+          format: uri
+          example: https://placehold.co/100/png
+        image_alt:
+          type: string
+          example: Insignia de primeiro projeto salvo
+        icon:
+          type: string
+          nullable: true
+          example: bookmark
+        is_secret:
+          type: boolean
+          example: false
+        display_order:
+          type: integer
+          example: 20
+
+    PublicFeaturedRepository:
+      type: object
+      required: [github_repository_id, owner_login, repository_name, state, public_url, updated_at]
+      properties:
+        github_repository_id:
+          type: integer
+          format: int64
+          nullable: true
+          example: 123456
+        owner_login:
+          type: string
+          nullable: true
+          example: open-source-org
+        repository_name:
+          type: string
+          nullable: true
+          example: project
+        state:
+          $ref: "#/components/schemas/RepositoryStateValue"
+        public_url:
+          type: string
+          format: uri
+          nullable: true
+          example: https://github.com/open-source-org/project
+        updated_at:
+          type: string
+          nullable: true
+          example: "2026-07-07 18:00:00"
+        repository:
+          allOf:
+            - $ref: "#/components/schemas/RepositorySummary"
+          nullable: true
+
+    PublicProfileShare:
+      type: object
+      required: [canonical_url, api_url]
+      properties:
+        canonical_url:
+          type: string
+          format: uri
+          nullable: true
+          example: https://dotti.work/u/ana-dev
+        api_url:
+          type: string
+          format: uri
+          nullable: true
+          example: https://api.dotti.work/api/v1/public/profiles/ana-dev
+
+    PublicProfileWarning:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          example: PROFILE_PRIVATE
+        message:
+          type: string
+          example: Perfil publico desativado.
+
     UserDataExportResponse:
       type: object
       required: [success, data]
@@ -1894,6 +2314,16 @@ components:
               type: integer
               format: int64
             onboarding_completed_at:
+              type: string
+              nullable: true
+            public_profile_enabled:
+              type: boolean
+              example: false
+            public_profile_slug:
+              type: string
+              nullable: true
+              example: ana-dev
+            public_profile_updated_at:
               type: string
               nullable: true
             created_at:

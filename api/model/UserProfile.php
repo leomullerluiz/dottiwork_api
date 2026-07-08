@@ -28,6 +28,9 @@ class UserProfile
         }
 
         $profile['onboarding_completed'] = (bool) $profile['onboarding_completed'];
+        if (array_key_exists('public_profile_enabled', $profile)) {
+            $profile['public_profile_enabled'] = (bool) $profile['public_profile_enabled'];
+        }
         $profile['goals'] = self::getGoals($userId);
         return $profile;
     }
@@ -41,6 +44,65 @@ class UserProfile
         ");
         $stmt->execute(['user_id' => $userId]);
         return self::findByUserId($userId);
+    }
+
+    public static function publicSettings($userId)
+    {
+        $profile = self::findByUserId($userId);
+
+        return [
+            'public_profile_enabled' => $profile ? !empty($profile['public_profile_enabled']) : false,
+            'public_profile_slug' => $profile['public_profile_slug'] ?? null,
+            'public_profile_updated_at' => $profile['public_profile_updated_at'] ?? null,
+        ];
+    }
+
+    public static function updatePublicSettings($userId, $enabled, $slug = null)
+    {
+        $profile = self::findByUserId($userId);
+        if (!$profile) {
+            self::createDefault($userId);
+        }
+
+        $db = Database::getInstance()->getConnection();
+        $params = [
+            'user_id' => $userId,
+            'public_profile_enabled' => $enabled ? 1 : 0,
+        ];
+        $slugSql = '';
+
+        if ($slug !== null) {
+            $slugSql = ', public_profile_slug = :public_profile_slug';
+            $params['public_profile_slug'] = $slug;
+        }
+
+        $stmt = $db->prepare("
+            UPDATE user_profiles
+            SET public_profile_enabled = :public_profile_enabled,
+                public_profile_updated_at = NOW(),
+                updated_at = NOW()
+                {$slugSql}
+            WHERE user_id = :user_id
+        ");
+        $stmt->execute($params);
+
+        return self::publicSettings($userId);
+    }
+
+    public static function publicSlugExistsForOtherUser($slug, $userId)
+    {
+        $db = Database::getInstance()->getConnection();
+        $stmt = $db->prepare("
+            SELECT 1
+            FROM user_profiles
+            WHERE public_profile_slug = :slug AND user_id <> :user_id
+            LIMIT 1
+        ");
+        $stmt->execute([
+            'slug' => $slug,
+            'user_id' => $userId,
+        ]);
+        return (bool) $stmt->fetchColumn();
     }
 
     public static function upsertWithGoals($userId, $role, $seniority, array $goals, $onboardingCompleted)

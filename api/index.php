@@ -76,6 +76,9 @@ function registerRoutes(Router $router)
 
     $route('get', '/me/profile', 'ProfileController@show');
     $route('put', '/me/profile', 'ProfileController@update');
+    $route('get', '/public/profiles/:login', 'PublicProfileController@show');
+    $route('get', '/me/public-profile', 'PublicProfileController@preview');
+    $route('put', '/me/public-profile/settings', 'PublicProfileController@updateSettings');
     $route('post', '/me/import-local-data', 'ProfileController@importLocalData');
     $route('get', '/me/export', 'ProfileController@export');
     $route('delete', '/me/account', 'AccountController@delete');

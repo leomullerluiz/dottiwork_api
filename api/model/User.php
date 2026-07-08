@@ -18,6 +18,30 @@ class User
         return $stmt->fetch();
     }
 
+    public static function findByLogin($login)
+    {
+        $db = Database::getInstance()->getConnection();
+        $stmt = $db->prepare("SELECT * FROM users WHERE login = :login AND deleted_at IS NULL LIMIT 1");
+        $stmt->execute(['login' => $login]);
+        return $stmt->fetch();
+    }
+
+    public static function loginExistsForOtherUser($login, $userId)
+    {
+        $db = Database::getInstance()->getConnection();
+        $stmt = $db->prepare("
+            SELECT 1
+            FROM users
+            WHERE login = :login AND id <> :user_id AND deleted_at IS NULL
+            LIMIT 1
+        ");
+        $stmt->execute([
+            'login' => $login,
+            'user_id' => $userId,
+        ]);
+        return (bool) $stmt->fetchColumn();
+    }
+
     public static function createFromGitHub(array $githubUser, $email = null)
     {
         $db = Database::getInstance()->getConnection();

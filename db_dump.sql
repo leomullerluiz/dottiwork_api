@@ -175,10 +175,14 @@ CREATE TABLE `user_profiles` (
   `seniority` enum('junior','mid','senior') DEFAULT NULL,
   `onboarding_completed` tinyint(1) NOT NULL DEFAULT 0,
   `onboarding_completed_at` datetime DEFAULT NULL,
+  `public_profile_enabled` tinyint(1) NOT NULL DEFAULT 0,
+  `public_profile_slug` varchar(120) DEFAULT NULL,
+  `public_profile_updated_at` datetime DEFAULT NULL,
   `created_at` datetime NOT NULL,
   `updated_at` datetime NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_user_profiles_user_id` (`user_id`),
+  UNIQUE KEY `uq_user_profiles_public_slug` (`public_profile_slug`),
   CONSTRAINT `fk_user_profiles_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
