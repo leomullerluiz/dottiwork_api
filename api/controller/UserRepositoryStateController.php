@@ -46,7 +46,9 @@ class UserRepositoryStateController extends BaseController
             $body['notes'] ?? null
         );
 
-        UserActivityEvent::create($user['id'], $this->eventForState($state), $githubRepositoryId);
+        $eventType = $this->eventForState($state);
+        $event = UserActivityEvent::create($user['id'], $eventType, $githubRepositoryId);
+        (new BadgeEvaluatorService())->evaluateAfterActivityEvent($user['id'], $eventType, $event['id'] ?? null);
         Response::success(['state' => $saved]);
     }
 
@@ -75,7 +77,8 @@ class UserRepositoryStateController extends BaseController
             null
         );
 
-        UserActivityEvent::create($user['id'], 'restored_project', $githubRepositoryId);
+        $event = UserActivityEvent::create($user['id'], 'restored_project', $githubRepositoryId);
+        (new BadgeEvaluatorService())->evaluateAfterRepositoryStateChange($user['id'], $githubRepositoryId);
         Response::success(['state' => $state]);
     }
 

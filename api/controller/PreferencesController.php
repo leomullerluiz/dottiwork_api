@@ -49,6 +49,9 @@ class PreferencesController extends BaseController
             Response::validationError($errors);
         }
 
-        Response::success(['preferences' => UserPreference::upsert($user['id'], $body)]);
+        $preferences = UserPreference::upsert($user['id'], $body);
+        (new BadgeEvaluatorService())->evaluateAfterProfileUpdate($user['id']);
+
+        Response::success(['preferences' => $preferences]);
     }
 }

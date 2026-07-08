@@ -96,6 +96,10 @@ function registerRoutes(Router $router)
     $route('post', '/me/consents', 'ConsentController@store');
     $route('delete', '/me/consents/:type', 'ConsentController@revoke');
 
+    $route('get', '/badges', 'BadgeController@index');
+    $route('get', '/me/badges', 'BadgeController@mine');
+    $route('post', '/me/badges/evaluate', 'BadgeController@evaluate');
+
     $route('get', '/matches', 'MatchController@index');
     $route('post', '/matches/refresh', 'MatchController@refresh');
     $route('get', '/matches/:githubRepositoryId', 'MatchController@show');

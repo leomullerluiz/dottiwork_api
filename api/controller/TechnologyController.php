@@ -64,6 +64,9 @@ class TechnologyController extends BaseController
             Response::validationError([['field' => 'technologies', 'message' => 'Uma ou mais tecnologias nao existem ou estao inativas.']]);
         }
 
-        Response::success(['technologies' => UserTechnology::replaceAll($user['id'], $normalized)]);
+        $technologies = UserTechnology::replaceAll($user['id'], $normalized);
+        (new BadgeEvaluatorService())->evaluateAfterProfileUpdate($user['id']);
+
+        Response::success(['technologies' => $technologies]);
     }
 }

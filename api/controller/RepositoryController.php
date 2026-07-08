@@ -16,10 +16,11 @@ class RepositoryController extends BaseController
         $state = UserRepositoryState::findByUserAndRepository($user['id'], $cached['github_repository_id']);
         $match = UserRepositoryMatch::findByUserAndRepository($user['id'], $cached['github_repository_id']);
 
-        UserActivityEvent::create($user['id'], 'viewed_project', $cached['github_repository_id'], [
+        $event = UserActivityEvent::create($user['id'], 'viewed_project', $cached['github_repository_id'], [
             'owner' => $owner,
             'repo' => $repo,
         ]);
+        (new BadgeEvaluatorService())->evaluateAfterActivityEvent($user['id'], 'viewed_project', $event['id'] ?? null);
 
         Response::success([
             'repository' => $repository,
@@ -77,12 +78,13 @@ class RepositoryController extends BaseController
         $cachedRepo = RepositoryCache::findByOwnerRepo($params['owner'], $params['repo'], false);
         $githubRepositoryId = $cachedRepo ? $cachedRepo['github_repository_id'] : null;
 
-        Response::created([
-            'event' => UserActivityEvent::create($user['id'], $eventType, $githubRepositoryId, [
-                'owner' => $params['owner'],
-                'repo' => $params['repo'],
-            ]),
+        $event = UserActivityEvent::create($user['id'], $eventType, $githubRepositoryId, [
+            'owner' => $params['owner'],
+            'repo' => $params['repo'],
         ]);
+        (new BadgeEvaluatorService())->evaluateAfterActivityEvent($user['id'], $eventType, $event['id'] ?? null);
+
+        Response::created(['event' => $event]);
     }
 
     private function githubClientForUser($userId)

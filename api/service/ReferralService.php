@@ -33,6 +33,7 @@ class ReferralService
 
             $referral = UserReferral::create($link['user_id'], $referredUserId, $link, $source);
             UserInviteLink::incrementUsage($link['id']);
+            (new BadgeEvaluatorService())->evaluateUser($link['user_id']);
 
             if ($startedTransaction) {
                 $db->commit();

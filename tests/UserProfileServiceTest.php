@@ -157,6 +157,9 @@ class UserProfileServiceTest extends TestCase
             'activity_create' => function ($userId, $type, $repoId, $metadata) use (&$calls) {
                 $calls[] = ['activity_create', $userId, $type, $repoId, $metadata];
             },
+            'badge_evaluate' => function ($userId) use (&$calls) {
+                $calls[] = ['badge_evaluate', $userId];
+            },
         ]);
 
         $result = $service->importLocalData(7, [
@@ -198,5 +201,6 @@ class UserProfileServiceTest extends TestCase
         $this->assertContains(['repository_state_upsert', 7, 123, 'owner', 'repo', 'saved', 'ok'], $calls);
         $this->assertContains(['activity_create', 7, 'viewed_project', 123, ['source' => 'local_storage_import']], $calls);
         $this->assertContains(['activity_create', 7, 'restored_project', null, ['type' => 'local_storage_import']], $calls);
+        $this->assertContains(['badge_evaluate', 7], $calls);
     }
 }

@@ -58,6 +58,7 @@ class ProfileController extends BaseController
             $goals,
             !empty($body['onboarding_completed'])
         );
+        (new BadgeEvaluatorService())->evaluateAfterProfileUpdate($user['id']);
 
         Response::success([
             'user' => User::toPublic(User::findById($user['id'])),

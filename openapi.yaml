@@ -41,6 +41,8 @@ tags:
     description: Historico de interacoes do usuario.
   - name: Convites
     description: Links de convite, validacao publica e indicacoes efetivas.
+  - name: Badges
+    description: Catalogo, progresso e conquistas do usuario.
   - name: Conta
     description: Operacoes de conta do usuario autenticado.
 
@@ -718,6 +720,59 @@ paths:
           $ref: "#/components/responses/NotFound"
         "422":
           $ref: "#/components/responses/ValidationError"
+
+  /badges:
+    get:
+      tags: [Badges]
+      operationId: listBadgeCatalog
+      summary: Lista catalogo publico de badges
+      responses:
+        "200":
+          description: Catalogo de badges ativas.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BadgeCatalogResponse"
+
+  /me/badges:
+    get:
+      tags: [Badges]
+      operationId: listMyBadges
+      summary: Lista badges conquistadas e progresso
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      responses:
+        "200":
+          description: Badges conquistadas, progresso e conquistas recentes.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyBadgesResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /me/badges/evaluate:
+    post:
+      tags: [Badges]
+      operationId: evaluateMyBadges
+      summary: Recalcula badges do usuario autenticado
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      responses:
+        "200":
+          description: Avaliacao executada.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BadgeEvaluationResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/RateLimited"
 
   /matches:
     get:
@@ -1429,6 +1484,174 @@ components:
             deleted:
               type: boolean
               example: true
+
+    BadgeCatalogResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          required: [badges]
+          properties:
+            badges:
+              type: array
+              items:
+                $ref: "#/components/schemas/Badge"
+
+    MyBadgesResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          required: [earned, progress, recently_awarded]
+          properties:
+            earned:
+              type: array
+              items:
+                $ref: "#/components/schemas/UserBadge"
+            progress:
+              type: array
+              items:
+                $ref: "#/components/schemas/BadgeProgress"
+            recently_awarded:
+              type: array
+              items:
+                $ref: "#/components/schemas/UserBadge"
+
+    BadgeEvaluationResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          required: [awarded, earned, progress, recently_awarded]
+          properties:
+            awarded:
+              type: array
+              items:
+                $ref: "#/components/schemas/UserBadge"
+            earned:
+              type: array
+              items:
+                $ref: "#/components/schemas/UserBadge"
+            progress:
+              type: array
+              items:
+                $ref: "#/components/schemas/BadgeProgress"
+            recently_awarded:
+              type: array
+              items:
+                $ref: "#/components/schemas/UserBadge"
+
+    Badge:
+      type: object
+      required: [slug, name, description, category, level, image_url, image_alt, is_secret, display_order]
+      properties:
+        slug:
+          type: string
+          example: first_contribution
+        name:
+          type: string
+          example: Primeira contribuicao
+        description:
+          type: string
+          example: Marcou sua primeira contribuicao como concluida.
+        category:
+          type: string
+          example: contribution
+        level:
+          type: string
+          example: gold
+        image_url:
+          type: string
+          format: uri
+          example: https://placehold.co/100/png
+        image_alt:
+          type: string
+          example: Insignia de primeira contribuicao open source
+        icon:
+          type: string
+          nullable: true
+          example: award
+        is_secret:
+          type: boolean
+          example: false
+        display_order:
+          type: integer
+          example: 100
+        criteria_type:
+          type: string
+          example: repository_state_exists
+        criteria_config:
+          type: object
+          additionalProperties: true
+          example:
+            state: contributed
+            target: 1
+
+    UserBadge:
+      type: object
+      required: [slug, awarded_at, badge]
+      properties:
+        slug:
+          type: string
+          example: first_contribution
+        awarded_at:
+          type: string
+          example: "2026-07-08 12:00:00"
+        source_event_id:
+          type: integer
+          format: int64
+          nullable: true
+        progress_snapshot:
+          type: object
+          additionalProperties: true
+        badge:
+          $ref: "#/components/schemas/Badge"
+
+    BadgeProgress:
+      type: object
+      required: [slug, current_value, target_value, percent, completed, badge]
+      properties:
+        slug:
+          type: string
+          example: explorer
+        current_value:
+          type: integer
+          example: 3
+        target_value:
+          type: integer
+          example: 5
+        percent:
+          type: integer
+          minimum: 0
+          maximum: 100
+          example: 60
+        completed:
+          type: boolean
+          example: false
+        awarded_at:
+          type: string
+          nullable: true
+          example: null
+        criteria_type:
+          type: string
+          example: activity_event_count
+        criteria_config:
+          type: object
+          additionalProperties: true
+        badge:
+          $ref: "#/components/schemas/Badge"
 
     InviteLinkResponse:
       type: object

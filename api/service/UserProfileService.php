@@ -25,6 +25,9 @@ class UserProfileService
             'technology_replace_all' => ['UserTechnology', 'replaceAll'],
             'repository_state_upsert' => ['UserRepositoryState', 'upsert'],
             'activity_create' => ['UserActivityEvent', 'create'],
+            'badge_evaluate' => function ($userId) {
+                return (new BadgeEvaluatorService())->evaluateUser($userId);
+            },
             'export_email' => function (array $user) {
                 return (new UserDataExportEmailService())->sendExportRequestedAlert($user);
             },
@@ -137,6 +140,7 @@ class UserProfileService
         }
 
         $this->call('activity_create', $userId, 'restored_project', null, ['type' => 'local_storage_import']);
+        $this->call('badge_evaluate', $userId);
         return $this->export($userId);
     }
 
