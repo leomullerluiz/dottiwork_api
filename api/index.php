@@ -102,6 +102,7 @@ function registerRoutes(Router $router)
     $route('get', '/badges', 'BadgeController@index');
     $route('get', '/me/badges', 'BadgeController@mine');
     $route('post', '/me/badges/evaluate', 'BadgeController@evaluate');
+    $route('post', '/me/badges/notifications/viewed', 'BadgeController@markNotificationsViewed');
 
     $route('get', '/matches', 'MatchController@index');
     $route('post', '/matches/refresh', 'MatchController@refresh');

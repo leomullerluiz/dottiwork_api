@@ -850,6 +850,36 @@ paths:
         "429":
           $ref: "#/components/responses/RateLimited"
 
+  /me/badges/notifications/viewed:
+    post:
+      tags: [Badges]
+      operationId: markBadgeNotificationsViewed
+      summary: Marca notificacoes de badges como visualizadas
+      security:
+        - BearerAuth: []
+        - CookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BadgeNotificationViewedRequest"
+      responses:
+        "200":
+          description: Notificacoes marcadas como visualizadas.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BadgeNotificationViewedResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
   /matches:
     get:
       tags: [Matches]
@@ -1930,7 +1960,7 @@ components:
           example: true
         data:
           type: object
-          required: [earned, progress, recently_awarded]
+          required: [earned, progress, recently_awarded, unseen_awarded, unseen_awarded_count]
           properties:
             earned:
               type: array
@@ -1944,6 +1974,13 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/UserBadge"
+            unseen_awarded:
+              type: array
+              items:
+                $ref: "#/components/schemas/UserBadge"
+            unseen_awarded_count:
+              type: integer
+              example: 2
 
     BadgeEvaluationResponse:
       type: object
@@ -1954,7 +1991,7 @@ components:
           example: true
         data:
           type: object
-          required: [awarded, earned, progress, recently_awarded]
+          required: [awarded, earned, progress, recently_awarded, unseen_awarded, unseen_awarded_count]
           properties:
             awarded:
               type: array
@@ -1972,6 +2009,60 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/UserBadge"
+            unseen_awarded:
+              type: array
+              items:
+                $ref: "#/components/schemas/UserBadge"
+            unseen_awarded_count:
+              type: integer
+              example: 2
+
+    BadgeNotificationViewedRequest:
+      type: object
+      properties:
+        slugs:
+          type: array
+          description: Slugs das badges conquistadas a marcar como visualizadas.
+          items:
+            type: string
+          example: [first_pr, first_contribution]
+        ids:
+          type: array
+          description: IDs das conquistas do usuario a marcar como visualizadas.
+          items:
+            type: integer
+            format: int64
+          example: [12, 13]
+        notification_seen:
+          type: boolean
+          description: Deve ser true quando enviado.
+          example: true
+
+    BadgeNotificationViewedResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          required: [updated_count, recently_awarded, unseen_awarded, unseen_awarded_count]
+          properties:
+            updated_count:
+              type: integer
+              example: 2
+            recently_awarded:
+              type: array
+              items:
+                $ref: "#/components/schemas/UserBadge"
+            unseen_awarded:
+              type: array
+              items:
+                $ref: "#/components/schemas/UserBadge"
+            unseen_awarded_count:
+              type: integer
+              example: 0
 
     Badge:
       type: object
@@ -2021,14 +2112,25 @@ components:
 
     UserBadge:
       type: object
-      required: [slug, awarded_at, badge]
+      required: [id, slug, awarded_at, notification_seen, badge]
       properties:
+        id:
+          type: integer
+          format: int64
+          example: 12
         slug:
           type: string
           example: first_contribution
         awarded_at:
           type: string
           example: "2026-07-08 12:00:00"
+        notification_seen:
+          type: boolean
+          example: false
+        notification_seen_at:
+          type: string
+          nullable: true
+          example: null
         source_event_id:
           type: integer
           format: int64

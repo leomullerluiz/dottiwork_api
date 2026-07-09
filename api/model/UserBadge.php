@@ -88,6 +88,81 @@ class UserBadge
         return array_map([self::class, 'toResponse'], $stmt->fetchAll());
     }
 
+    public static function unseenAwarded($userId)
+    {
+        $db = Database::getInstance()->getConnection();
+        $stmt = $db->prepare("
+            SELECT ub.*, bd.name, bd.description, bd.category, bd.level, bd.image_url,
+                   bd.image_alt, bd.icon, bd.is_secret, bd.display_order, bd.criteria_type,
+                   bd.criteria_config
+            FROM user_badges ub
+            INNER JOIN badge_definitions bd ON bd.id = ub.badge_id
+            WHERE ub.user_id = :user_id AND ub.notification_seen_at IS NULL
+            ORDER BY ub.awarded_at DESC, ub.id DESC
+        ");
+        $stmt->execute(['user_id' => $userId]);
+
+        return array_map([self::class, 'toResponse'], $stmt->fetchAll());
+    }
+
+    public static function unseenAwardedCount($userId)
+    {
+        $db = Database::getInstance()->getConnection();
+        $stmt = $db->prepare("
+            SELECT COUNT(*)
+            FROM user_badges
+            WHERE user_id = :user_id AND notification_seen_at IS NULL
+        ");
+        $stmt->execute(['user_id' => $userId]);
+        return (int) $stmt->fetchColumn();
+    }
+
+    public static function markNotificationsSeen($userId, array $slugs = [], array $ids = [])
+    {
+        $slugs = self::normalizeSlugs($slugs);
+        $ids = self::normalizeIds($ids);
+
+        if (!$slugs && !$ids) {
+            return 0;
+        }
+
+        $conditions = [];
+        $params = ['user_id' => $userId];
+
+        if ($slugs) {
+            $slugPlaceholders = [];
+            foreach ($slugs as $index => $slug) {
+                $key = 'slug_' . $index;
+                $slugPlaceholders[] = ':' . $key;
+                $params[$key] = $slug;
+            }
+            $conditions[] = 'slug IN (' . implode(', ', $slugPlaceholders) . ')';
+        }
+
+        if ($ids) {
+            $idPlaceholders = [];
+            foreach ($ids as $index => $id) {
+                $key = 'id_' . $index;
+                $idPlaceholders[] = ':' . $key;
+                $params[$key] = $id;
+            }
+            $conditions[] = 'id IN (' . implode(', ', $idPlaceholders) . ')';
+        }
+
+        $db = Database::getInstance()->getConnection();
+        $stmt = $db->prepare("
+            UPDATE user_badges
+            SET notification_seen_at = COALESCE(notification_seen_at, NOW()),
+                updated_at = NOW()
+            WHERE user_id = :user_id
+              AND notification_seen_at IS NULL
+              AND (" . implode(' OR ', $conditions) . ")
+        ");
+        $stmt->execute($params);
+
+        return $stmt->rowCount();
+    }
+
     public static function awardedMapByUser($userId)
     {
         $map = [];
@@ -133,8 +208,11 @@ class UserBadge
         ];
 
         return [
+            'id' => isset($row['id']) ? (int) $row['id'] : null,
             'slug' => (string) $row['slug'],
             'awarded_at' => $row['awarded_at'] ?? null,
+            'notification_seen' => !empty($row['notification_seen_at']),
+            'notification_seen_at' => $row['notification_seen_at'] ?? null,
             'source_event_id' => isset($row['source_event_id']) ? (int) $row['source_event_id'] : null,
             'progress_snapshot' => self::normalizeJson($row['progress_snapshot'] ?? []),
             'badge' => BadgeDefinition::compactResponse($definition),
@@ -149,5 +227,39 @@ class UserBadge
         }
 
         return is_array($value) ? $value : [];
+    }
+
+    private static function normalizeSlugs(array $slugs)
+    {
+        $normalized = [];
+        foreach ($slugs as $slug) {
+            if (!is_string($slug)) {
+                continue;
+            }
+
+            $slug = trim($slug);
+            if ($slug !== '') {
+                $normalized[$slug] = true;
+            }
+        }
+
+        return array_keys($normalized);
+    }
+
+    private static function normalizeIds(array $ids)
+    {
+        $normalized = [];
+        foreach ($ids as $id) {
+            if (!Validator::integer($id)) {
+                continue;
+            }
+
+            $id = (int) $id;
+            if ($id > 0) {
+                $normalized[$id] = true;
+            }
+        }
+
+        return array_keys($normalized);
     }
 }
