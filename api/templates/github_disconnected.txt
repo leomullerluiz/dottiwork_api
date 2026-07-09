@@ -1,0 +1,14 @@
+GitHub desconectado
+
+Ola, {{ name }}.
+
+A integracao com {{ github_login }} foi desconectada do dotti.work.
+
+Desconexao registrada em {{ disconnected_at }}. Matches, sincronizacao de perfil e busca personalizada podem ficar limitados ate voce reconectar o GitHub.
+
+Removemos a credencial local da integracao. Seus projetos salvos, historico e preferencias continuam na sua conta.
+
+Reconectar GitHub:
+{{ settings_url }}
+
+Se voce nao reconhece esta acao, revise suas sessoes e configuracoes de conta.

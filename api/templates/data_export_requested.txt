@@ -1,0 +1,14 @@
+Exportacao solicitada
+
+Ola, {{ name }}.
+
+Recebemos uma solicitacao de exportacao dos seus dados do dotti.work.
+
+Solicitacao registrada em {{ exported_at }}. Por seguranca, este e-mail nao contem os dados exportados nem anexos.
+
+A exportacao e entregue apenas na sessao autenticada em que a acao foi solicitada. Guarde o arquivo com cuidado, pois ele pode conter dados pessoais e historico de interacoes.
+
+Abrir privacidade:
+{{ privacy_url }}
+
+Se voce nao fez essa solicitacao, encerre sessoes abertas e revise suas configuracoes.

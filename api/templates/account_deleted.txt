@@ -1,0 +1,14 @@
+Sua conta foi excluida
+
+Ola, {{ name }}.
+
+Confirmamos que sua conta dotti.work foi excluida.
+
+Solicitacao registrada em {{ deleted_at }}. Suas sessoes locais foram encerradas e o acesso a conta foi removido.
+
+Dados associados a sua conta sao tratados conforme a politica de privacidade e regras de retencao aplicaveis.
+
+Se voce nao reconhece esta acao, entre em contato pelo canal oficial do dotti.work e revise a seguranca do seu e-mail.
+
+Pagina publica do produto:
+{{ home_url }}
