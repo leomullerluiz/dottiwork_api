@@ -1835,8 +1835,7 @@ components:
           example: bronze
         image_url:
           type: string
-          format: uri
-          example: https://placehold.co/100/png
+          example: /uploads/media/badges/first_contribution.png
         image_alt:
           type: string
           example: Insignia de primeiro projeto salvo
@@ -2085,8 +2084,7 @@ components:
           example: gold
         image_url:
           type: string
-          format: uri
-          example: https://placehold.co/100/png
+          example: /uploads/media/badges/first_contribution.png
         image_alt:
           type: string
           example: Insignia de primeira contribuicao open source

@@ -208,7 +208,7 @@ class PublicUserProfileServiceTest extends TestCase
                             'description' => 'Conquista publica.',
                             'category' => 'discovery',
                             'level' => 'bronze',
-                            'image_url' => 'https://placehold.co/100/png',
+                            'image_url' => '/uploads/media/badges/first_contribution.png',
                             'image_alt' => 'Badge publica',
                             'icon' => 'bookmark',
                             'is_secret' => false,

@@ -39,7 +39,7 @@ class UserBadgeTest extends TestCase
             'description' => 'Marcou o primeiro pull request como enviado.',
             'category' => 'contribution',
             'level' => 'gold',
-            'image_url' => 'https://placehold.co/100/png',
+            'image_url' => '/uploads/media/badges/first_pr.png',
             'image_alt' => 'Insignia de primeiro pull request',
             'icon' => 'git-pull-request',
             'is_secret' => false,
@@ -49,4 +49,3 @@ class UserBadgeTest extends TestCase
         ], $overrides);
     }
 }
-

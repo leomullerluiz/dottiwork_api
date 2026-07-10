@@ -119,7 +119,7 @@ class BadgeProgressServiceTest extends TestCase
 
         $this->assertSame(['threshold' => 3], $response['criteria_config']);
         $this->assertFalse($response['is_secret']);
-        $this->assertSame('https://placehold.co/100/png', $response['image_url']);
+        $this->assertSame('/uploads/media/badges/first_contribution.png', $response['image_url']);
     }
 
     private function definition(array $overrides = []): array
@@ -131,7 +131,7 @@ class BadgeProgressServiceTest extends TestCase
             'description' => 'Marcou sua primeira contribuicao como concluida.',
             'category' => 'contribution',
             'level' => 'gold',
-            'image_url' => 'https://placehold.co/100/png',
+            'image_url' => '/uploads/media/badges/first_contribution.png',
             'image_alt' => 'Insignia de primeira contribuicao open source',
             'icon' => 'award',
             'is_active' => true,
