@@ -82,6 +82,54 @@ class MatchServiceTest extends TestCase
 
         $this->assertSame(['with-issues', 'legacy-open-issues-field'], array_column($candidates, 'name'));
         $this->assertSame('language:PHP archived:false is:public stars:>=10', $client->queries[0]);
+        $this->assertSame(15, $client->perPages[0]);
+    }
+
+    public function testFetchCandidatesUsesConfigurableSearchAndCandidateLimits(): void
+    {
+        $previousSearchPerQuery = $_ENV['MATCH_SEARCH_PER_QUERY'] ?? null;
+        $previousCandidateLimit = $_ENV['MATCH_CANDIDATE_LIMIT'] ?? null;
+        $_ENV['MATCH_SEARCH_PER_QUERY'] = '25';
+        $_ENV['MATCH_CANDIDATE_LIMIT'] = '20';
+
+        try {
+            $service = new MatchService();
+            $items = [];
+            for ($i = 1; $i <= 30; $i++) {
+                $items[] = [
+                    'id' => $i,
+                    'name' => 'repo-' . $i,
+                    'open_issues_count' => 1,
+                ];
+            }
+
+            $client = new MatchServiceSearchClient($items);
+            $candidates = $this->invokePrivate($service, 'fetchCandidates', [
+                $client,
+                [
+                    [
+                        'github_language' => 'TypeScript',
+                        'github_topics' => ['react'],
+                    ],
+                ],
+                ['minimum_stars' => 0],
+            ]);
+
+            $this->assertCount(20, $candidates);
+            $this->assertSame(25, $client->perPages[0]);
+        } finally {
+            if ($previousSearchPerQuery === null) {
+                unset($_ENV['MATCH_SEARCH_PER_QUERY']);
+            } else {
+                $_ENV['MATCH_SEARCH_PER_QUERY'] = $previousSearchPerQuery;
+            }
+
+            if ($previousCandidateLimit === null) {
+                unset($_ENV['MATCH_CANDIDATE_LIMIT']);
+            } else {
+                $_ENV['MATCH_CANDIDATE_LIMIT'] = $previousCandidateLimit;
+            }
+        }
     }
 
     public function testOpenIssueItemsIgnoresPullRequestsAndClosedIssues(): void
@@ -122,6 +170,7 @@ class MatchServiceTest extends TestCase
 class MatchServiceSearchClient extends GitHubClient
 {
     public $queries = [];
+    public $perPages = [];
     private $items;
 
     public function __construct(array $items)
@@ -132,6 +181,7 @@ class MatchServiceSearchClient extends GitHubClient
     public function searchRepositories($query, $page = 1, $perPage = 10)
     {
         $this->queries[] = $query;
+        $this->perPages[] = $perPage;
         return ['items' => $this->items];
     }
 }

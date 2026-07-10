@@ -66,7 +66,9 @@ class MatchService
                 $health = $this->healthService->analyze($repository, $labels, $contents);
                 RepositoryCache::upsert($repository, $health, $this->githubConfig['repository_cache_ttl_seconds']);
 
-                $issues = $this->openIssueItems($client->getRepositoryIssues($owner, $repo, ['per_page' => 20]));
+                $issues = $this->openIssueItems($client->getRepositoryIssues($owner, $repo, [
+                    'per_page' => $this->configInt('match_issues_per_repository', 20, 1, 100),
+                ]));
                 if (!$issues) {
                     continue;
                 }
@@ -92,7 +94,7 @@ class MatchService
             return $b['score'] <=> $a['score'];
         });
 
-        $matches = array_slice($matches, 0, 30);
+        $matches = array_slice($matches, 0, $this->configInt('match_result_limit', 30, 1, 100));
         UserRepositoryMatch::upsertMany($user['id'], $matches, $this->githubConfig['match_cache_ttl_seconds']);
 
         return [
@@ -166,6 +168,8 @@ class MatchService
     {
         $queries = [];
         $minimumStars = (int) ($preferences['minimum_stars'] ?? 0);
+        $searchPerQuery = $this->configInt('match_search_per_query', 15, 1, 100);
+        $candidateLimit = $this->configInt('match_candidate_limit', 30, 1, 100);
 
         foreach (array_slice($technologies, 0, 5) as $technology) {
             if (!empty($technology['github_language'])) {
@@ -187,7 +191,7 @@ class MatchService
 
         foreach (array_unique($queries) as $query) {
             $fullQuery = $query . ' archived:false is:public stars:>=' . $minimumStars;
-            $result = $client->searchRepositories($fullQuery, 1, 5);
+            $result = $client->searchRepositories($fullQuery, 1, $searchPerQuery);
 
             foreach ($result['items'] ?? [] as $repository) {
                 if (!$this->hasOpenIssues($repository)) {
@@ -199,10 +203,14 @@ class MatchService
                 }
                 $seen[$repository['id']] = true;
                 $repositories[] = $repository;
+
+                if (count($repositories) >= $candidateLimit) {
+                    break 2;
+                }
             }
         }
 
-        return array_slice($repositories, 0, 12);
+        return array_slice($repositories, 0, $candidateLimit);
     }
 
     private function hasOpenIssues(array $repository)
@@ -286,5 +294,15 @@ class MatchService
         }
 
         return $reasons;
+    }
+
+    private function configInt($key, $default, $min, $max)
+    {
+        $value = $this->githubConfig[$key] ?? $default;
+        if (!is_numeric($value)) {
+            $value = $default;
+        }
+
+        return min($max, max($min, (int) $value));
     }
 }

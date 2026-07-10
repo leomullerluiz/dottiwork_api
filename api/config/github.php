@@ -37,4 +37,8 @@ return [
     'issues_cache_ttl_seconds' => (int) ($_ENV['ISSUES_CACHE_TTL_SECONDS'] ?? 3600),
     'match_cache_ttl_seconds' => (int) ($_ENV['MATCH_CACHE_TTL_SECONDS'] ?? 3600),
     'match_refresh_cooldown_seconds' => (int) ($_ENV['MATCH_REFRESH_COOLDOWN_SECONDS'] ?? 60),
+    'match_search_per_query' => (int) ($_ENV['MATCH_SEARCH_PER_QUERY'] ?? 15),//todo: add in deploy params
+    'match_candidate_limit' => (int) ($_ENV['MATCH_CANDIDATE_LIMIT'] ?? 30),//todo: add in deploy params
+    'match_result_limit' => (int) ($_ENV['MATCH_RESULT_LIMIT'] ?? 30),//todo: add in deploy params
+    'match_issues_per_repository' => (int) ($_ENV['MATCH_ISSUES_PER_REPOSITORY'] ?? 20),//todo: add in deploy params
 ];
