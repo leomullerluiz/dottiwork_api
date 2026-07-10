@@ -12,11 +12,7 @@ O front nao precisa conhecer regras de conquista. Ele consome:
 
 Toda badge nasce em `badge_definitions`. Quando um usuario cumpre o criterio, o backend grava uma linha unica em `user_badges`.
 
-Por enquanto, todas as imagens usam:
-
-```text
-https://placehold.co/100/png
-```
+As badges devem apontar para imagens publicas em `uploads/media/badges`.
 
 ## Quando basta adicionar seed
 
@@ -51,7 +47,7 @@ INSERT INTO badge_definitions (
   'Visualizou 20 projetos open source.',
   'discovery',
   'gold',
-  'https://placehold.co/100/png',
+  '/uploads/media/badges/view_20_projects.png',
   'Insignia de exploracao avancada de projetos',
   'map',
   1,
@@ -128,7 +124,7 @@ Depois de publicar uma nova badge retroativa:
 
 - `slug` unico, estavel e em snake_case.
 - `name`, `description` e `image_alt` claros para o front.
-- `image_url` preenchido com `https://placehold.co/100/png` enquanto nao houver arte final.
+- `image_url` preenchido com o caminho publico da imagem, por exemplo `/uploads/media/badges/minha_badge.png`.
 - `criteria_type` conhecido pelo backend.
 - `criteria_config` com `threshold` ou `target` quando aplicavel.
 - Teste unitario cobrindo o criterio novo.
