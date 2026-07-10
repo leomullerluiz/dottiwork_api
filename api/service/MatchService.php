@@ -60,6 +60,7 @@ class MatchService
                     $topicsResponse = $client->getRepositoryTopics($owner, $repo);
                     $repository['topics'] = $topicsResponse['names'] ?? [];
                 }
+                $repository = $this->withContributorCount($client, $repository, $owner, $repo);
 
                 $labels = $client->getRepositoryLabels($owner, $repo);
                 $contents = $client->getRepositoryContents($owner, $repo);
@@ -226,6 +227,17 @@ class MatchService
                 && !isset($issue['pull_request'])
                 && (($issue['state'] ?? 'open') === 'open');
         }));
+    }
+
+    private function withContributorCount(GitHubClient $client, array $repository, $owner, $repo)
+    {
+        try {
+            $repository['contributors_count'] = $client->getRepositoryContributorsCount($owner, $repo);
+        } catch (Exception $e) {
+            $repository['contributors_count'] = (int) ($repository['contributors_count'] ?? $repository['contributors'] ?? 0);
+        }
+
+        return $repository;
     }
 
     private function countHelpfulIssues(array $issues)

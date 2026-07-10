@@ -67,6 +67,20 @@ class GitHubClient
         return $this->request('GET', 'https://api.github.com/repos/' . rawurlencode($owner) . '/' . rawurlencode($repo) . '/issues?' . http_build_query($params));
     }
 
+    public function getRepositoryContributorsCount($owner, $repo)
+    {
+        $response = $this->requestWithMeta('GET', 'https://api.github.com/repos/' . rawurlencode($owner) . '/' . rawurlencode($repo) . '/contributors?' . http_build_query([
+            'per_page' => 1,
+        ]));
+
+        $lastPage = $this->lastPageFromLinkHeader($this->headerValue($response['headers'], 'link'));
+        if ($lastPage !== null) {
+            return $lastPage;
+        }
+
+        return count($response['data']);
+    }
+
     public function getRepositoryLabels($owner, $repo)
     {
         return $this->request('GET', 'https://api.github.com/repos/' . rawurlencode($owner) . '/' . rawurlencode($repo) . '/labels?per_page=100');
@@ -135,10 +149,17 @@ class GitHubClient
 
     private function request($method, $url, $payload = null, $useBearer = true)
     {
+        $response = $this->requestWithMeta($method, $url, $payload, $useBearer);
+        return $response['data'];
+    }
+
+    private function requestWithMeta($method, $url, $payload = null, $useBearer = true)
+    {
         if (!function_exists('curl_init')) {
             throw new RuntimeException('Extensao cURL nao esta disponivel.');
         }
 
+        $responseHeaders = [];
         $headers = [
             'Accept: application/vnd.github+json',
             'User-Agent: ' . $this->config['user_agent'],
@@ -159,6 +180,30 @@ class GitHubClient
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $this->config['connect_timeout']);
         curl_setopt($ch, CURLOPT_TIMEOUT, $this->config['timeout']);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_HEADERFUNCTION, function ($curl, $header) use (&$responseHeaders) {
+            $length = strlen($header);
+            $header = trim($header);
+
+            if ($header === '' || strpos($header, ':') === false) {
+                return $length;
+            }
+
+            [$name, $value] = explode(':', $header, 2);
+            $name = strtolower(trim($name));
+            $value = trim($value);
+
+            if (isset($responseHeaders[$name])) {
+                if (!is_array($responseHeaders[$name])) {
+                    $responseHeaders[$name] = [$responseHeaders[$name]];
+                }
+
+                $responseHeaders[$name][] = $value;
+            } else {
+                $responseHeaders[$name] = $value;
+            }
+
+            return $length;
+        });
 
         if ($payload !== null) {
             $body = json_encode($payload);
@@ -183,7 +228,42 @@ class GitHubClient
             throw new RuntimeException('GitHub HTTP ' . $status . ': ' . $message, $status);
         }
 
-        return $data;
+        return [
+            'data' => $data,
+            'headers' => $responseHeaders,
+            'status' => $status,
+        ];
+    }
+
+    private function headerValue(array $headers, $name)
+    {
+        $name = strtolower($name);
+        $value = $headers[$name] ?? null;
+
+        if (is_array($value)) {
+            $value = end($value);
+        }
+
+        return is_string($value) && $value !== '' ? $value : null;
+    }
+
+    private function lastPageFromLinkHeader($linkHeader)
+    {
+        if (!$linkHeader) {
+            return null;
+        }
+
+        foreach (explode(',', $linkHeader) as $link) {
+            if (strpos($link, 'rel="last"') === false) {
+                continue;
+            }
+
+            if (preg_match('/[?&]page=(\d+)/', $link, $matches)) {
+                return max(1, (int) $matches[1]);
+            }
+        }
+
+        return null;
     }
 
     private function requestForm($url, array $payload)
