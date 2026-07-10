@@ -44,6 +44,7 @@ class RepositorySummary
         $stars = self::intValue($repository['stargazers_count'] ?? $repository['stars'] ?? 0);
         $forks = self::intValue($repository['forks_count'] ?? $repository['forks'] ?? 0);
         $openIssues = self::intValue($repository['open_issues_count'] ?? $repository['open_issues'] ?? 0);
+        $contributors = self::intValue($repository['contributors_count'] ?? $repository['contributors'] ?? 0);
         $lastPushedAt = self::stringOrNull($repository['pushed_at'] ?? $repository['last_pushed_at'] ?? null);
         $lastUpdatedAt = self::stringOrNull($repository['updated_at'] ?? $repository['last_updated_at'] ?? null);
         $activityDate = $lastPushedAt ?: $lastUpdatedAt;
@@ -66,6 +67,7 @@ class RepositorySummary
             'forks' => $forks,
             'watchers' => self::intValue($repository['watchers_count'] ?? $repository['watchers'] ?? 0),
             'open_issues' => $openIssues,
+            'contributors' => $contributors,
             'good_first_issues' => self::issueCount($repository, $issueStats, 'good_first_issues'),
             'help_wanted_issues' => self::issueCount($repository, $issueStats, 'help_wanted_issues'),
             'license' => self::license($repository['license'] ?? null),

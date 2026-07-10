@@ -1006,6 +1006,43 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
+  /repositories/top:
+    get:
+      tags: [Repositorios]
+      operationId: listTopRepositories
+      summary: Lista repositorios populares por ranking global
+      security:
+        - {}
+        - BearerAuth: []
+        - CookieAuth: []
+      parameters:
+        - in: query
+          name: sort_by
+          schema:
+            $ref: "#/components/schemas/TopRepositorySortBy"
+          description: Ranking ativo exibido na tela.
+        - in: query
+          name: technology
+          schema:
+            type: string
+          description: Slug de tecnologia ativa do catalogo.
+          example: typescript
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Cursor"
+      responses:
+        "200":
+          description: Ranking global paginado a partir do cache de repositorios.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TopRepositoryListResponse"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "502":
+          $ref: "#/components/responses/BadGateway"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+
   /repositories/{owner}/{repo}:
     get:
       tags: [Repositorios]
@@ -3019,6 +3056,73 @@ components:
                 - $ref: "#/components/schemas/Match"
               nullable: true
 
+    TopRepositoryListResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          required: [items, pagination, metadata]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/TopRepositoryItem"
+            pagination:
+              type: object
+              required: [next_cursor]
+              properties:
+                next_cursor:
+                  type: string
+                  nullable: true
+            metadata:
+              type: object
+              required: [sort_by, technology, generated_at, cached]
+              properties:
+                sort_by:
+                  $ref: "#/components/schemas/TopRepositorySortBy"
+                technology:
+                  type: string
+                  nullable: true
+                generated_at:
+                  type: string
+                  format: date-time
+                cached:
+                  type: boolean
+
+    TopRepositoryItem:
+      type: object
+      required: [repository, rank, rank_metric, user_state]
+      properties:
+        repository:
+          $ref: "#/components/schemas/RepositorySummary"
+        rank:
+          type: integer
+          minimum: 1
+        rank_metric:
+          $ref: "#/components/schemas/TopRepositoryRankMetric"
+        user_state:
+          allOf:
+            - $ref: "#/components/schemas/RepositoryStateValue"
+          nullable: true
+
+    TopRepositoryRankMetric:
+      type: object
+      required: [type, value]
+      properties:
+        type:
+          $ref: "#/components/schemas/TopRepositorySortBy"
+        value:
+          type: integer
+          minimum: 0
+
+    TopRepositorySortBy:
+      type: string
+      enum: [stars, open_issues, contributors]
+
     RepositorySummary:
       type: object
       properties:
@@ -3068,6 +3172,8 @@ components:
         watchers:
           type: integer
         open_issues:
+          type: integer
+        contributors:
           type: integer
         good_first_issues:
           type: integer

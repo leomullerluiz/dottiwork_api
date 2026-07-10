@@ -81,6 +81,24 @@ class RepositoryCache
         return self::findByGitHubRepositoryId($githubRepositoryId);
     }
 
+    public static function listAll($freshOnly = false)
+    {
+        $db = Database::getInstance()->getConnection();
+        $sql = "
+            SELECT *
+            FROM repository_cache
+        ";
+
+        if ($freshOnly) {
+            $sql .= " WHERE expires_at > NOW()";
+        }
+
+        $sql .= " ORDER BY fetched_at DESC, updated_at DESC, github_repository_id ASC";
+
+        $stmt = $db->query($sql);
+        return array_map([self::class, 'decode'], $stmt->fetchAll());
+    }
+
     public static function decode($row)
     {
         if (!$row) {

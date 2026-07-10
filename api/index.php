@@ -108,6 +108,7 @@ function registerRoutes(Router $router)
     $route('post', '/matches/refresh', 'MatchController@refresh');
     $route('get', '/matches/:githubRepositoryId', 'MatchController@show');
 
+    $route('get', '/repositories/top', 'RepositoryController@top');
     $route('get', '/repositories/:owner/:repo', 'RepositoryController@show');
     $route('get', '/repositories/:owner/:repo/issues', 'RepositoryController@issues');
     $route('post', '/repositories/:owner/:repo/activity', 'RepositoryController@activity');

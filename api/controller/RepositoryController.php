@@ -2,6 +2,53 @@
 
 class RepositoryController extends BaseController
 {
+    public function top(Request $request)
+    {
+        $filters = TopRepositoryService::fromRequest($request);
+        $errors = TopRepositoryService::validate($filters);
+
+        $technology = null;
+        if (!empty($filters['technology'])) {
+            $technology = Technology::findBySlug($filters['technology']);
+            if (!$technology || !$technology['is_active']) {
+                $errors[] = ['field' => 'technology', 'message' => 'Tecnologia invalida ou inativa.'];
+            }
+        }
+
+        if ($errors) {
+            Response::validationError($errors);
+        }
+
+        $rows = RepositoryCache::listAll(true);
+        if (!$rows) {
+            $rows = RepositoryCache::listAll(false);
+        }
+
+        if (!$rows) {
+            Response::badGateway('Nao foi possivel carregar repositorios populares no momento.');
+        }
+
+        try {
+            $payload = (new TopRepositoryService())->list($rows, $filters, $technology);
+        } catch (InvalidArgumentException $exception) {
+            Response::validationError([['field' => 'cursor', 'message' => 'Cursor invalido.']]);
+        }
+
+        $user = Auth::getAuthenticatedUser($request);
+        $githubRepositoryIds = array_values(array_filter(array_map(function ($item) {
+            return (int) ($item['repository']['github_repository_id'] ?? 0);
+        }, $payload['items'])));
+        $states = $user ? UserRepositoryState::listStateMapByUserAndRepositoryIds($user['id'], $githubRepositoryIds) : [];
+
+        foreach ($payload['items'] as &$item) {
+            $githubRepositoryId = (int) ($item['repository']['github_repository_id'] ?? 0);
+            $item['user_state'] = $states[$githubRepositoryId] ?? null;
+        }
+        unset($item);
+
+        Response::success($payload);
+    }
+
     public function show(Request $request, $params)
     {
         $user = $this->requireToken($request);

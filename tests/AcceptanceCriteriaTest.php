@@ -13,6 +13,7 @@ class AcceptanceCriteriaTest extends TestCase
         $this->assertStringContainsString("\$route('post', '/me/consents', 'ConsentController@store');", $index);
         $this->assertStringContainsString("\$route('delete', '/me/consents/:type', 'ConsentController@revoke');", $index);
         $this->assertStringContainsString("\$route('post', '/me/badges/notifications/viewed', 'BadgeController@markNotificationsViewed');", $index);
+        $this->assertStringContainsString("\$route('get', '/repositories/top', 'RepositoryController@top');", $index);
     }
 
     public function testFrontFacingDtosRemainStableWithMissingData(): void
@@ -148,6 +149,7 @@ class AcceptanceCriteriaTest extends TestCase
             'stars',
             'forks',
             'open_issues',
+            'contributors',
             'good_first_issues',
             'help_wanted_issues',
             'project_size',

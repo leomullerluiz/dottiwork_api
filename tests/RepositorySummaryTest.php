@@ -23,6 +23,7 @@ class RepositorySummaryTest extends TestCase
             'forks_count' => 120,
             'watchers_count' => 80,
             'open_issues_count' => 32,
+            'contributors_count' => 18,
             'license' => ['spdx_id' => 'MIT'],
             'pushed_at' => date('c'),
             'updated_at' => date('c'),
@@ -49,6 +50,7 @@ class RepositorySummaryTest extends TestCase
         $this->assertSame(120, $summary['forks']);
         $this->assertSame(80, $summary['watchers']);
         $this->assertSame(32, $summary['open_issues']);
+        $this->assertSame(18, $summary['contributors']);
         $this->assertSame(5, $summary['good_first_issues']);
         $this->assertSame(3, $summary['help_wanted_issues']);
         $this->assertSame('MIT', $summary['license']);
@@ -74,6 +76,7 @@ class RepositorySummaryTest extends TestCase
         $this->assertSame([], $summary['languages']);
         $this->assertSame([], $summary['topics']);
         $this->assertSame(0, $summary['stars']);
+        $this->assertSame(0, $summary['contributors']);
         $this->assertSame(0, $summary['good_first_issues']);
         $this->assertSame(0, $summary['help_wanted_issues']);
         $this->assertSame('small', $summary['project_size']);

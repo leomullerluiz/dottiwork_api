@@ -136,6 +136,32 @@ class UserRepositoryState
         $stmt->execute(['user_id' => $userId]);
     }
 
+    public static function listStateMapByUserAndRepositoryIds($userId, array $githubRepositoryIds)
+    {
+        $githubRepositoryIds = array_values(array_unique(array_filter(array_map('intval', $githubRepositoryIds))));
+        if (!$githubRepositoryIds) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($githubRepositoryIds), '?'));
+        $params = array_merge([$userId], $githubRepositoryIds);
+        $db = Database::getInstance()->getConnection();
+        $stmt = $db->prepare("
+            SELECT github_repository_id, state
+            FROM user_repository_states
+            WHERE user_id = ?
+              AND github_repository_id IN ({$placeholders})
+        ");
+        $stmt->execute($params);
+
+        $map = [];
+        foreach ($stmt->fetchAll() as $row) {
+            $map[(int) $row['github_repository_id']] = $row['state'];
+        }
+
+        return $map;
+    }
+
     private static function decodeListRow($row)
     {
         if (!$row) {
