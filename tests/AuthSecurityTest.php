@@ -104,4 +104,25 @@ class AuthSecurityTest extends TestCase
         $this->assertStringNotContainsString('203.0.113.10', $hash);
         $this->assertNotSame($hash, RateLimiter::keyHash($request, 'auth.github.callback'));
     }
+
+    public function testRateLimiterBuildsSeparateIpAndAccountKeys(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_SERVER['REQUEST_URI'] = '/me/account';
+        $_SERVER['SCRIPT_NAME'] = '/api/index.php';
+        $_SERVER['REMOTE_ADDR'] = '203.0.113.20';
+        unset($_SERVER['HTTP_AUTHORIZATION']);
+        $_GET = [];
+        $_COOKIE = [];
+
+        $request = new Request();
+        $ipHash = RateLimiter::keyHash($request, 'account.delete');
+        $accountHash = RateLimiter::keyHash($request, 'account.delete', 'user:42');
+        $hashes = RateLimiter::keyHashes($request, 'account.delete', 'user:42');
+
+        $this->assertCount(2, $hashes);
+        $this->assertContains($ipHash, $hashes);
+        $this->assertContains($accountHash, $hashes);
+        $this->assertNotSame($ipHash, $accountHash);
+    }
 }

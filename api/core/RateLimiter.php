@@ -8,11 +8,13 @@ class RateLimiter
             return true;
         }
 
-        $keyHash = self::keyHash($request, $action, $identity);
+        $keyHashes = self::keyHashes($request, $action, $identity);
 
         try {
-            if (!self::consume($keyHash, $limit, $windowSeconds)) {
-                Response::tooManyRequests('Muitas requisicoes. Tente novamente em alguns minutos.');
+            foreach ($keyHashes as $keyHash) {
+                if (!self::consume($keyHash, $limit, $windowSeconds)) {
+                    Response::tooManyRequests('Muitas requisicoes. Tente novamente em alguns minutos.');
+                }
             }
         } catch (Throwable $e) {
             if (self::env('APP_ENV') === 'production') {
@@ -27,8 +29,38 @@ class RateLimiter
 
     public static function keyHash(Request $request, $action, $identity = null)
     {
-        $source = $identity ?: ($request->getClientIp() ?: 'unknown');
+        $source = self::identitySource($request, $identity);
         return hash('sha256', $action . '|' . $source);
+    }
+
+    public static function keyHashes(Request $request, $action, $identity = null)
+    {
+        $sources = [self::ipSource($request)];
+
+        if ($identity !== null && $identity !== '') {
+            $sources[] = (string) $identity;
+        }
+
+        $hashes = [];
+        foreach (array_unique($sources) as $source) {
+            $hashes[] = hash('sha256', $action . '|' . $source);
+        }
+
+        return $hashes;
+    }
+
+    private static function identitySource(Request $request, $identity = null)
+    {
+        if ($identity !== null && $identity !== '') {
+            return (string) $identity;
+        }
+
+        return self::ipSource($request);
+    }
+
+    private static function ipSource(Request $request)
+    {
+        return $request->getClientIp() ?: 'unknown';
     }
 
     private static function consume($keyHash, $limit, $windowSeconds)
