@@ -1,11 +1,11 @@
-# Documentacao Tecnica - dotti.work API v2
+# Technical Documentation - dotti.work API v2
 
-Esta documentacao resume a arquitetura atual. O contrato detalhado de rotas, schemas e exemplos fica em `openapi.yaml`.
+This document summarizes the current backend architecture. The detailed HTTP contract, schemas, and examples live in `openapi.yaml`.
 
-## Arquitetura
+## Architecture
 
 ```text
-Cliente
+Client
   -> Apache/.htaccess
   -> api/index.php
   -> Router
@@ -13,37 +13,38 @@ Cliente
   -> Service
   -> Model
   -> PDO/MySQL
-  -> Response JSON
+  -> JSON response
 ```
 
-## Camadas
+## Layers
 
-- `api/core`: infraestrutura HTTP, sessao, OAuth, GitHubClient, criptografia e validacao.
-- `api/controller`: entrada das rotas; autentica, valida e chama services/models.
-- `api/model`: acesso a banco via PDO.
-- `api/service`: regras de negocio, matching, saude de repositorio, dificuldade de issues e import/export.
-- `migrations`: schema incremental da API v2.
-- `docs`: Swagger UI.
+- `api/core`: HTTP primitives, routing, response formatting, auth/session helpers, GitHub OAuth, GitHub client, cryptography, validation, rate limiting, mail, and CORS.
+- `api/controller`: route entry points. Controllers authenticate, validate input, call services/models, and return JSON responses.
+- `api/model`: PDO/MySQL data access and response shaping.
+- `api/service`: business rules, matching, repository health, issue difficulty, public profiles, invites, badges, import/export, and email orchestration.
+- `migrations`: incremental schema changes for API v2.
+- `docs`: Swagger UI assets.
+- `tests`: PHPUnit coverage for isolated services, DTOs, contracts, and security behavior.
 
-## Autenticacao
+## Authentication
 
-O unico login suportado no MVP e GitHub OAuth App.
+GitHub OAuth App is the only login method in the MVP.
 
-Regras:
+Rules:
 
-- Nao existe signup manual.
-- Nao existe login por senha.
-- Nao existe password reset.
-- O access token do GitHub e criptografado no banco.
-- O access token do GitHub nunca e enviado ao front-end.
-- A sessao da API usa token opaco proprio.
-- O banco salva apenas `token_hash`.
-- O browser deve usar cookie HttpOnly com `credentials: "include"`.
-- Integracoes externas podem usar `Authorization: Bearer TOKEN`.
+- No manual signup.
+- No password login.
+- No password reset.
+- GitHub access tokens are encrypted before being stored.
+- GitHub access tokens are never returned to the frontend.
+- API sessions use first-party opaque tokens.
+- Only `token_hash` is stored for local session tokens.
+- Browsers should use an HttpOnly cookie with `fetch(..., { credentials: "include" })`.
+- External integrations and tests may use `Authorization: Bearer TOKEN`.
 
-## Respostas
+## Response Contract
 
-Sucesso:
+Success:
 
 ```json
 {
@@ -52,62 +53,76 @@ Sucesso:
 }
 ```
 
-Erro:
+Error:
 
 ```json
 {
   "success": false,
   "error": {
     "code": "VALIDATION_ERROR",
-    "message": "Dados invalidos.",
+    "message": "Invalid data.",
     "details": []
   }
 }
 ```
 
-## Dominio
+## Domain
 
-O dominio antigo de tarefas foi descontinuado nas rotas publicas. O dominio atual possui:
+The legacy task/notepad/password domain is no longer exposed by public routes. The current domain includes:
 
-- Usuarios autenticados via GitHub.
-- Perfil profissional.
-- Objetivos de portfolio/contribuicao.
-- Catalogo de tecnologias.
-- Stacks do usuario.
-- Preferencias de matching.
-- Cache de repositorios e issues do GitHub.
-- Matches persistidos e explicaveis.
-- Estados de repositorio por usuario.
-- Historico de interacoes.
-- Importacao de dados do MVP localStorage.
-- Exportacao dos dados do usuario.
+- Users authenticated through GitHub.
+- Professional profile and onboarding state.
+- Portfolio and contribution goals.
+- Technology catalog.
+- User technology stack.
+- Matching preferences.
+- GitHub repository and issue cache.
+- Persistent, explainable repository matches.
+- Per-user repository states.
+- User activity history.
+- Public profiles.
+- Invite links and referrals.
+- Consent tracking.
+- Badge catalog, progress, and earned badges.
+- Import from the localStorage MVP format.
+- User data export and account deletion.
 
-## Migration
+## Database Setup
 
-Aplicar:
+For a fresh local install without users, sessions, OAuth accounts, or cached GitHub data:
 
 ```bash
-mysql -u usuario -p banco < migrations/202606230001_open_source_portal.sql
-mysql -u usuario -p banco < migrations/202607040001_user_consents.sql
-mysql -u usuario -p banco < migrations/202607040002_rate_limit_buckets.sql
+mysql -u root -p dottiwork_db < db_dump.sql
 ```
 
-Ela preserva tabelas antigas e cria/adapta as estruturas da API v2.
+For incremental upgrades from an older database, apply migrations in chronological order. Important baseline files include:
 
-## Seguranca
+```bash
+mysql -u user -p database < migrations/202606230001_open_source_portal.sql
+mysql -u user -p database < migrations/202607040001_user_consents.sql
+mysql -u user -p database < migrations/202607040002_rate_limit_buckets.sql
+mysql -u user -p database < migrations/202607070001_invite_links.sql
+mysql -u user -p database < migrations/202607080001_badges.sql
+mysql -u user -p database < migrations/202607080002_public_user_profiles.sql
+mysql -u user -p database < migrations/202607090001_badge_notification_seen.sql
+mysql -u user -p database < migrations/202607100001_badge_image_assets.sql
+```
 
-- CORS usa origens configuradas em `CORS_ALLOWED_ORIGINS`; em producao, configure apenas dominios do front.
-- Cookies usam `HttpOnly`, `Secure` via `SESSION_COOKIE_SECURE`, `SameSite` via `SESSION_COOKIE_SAMESITE` e dominio opcional via `SESSION_COOKIE_DOMAIN`.
-- Mutacoes autenticadas por cookie exigem `Origin` permitido para reduzir risco de CSRF.
-- Rate limit usa `rate_limit_buckets` com chaves SHA-256; IPs, tokens, cookies e headers sensiveis nao sao armazenados.
-- SQL usa prepared statements.
-- `return_to` OAuth aceita apenas caminhos internos.
-- `.htaccess` bloqueia acesso direto a `config`, `core`, `controller`, `model`, `service`, `tests`, `vendor`, `migrations` e `templates`.
+## Security
 
-## Testes
+- CORS uses `CORS_ALLOWED_ORIGINS`; in production, allow only frontend domains.
+- Cookies use `HttpOnly`, `Secure` through `SESSION_COOKIE_SECURE`, `SameSite` through `SESSION_COOKIE_SAMESITE`, and an optional `SESSION_COOKIE_DOMAIN`.
+- Cookie-authenticated mutations require an allowed `Origin` to reduce CSRF risk.
+- Rate limiting uses `rate_limit_buckets` with SHA-256 keys; raw IPs, tokens, cookies, and sensitive headers are not stored.
+- SQL statements use prepared statements.
+- OAuth `return_to` accepts internal paths only.
+- `.htaccess` blocks direct access to `config`, `core`, `controller`, `model`, `service`, `tests`, `vendor`, `migrations`, and `templates`.
+- Secrets must come from environment variables. Do not commit `.env`.
+
+## Tests
 
 ```bash
 vendor/bin/phpunit
 ```
 
-Os testes atuais cobrem componentes sem banco: token local, parsing Bearer, seguranca do `return_to`, validacoes, estimativa de dificuldade e score deterministico.
+Current tests cover local token handling, Bearer parsing, OAuth `return_to` safety, validation, deterministic matching, issue difficulty estimation, public profile shaping, badge progress, invites, consents, and response contracts.

@@ -3,57 +3,58 @@ info:
   title: dotti.work API
   version: 2.0.0
   description: >
-    API PHP nativa para descoberta de projetos open source com OAuth GitHub,
-    perfil tecnico, preferencias, cache de repositorios/issues e matching
-    deterministico. Todas as rotas listadas tambem sao registradas com o
-    prefixo /api/v1.
+    Native PHP API for open source project discovery with GitHub OAuth,
+    technical profiles, preferences, repository/issue cache, and deterministic
+    matching. Every listed route is also registered with the /api/v1 prefix.
 
 servers:
   - url: https://api.dottiwork.com
-    description: Producao
+    description: Production
   - url: https://api.dottiwork.com/api/v1
-    description: Producao com prefixo versionado
+    description: Production with versioned prefix
   - url: http://localhost/dottiwork_api/api
     description: Local
   - url: http://localhost/dottiwork_api/api/api/v1
-    description: Local com prefixo versionado
+    description: Local with versioned prefix
 
 tags:
-  - name: Sistema
-    description: Rotas de disponibilidade da API.
-  - name: Autenticacao
-    description: Login GitHub OAuth, sessao local e integracao GitHub.
-  - name: Perfil
-    description: Perfil profissional, onboarding, importacao e exportacao.
-  - name: Perfil Publico
-    description: Pagina publica compartilhavel do usuario.
-  - name: Catalogo
-    description: Catalogos publicos usados pelo produto.
-  - name: Tecnologias
-    description: Stack tecnica do usuario.
-  - name: Preferencias
-    description: Preferencias usadas no matching.
+  - name: System
+    description: API availability routes.
+  - name: Authentication
+    description: GitHub OAuth login, local sessions, and GitHub integration.
+  - name: Profile
+    description: Professional profile, onboarding, import, and export.
+  - name: Public Profile
+    description: Shareable public user profile.
+  - name: Catalog
+    description: Public catalogs used by the product.
+  - name: Technologies
+    description: User technical stack.
+  - name: Preferences
+    description: Preferences used for matching.
   - name: Matches
-    description: Recomendacoes de repositorios.
-  - name: Repositorios
-    description: Dados, issues e atividade de repositorios GitHub.
-  - name: Estados
-    description: Projetos salvos, ignorados e em andamento.
-  - name: Historico
-    description: Historico de interacoes do usuario.
-  - name: Convites
-    description: Links de convite, validacao publica e indicacoes efetivas.
+    description: Repository recommendations.
+  - name: Repositories
+    description: GitHub repository data, issues, and activity.
+  - name: States
+    description: Saved, ignored, and in-progress projects.
+  - name: History
+    description: User interaction history.
+  - name: Invites
+    description: Invite links, public validation, and effective referrals.
   - name: Badges
-    description: Catalogo, progresso e conquistas do usuario.
-  - name: Conta
-    description: Operacoes de conta do usuario autenticado.
+    description: Badge catalog, progress, and user achievements.
+  - name: Privacy
+    description: Consent and privacy operations for authenticated users.
+  - name: Account
+    description: Authenticated user account operations.
 
 paths:
   /:
     get:
-      tags: [Sistema]
+      tags: [System]
       operationId: getRootHealth
-      summary: Status da API
+      summary: API status
       responses:
         "200":
           description: API online.
@@ -64,9 +65,9 @@ paths:
 
   /health:
     get:
-      tags: [Sistema]
+      tags: [System]
       operationId: getHealth
-      summary: Status da API
+      summary: API status
       responses:
         "200":
           description: API online.
@@ -77,16 +78,16 @@ paths:
 
   /health/database:
     get:
-      tags: [Sistema]
+      tags: [System]
       operationId: getDatabaseHealth
-      summary: Status do banco de dados
-      description: Em producao exige sessao autenticada; em ambiente local pode ser publico.
+      summary: Database status
+      description: Requires an authenticated session in production; may be public in local environments.
       security:
         - BearerAuth: []
         - CookieAuth: []
       responses:
         "200":
-          description: Banco online.
+          description: Database online.
           content:
             application/json:
               schema:
@@ -98,26 +99,26 @@ paths:
 
   /auth/github/start:
     get:
-      tags: [Autenticacao]
+      tags: [Authentication]
       operationId: startGitHubOAuth
-      summary: Inicia OAuth com GitHub
+      summary: Start GitHub OAuth
       parameters:
         - in: query
           name: return_to
           schema:
             type: string
             example: /onboarding
-          description: Caminho interno seguro para retorno apos login.
+          description: Safe internal path to return to after login.
         - in: query
           name: invite_code
           schema:
             type: string
             pattern: "^[A-Za-z0-9_-]{12,64}$"
             example: AbC123xYz_456789
-          description: Codigo opcional de convite a ser persistido no state OAuth.
+          description: Optional invite code to persist in the OAuth state.
       responses:
         "302":
-          description: Redireciona para a tela de autorizacao do GitHub.
+          description: Redirects to the GitHub authorization screen.
           headers:
             Location:
               schema:
@@ -128,9 +129,9 @@ paths:
 
   /auth/github/callback:
     get:
-      tags: [Autenticacao]
+      tags: [Authentication]
       operationId: handleGitHubOAuthCallback
-      summary: Callback OAuth GitHub
+      summary: GitHub OAuth callback
       parameters:
         - in: query
           name: code
@@ -144,7 +145,7 @@ paths:
             type: string
       responses:
         "302":
-          description: Grava cookie HttpOnly e redireciona para o front-end.
+          description: Writes the HttpOnly cookie and redirects to the frontend.
           headers:
             Location:
               schema:
@@ -153,15 +154,15 @@ paths:
 
   /auth/me:
     get:
-      tags: [Autenticacao]
+      tags: [Authentication]
       operationId: getAuthenticatedUser
-      summary: Usuario autenticado
+      summary: Authenticated user
       security:
         - BearerAuth: []
         - CookieAuth: []
       responses:
         "200":
-          description: Usuario atual, perfil resumido e status GitHub.
+          description: Current user, summarized profile, and GitHub status.
           content:
             application/json:
               schema:
@@ -171,15 +172,15 @@ paths:
 
   /auth/logout:
     post:
-      tags: [Autenticacao]
+      tags: [Authentication]
       operationId: logoutCurrentSession
-      summary: Revoga sessao atual
+      summary: Revoke current session
       security:
         - BearerAuth: []
         - CookieAuth: []
       responses:
         "200":
-          description: Sessao atual revogada.
+          description: Current session revoked.
           content:
             application/json:
               schema:
@@ -191,15 +192,15 @@ paths:
 
   /auth/logout-all:
     post:
-      tags: [Autenticacao]
+      tags: [Authentication]
       operationId: logoutAllSessions
-      summary: Revoga todas as sessoes do usuario
+      summary: Revoke all user sessions
       security:
         - BearerAuth: []
         - CookieAuth: []
       responses:
         "200":
-          description: Todas as sessoes foram revogadas.
+          description: All sessions were revoked.
           content:
             application/json:
               schema:
@@ -211,15 +212,15 @@ paths:
 
   /auth/session:
     get:
-      tags: [Autenticacao]
+      tags: [Authentication]
       operationId: getCurrentSession
-      summary: Valida sessao atual
+      summary: Validate current session
       security:
         - BearerAuth: []
         - CookieAuth: []
       responses:
         "200":
-          description: Sessao autenticada.
+          description: Authenticated session.
           content:
             application/json:
               schema:
@@ -229,15 +230,15 @@ paths:
 
   /integrations/github/status:
     get:
-      tags: [Autenticacao]
+      tags: [Authentication]
       operationId: getGitHubIntegrationStatus
-      summary: Status da integracao GitHub
+      summary: GitHub integration status
       security:
         - BearerAuth: []
         - CookieAuth: []
       responses:
         "200":
-          description: Status da conta GitHub vinculada.
+          description: Linked GitHub account status.
           content:
             application/json:
               schema:
@@ -247,15 +248,15 @@ paths:
 
   /integrations/github:
     delete:
-      tags: [Autenticacao]
+      tags: [Authentication]
       operationId: disconnectGitHubIntegration
-      summary: Desconecta a integracao GitHub
+      summary: Disconnect GitHub integration
       security:
         - BearerAuth: []
         - CookieAuth: []
       responses:
         "200":
-          description: Integracao GitHub desconectada.
+          description: GitHub integration disconnected.
           content:
             application/json:
               schema:
@@ -269,15 +270,15 @@ paths:
 
   /integrations/github/sync:
     post:
-      tags: [Autenticacao]
+      tags: [Authentication]
       operationId: syncGitHubProfile
-      summary: Sincroniza perfil publico do GitHub
+      summary: Sync public GitHub profile
       security:
         - BearerAuth: []
         - CookieAuth: []
       responses:
         "200":
-          description: Perfil sincronizado.
+          description: Profile sincronizado.
           content:
             application/json:
               schema:
@@ -293,15 +294,15 @@ paths:
 
   /me/profile:
     get:
-      tags: [Perfil]
+      tags: [Profile]
       operationId: getMyProfile
-      summary: Perfil completo do usuario
+      summary: Complete user profile
       security:
         - BearerAuth: []
         - CookieAuth: []
       responses:
         "200":
-          description: Usuario e perfil completos.
+          description: Complete user and profile.
           content:
             application/json:
               schema:
@@ -309,9 +310,9 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
     put:
-      tags: [Perfil]
+      tags: [Profile]
       operationId: updateMyProfile
-      summary: Atualiza perfil, nome publico e objetivos
+      summary: Update profile, public name, and goals
       security:
         - BearerAuth: []
         - CookieAuth: []
@@ -323,7 +324,7 @@ paths:
               $ref: "#/components/schemas/ProfileUpdateInput"
       responses:
         "200":
-          description: Perfil atualizado.
+          description: Profile atualizado.
           content:
             application/json:
               schema:
@@ -337,10 +338,10 @@ paths:
 
   /public/profiles/{login}:
     get:
-      tags: [Perfil Publico]
+      tags: [Public Profile]
       operationId: getPublicUserProfile
-      summary: Perfil publico consolidado por login ou slug
-      description: Nao exige autenticacao e nunca expoe email, tokens, notas privadas ou historico bruto.
+      summary: Consolidated public profile by login or slug
+      description: Does not require authentication and never exposes email, tokens, private notes, or raw history.
       parameters:
         - in: path
           name: login
@@ -351,7 +352,7 @@ paths:
             example: ana-dev
       responses:
         "200":
-          description: Perfil publico encontrado.
+          description: Public profile found.
           content:
             application/json:
               schema:
@@ -363,15 +364,15 @@ paths:
 
   /me/public-profile:
     get:
-      tags: [Perfil Publico]
+      tags: [Public Profile]
       operationId: previewMyPublicProfile
-      summary: Preview autenticado do perfil publico
+      summary: Authenticated public profile preview
       security:
         - BearerAuth: []
         - CookieAuth: []
       responses:
         "200":
-          description: Preview do perfil publico e link de compartilhamento.
+          description: Public profile preview and share link.
           content:
             application/json:
               schema:
@@ -381,9 +382,9 @@ paths:
 
   /me/public-profile/settings:
     put:
-      tags: [Perfil Publico]
+      tags: [Public Profile]
       operationId: updateMyPublicProfileSettings
-      summary: Atualiza configuracoes do perfil publico
+      summary: Update public profile settings
       security:
         - BearerAuth: []
         - CookieAuth: []
@@ -395,7 +396,7 @@ paths:
               $ref: "#/components/schemas/PublicProfileSettingsInput"
       responses:
         "200":
-          description: Configuracoes publicas atualizadas.
+          description: Public settings updated.
           content:
             application/json:
               schema:
@@ -411,9 +412,9 @@ paths:
 
   /me/import-local-data:
     post:
-      tags: [Perfil]
+      tags: [Profile]
       operationId: importLocalData
-      summary: Importa dados do MVP/localStorage
+      summary: Import MVP/localStorage data
       security:
         - BearerAuth: []
         - CookieAuth: []
@@ -425,7 +426,7 @@ paths:
               $ref: "#/components/schemas/LocalDataImport"
       responses:
         "200":
-          description: Dados importados e exportacao consolidada retornada.
+          description: Data imported and consolidated export returned.
           content:
             application/json:
               schema:
@@ -439,15 +440,15 @@ paths:
 
   /me/export:
     get:
-      tags: [Perfil]
+      tags: [Profile]
       operationId: exportMyData
-      summary: Exporta dados persistidos do usuario
+      summary: Export persisted user data
       security:
         - BearerAuth: []
         - CookieAuth: []
       responses:
         "200":
-          description: Exportacao dos dados do usuario.
+          description: User data export.
           content:
             application/json:
               schema:
@@ -457,16 +458,16 @@ paths:
 
   /me/account:
     delete:
-      tags: [Conta]
+      tags: [Account]
       operationId: deleteMyAccount
-      summary: Exclui a conta do usuario autenticado
-      description: Revoga sessoes e marca o usuario com soft delete.
+      summary: Delete the authenticated user account
+      description: Revokes sessions and soft-deletes the user.
       security:
         - BearerAuth: []
         - CookieAuth: []
       responses:
         "200":
-          description: Conta excluida.
+          description: Account deleted.
           content:
             application/json:
               schema:
@@ -478,15 +479,15 @@ paths:
 
   /me/invite-links:
     get:
-      tags: [Convites]
+      tags: [Invites]
       operationId: listMyInviteLinks
-      summary: Lista links de convite do usuario
+      summary: List user invite links
       security:
         - BearerAuth: []
         - CookieAuth: []
       responses:
         "200":
-          description: Links de convite e resumo de indicacoes.
+          description: Invite links and referral summary.
           content:
             application/json:
               schema:
@@ -494,16 +495,16 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
     post:
-      tags: [Convites]
+      tags: [Invites]
       operationId: createMyInviteLink
-      summary: Cria ou retorna o link principal ativo
-      description: Operacao idempotente para garantir um link ativo principal por usuario.
+      summary: Create or return the primary active link
+      description: Idempotent operation that ensures one primary active link per user.
       security:
         - BearerAuth: []
         - CookieAuth: []
       responses:
         "200":
-          description: Link de convite ativo.
+          description: Active invite link.
           content:
             application/json:
               schema:
@@ -517,9 +518,9 @@ paths:
 
   /me/invite-links/{id}/revoke:
     post:
-      tags: [Convites]
+      tags: [Invites]
       operationId: revokeMyInviteLink
-      summary: Revoga um link de convite do usuario
+      summary: Revoke a user invite link
       security:
         - BearerAuth: []
         - CookieAuth: []
@@ -532,7 +533,7 @@ paths:
             format: int64
       responses:
         "200":
-          description: Link revogado.
+          description: Link revoked.
           content:
             application/json:
               schema:
@@ -550,9 +551,9 @@ paths:
 
   /me/referrals:
     get:
-      tags: [Convites]
+      tags: [Invites]
       operationId: listMyReferrals
-      summary: Lista indicacoes efetivas do usuario
+      summary: List effective user referrals
       security:
         - BearerAuth: []
         - CookieAuth: []
@@ -560,7 +561,7 @@ paths:
         - $ref: "#/components/parameters/Limit"
       responses:
         "200":
-          description: Resumo e lista de indicacoes efetivas.
+          description: Summary and list of effective referrals.
           content:
             application/json:
               schema:
@@ -570,9 +571,9 @@ paths:
 
   /invites/{code}:
     get:
-      tags: [Convites]
+      tags: [Invites]
       operationId: getPublicInvite
-      summary: Valida convite publico
+      summary: Validate public invite
       security: []
       parameters:
         - in: path
@@ -584,7 +585,7 @@ paths:
           example: AbC123xYz_456789
       responses:
         "200":
-          description: Convite valido.
+          description: Valid invite.
           content:
             application/json:
               schema:
@@ -596,9 +597,9 @@ paths:
 
   /catalog/technologies:
     get:
-      tags: [Catalogo]
+      tags: [Catalog]
       operationId: listTechnologies
-      summary: Lista catalogo de tecnologias
+      summary: List technology catalog
       parameters:
         - $ref: "#/components/parameters/TechnologyCategory"
         - $ref: "#/components/parameters/Search"
@@ -607,7 +608,7 @@ paths:
         - $ref: "#/components/parameters/Cursor"
       responses:
         "200":
-          description: Lista paginada de tecnologias.
+          description: Paginated technology list.
           content:
             application/json:
               schema:
@@ -615,9 +616,9 @@ paths:
 
   /catalog/technologies/{slug}:
     get:
-      tags: [Catalogo]
+      tags: [Catalog]
       operationId: getTechnologyBySlug
-      summary: Detalhe de tecnologia
+      summary: Technology detail
       parameters:
         - in: path
           name: slug
@@ -627,7 +628,7 @@ paths:
           example: typescript
       responses:
         "200":
-          description: Tecnologia encontrada.
+          description: Technology found.
           content:
             application/json:
               schema:
@@ -637,15 +638,15 @@ paths:
 
   /me/technologies:
     get:
-      tags: [Tecnologias]
+      tags: [Technologies]
       operationId: getMyTechnologies
-      summary: Stack tecnica do usuario
+      summary: User technical stack
       security:
         - BearerAuth: []
         - CookieAuth: []
       responses:
         "200":
-          description: Tecnologias escolhidas pelo usuario.
+          description: Technologies selected by the user.
           content:
             application/json:
               schema:
@@ -653,9 +654,9 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
     put:
-      tags: [Tecnologias]
+      tags: [Technologies]
       operationId: replaceMyTechnologies
-      summary: Substitui stack tecnica do usuario
+      summary: Replace user technical stack
       security:
         - BearerAuth: []
         - CookieAuth: []
@@ -667,7 +668,7 @@ paths:
               $ref: "#/components/schemas/UserTechnologyReplaceInput"
       responses:
         "200":
-          description: Tecnologias substituidas.
+          description: Technologies substituidas.
           content:
             application/json:
               schema:
@@ -681,15 +682,15 @@ paths:
 
   /me/preferences:
     get:
-      tags: [Preferencias]
+      tags: [Preferences]
       operationId: getMyPreferences
-      summary: Preferencias do usuario
+      summary: User preferences
       security:
         - BearerAuth: []
         - CookieAuth: []
       responses:
         "200":
-          description: Preferencias atuais.
+          description: Preferences atuais.
           content:
             application/json:
               schema:
@@ -697,9 +698,9 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
     put:
-      tags: [Preferencias]
+      tags: [Preferences]
       operationId: updateMyPreferences
-      summary: Atualiza preferencias e invalida matches
+      summary: Update preferences and invalidate matches
       security:
         - BearerAuth: []
         - CookieAuth: []
@@ -711,7 +712,7 @@ paths:
               $ref: "#/components/schemas/UserPreferenceInput"
       responses:
         "200":
-          description: Preferencias atualizadas.
+          description: Preferences atualizadas.
           content:
             application/json:
               schema:
@@ -725,15 +726,15 @@ paths:
 
   /me/consents:
     get:
-      tags: [Privacidade]
+      tags: [Privacy]
       operationId: listMyConsents
-      summary: Lista consentimentos LGPD do usuario
+      summary: List user privacy consents
       security:
         - BearerAuth: []
         - CookieAuth: []
       responses:
         "200":
-          description: Consentimentos atuais.
+          description: Current consents.
           content:
             application/json:
               schema:
@@ -741,9 +742,9 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
     post:
-      tags: [Privacidade]
+      tags: [Privacy]
       operationId: grantMyConsent
-      summary: Registra ou reativa consentimento LGPD
+      summary: Register or reactivate privacy consent
       security:
         - BearerAuth: []
         - CookieAuth: []
@@ -755,7 +756,7 @@ paths:
               $ref: "#/components/schemas/UserConsentInput"
       responses:
         "200":
-          description: Consentimento registrado.
+          description: Consent registered.
           content:
             application/json:
               schema:
@@ -769,9 +770,9 @@ paths:
 
   /me/consents/{type}:
     delete:
-      tags: [Privacidade]
+      tags: [Privacy]
       operationId: revokeMyConsent
-      summary: Revoga consentimento LGPD opcional
+      summary: Revoke optional privacy consent
       security:
         - BearerAuth: []
         - CookieAuth: []
@@ -783,7 +784,7 @@ paths:
             $ref: "#/components/schemas/ConsentType"
       responses:
         "200":
-          description: Consentimento revogado.
+          description: Consent revoked.
           content:
             application/json:
               schema:
@@ -801,10 +802,10 @@ paths:
     get:
       tags: [Badges]
       operationId: listBadgeCatalog
-      summary: Lista catalogo publico de badges
+      summary: List public badge catalog
       responses:
         "200":
-          description: Catalogo de badges ativas.
+          description: Catalog de badges ativas.
           content:
             application/json:
               schema:
@@ -814,13 +815,13 @@ paths:
     get:
       tags: [Badges]
       operationId: listMyBadges
-      summary: Lista badges conquistadas e progresso
+      summary: List earned badges and progress
       security:
         - BearerAuth: []
         - CookieAuth: []
       responses:
         "200":
-          description: Badges conquistadas, progresso e conquistas recentes.
+          description: Earned badges, progress, and recent awards.
           content:
             application/json:
               schema:
@@ -832,13 +833,13 @@ paths:
     post:
       tags: [Badges]
       operationId: evaluateMyBadges
-      summary: Recalcula badges do usuario autenticado
+      summary: Recalculate badges for the authenticated user
       security:
         - BearerAuth: []
         - CookieAuth: []
       responses:
         "200":
-          description: Avaliacao executada.
+          description: Evaluation executed.
           content:
             application/json:
               schema:
@@ -854,7 +855,7 @@ paths:
     post:
       tags: [Badges]
       operationId: markBadgeNotificationsViewed
-      summary: Marca notificacoes de badges como visualizadas
+      summary: Mark badge notifications as viewed
       security:
         - BearerAuth: []
         - CookieAuth: []
@@ -866,7 +867,7 @@ paths:
               $ref: "#/components/schemas/BadgeNotificationViewedRequest"
       responses:
         "200":
-          description: Notificacoes marcadas como visualizadas.
+          description: Notifications marked as viewed.
           content:
             application/json:
               schema:
@@ -884,7 +885,7 @@ paths:
     get:
       tags: [Matches]
       operationId: listMatches
-      summary: Lista matches armazenados
+      summary: List stored matches
       security:
         - BearerAuth: []
         - CookieAuth: []
@@ -950,7 +951,7 @@ paths:
         - $ref: "#/components/parameters/Cursor"
       responses:
         "200":
-          description: Lista de matches em cache.
+          description: Cached match list.
           content:
             application/json:
               schema:
@@ -964,13 +965,13 @@ paths:
     post:
       tags: [Matches]
       operationId: refreshMatches
-      summary: Recalcula matches usando GitHub e cache
+      summary: Recalculate matches using GitHub and cache
       security:
         - BearerAuth: []
         - CookieAuth: []
       responses:
         "200":
-          description: Matches recalculados.
+          description: Matches recalculated.
           content:
             application/json:
               schema:
@@ -988,7 +989,7 @@ paths:
     get:
       tags: [Matches]
       operationId: getMatchByRepositoryId
-      summary: Retorna match especifico
+      summary: Return specific match
       security:
         - BearerAuth: []
         - CookieAuth: []
@@ -996,7 +997,7 @@ paths:
         - $ref: "#/components/parameters/GitHubRepositoryId"
       responses:
         "200":
-          description: Match encontrado.
+          description: Match found.
           content:
             application/json:
               schema:
@@ -1008,9 +1009,9 @@ paths:
 
   /repositories/top:
     get:
-      tags: [Repositorios]
+      tags: [Repositories]
       operationId: listTopRepositories
-      summary: Lista repositorios populares por ranking global
+      summary: List popular repositories by global ranking
       security:
         - {}
         - BearerAuth: []
@@ -1020,18 +1021,18 @@ paths:
           name: sort_by
           schema:
             $ref: "#/components/schemas/TopRepositorySortBy"
-          description: Ranking ativo exibido na tela.
+          description: Active ranking displayed on the screen.
         - in: query
           name: technology
           schema:
             type: string
-          description: Slug de tecnologia ativa do catalogo.
+          description: Active technology slug from the catalog.
           example: typescript
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Cursor"
       responses:
         "200":
-          description: Ranking global paginado a partir do cache de repositorios.
+          description: Paginated global ranking from repository cache.
           content:
             application/json:
               schema:
@@ -1045,9 +1046,9 @@ paths:
 
   /repositories/{owner}/{repo}:
     get:
-      tags: [Repositorios]
+      tags: [Repositories]
       operationId: getRepository
-      summary: Detalhe de repositorio
+      summary: Repository detail
       security:
         - BearerAuth: []
         - CookieAuth: []
@@ -1056,7 +1057,7 @@ paths:
         - $ref: "#/components/parameters/Repo"
       responses:
         "200":
-          description: Repositorio, saude, estado do usuario e match quando existir.
+          description: Repository, health, user state, and match when available.
           content:
             application/json:
               schema:
@@ -1068,9 +1069,9 @@ paths:
 
   /repositories/{owner}/{repo}/issues:
     get:
-      tags: [Repositorios]
+      tags: [Repositories]
       operationId: listRepositoryIssues
-      summary: Lista issues de repositorio com estimativa de dificuldade
+      summary: List repository issues with difficulty estimation
       security:
         - BearerAuth: []
         - CookieAuth: []
@@ -1090,7 +1091,7 @@ paths:
         - $ref: "#/components/parameters/Cursor"
       responses:
         "200":
-          description: Issues em cache ou carregadas do GitHub.
+          description: Issues from cache or loaded from GitHub.
           content:
             application/json:
               schema:
@@ -1102,9 +1103,9 @@ paths:
 
   /repositories/{owner}/{repo}/activity:
     post:
-      tags: [Repositorios]
+      tags: [Repositories]
       operationId: createRepositoryActivity
-      summary: Registra interacao com repositorio
+      summary: Register repository interaction
       security:
         - BearerAuth: []
         - CookieAuth: []
@@ -1119,7 +1120,7 @@ paths:
               $ref: "#/components/schemas/RepositoryActivityInput"
       responses:
         "201":
-          description: Evento criado.
+          description: Event created.
           content:
             application/json:
               schema:
@@ -1133,9 +1134,9 @@ paths:
 
   /me/repositories:
     get:
-      tags: [Estados]
+      tags: [States]
       operationId: listMyRepositoryStates
-      summary: Lista projetos por estado
+      summary: List projects by state
       security:
         - BearerAuth: []
         - CookieAuth: []
@@ -1148,7 +1149,7 @@ paths:
         - $ref: "#/components/parameters/Cursor"
       responses:
         "200":
-          description: Estados de repositorio do usuario.
+          description: User repository states.
           content:
             application/json:
               schema:
@@ -1158,9 +1159,9 @@ paths:
 
   /me/repositories/{githubRepositoryId}/state:
     put:
-      tags: [Estados]
+      tags: [States]
       operationId: setRepositoryState
-      summary: Define estado de projeto
+      summary: Set project state
       security:
         - BearerAuth: []
         - CookieAuth: []
@@ -1174,7 +1175,7 @@ paths:
               $ref: "#/components/schemas/RepositoryStateInput"
       responses:
         "200":
-          description: Estado salvo.
+          description: State saved.
           content:
             application/json:
               schema:
@@ -1186,9 +1187,9 @@ paths:
         "422":
           $ref: "#/components/responses/ValidationError"
     delete:
-      tags: [Estados]
+      tags: [States]
       operationId: deleteRepositoryState
-      summary: Remove estado salvo
+      summary: Remove saved state
       security:
         - BearerAuth: []
         - CookieAuth: []
@@ -1196,7 +1197,7 @@ paths:
         - $ref: "#/components/parameters/GitHubRepositoryId"
       responses:
         "200":
-          description: Estado removido.
+          description: State removed.
           content:
             application/json:
               schema:
@@ -1208,9 +1209,9 @@ paths:
 
   /me/repositories/{githubRepositoryId}/restore:
     post:
-      tags: [Estados]
+      tags: [States]
       operationId: restoreRepositoryState
-      summary: Restaura projeto ignorado como salvo
+      summary: Restore ignored project as saved
       security:
         - BearerAuth: []
         - CookieAuth: []
@@ -1218,7 +1219,7 @@ paths:
         - $ref: "#/components/parameters/GitHubRepositoryId"
       responses:
         "200":
-          description: Projeto restaurado.
+          description: Project restored.
           content:
             application/json:
               schema:
@@ -1230,9 +1231,9 @@ paths:
 
   /me/history:
     get:
-      tags: [Historico]
+      tags: [History]
       operationId: listMyHistory
-      summary: Historico paginado do usuario
+      summary: Paginated user history
       security:
         - BearerAuth: []
         - CookieAuth: []
@@ -1250,7 +1251,7 @@ paths:
         - $ref: "#/components/parameters/Cursor"
       responses:
         "200":
-          description: Eventos recentes do usuario.
+          description: Recent user events.
           content:
             application/json:
               schema:
@@ -1258,15 +1259,15 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
     delete:
-      tags: [Historico]
+      tags: [History]
       operationId: clearMyHistory
-      summary: Limpa historico do usuario
+      summary: Clear user history
       security:
         - BearerAuth: []
         - CookieAuth: []
       responses:
         "200":
-          description: Historico limpo.
+          description: History limpo.
           content:
             application/json:
               schema:
@@ -1282,12 +1283,12 @@ components:
       type: http
       scheme: bearer
       bearerFormat: opaque-session-token
-      description: Token local opaco da API. O token GitHub nunca e exposto.
+      description: Opaque local API token. The GitHub token is never exposed.
     CookieAuth:
       type: apiKey
       in: cookie
       name: dotti_session
-      description: Cookie HttpOnly/Secure/SameSite=Lax usado pelo front-end com credentials include.
+      description: HttpOnly/Secure/SameSite=Lax cookie used by the frontend with credentials include.
 
   parameters:
     Owner:
@@ -1344,55 +1345,55 @@ components:
 
   responses:
     Success:
-      description: Operacao concluida.
+      description: Operation completed.
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/SuccessResponse"
     Unauthorized:
-      description: Sessao ausente, invalida ou expirada.
+      description: Missing, invalid, or expired session.
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
     Forbidden:
-      description: Origem nao autorizada ou acesso negado.
+      description: Unauthorized origin or access denied.
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
     NotFound:
-      description: Recurso nao encontrado.
+      description: Resource not found.
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
     ValidationError:
-      description: Dados invalidos.
+      description: Invalid data.
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
     RateLimited:
-      description: Limite de atualizacao ou limite da API do GitHub atingido.
+      description: Refresh limit or GitHub API limit reached.
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
     BadGateway:
-      description: Falha ao consultar servico externo.
+      description: Failed to query external service.
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
     ServiceUnavailable:
-      description: Servico indisponivel.
+      description: Service unavailable.
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
     InternalServerError:
-      description: Erro interno do servidor.
+      description: Internal server error.
       content:
         application/json:
           schema:
@@ -1426,7 +1427,7 @@ components:
               example: VALIDATION_ERROR
             message:
               type: string
-              example: Dados invalidos.
+              example: Invalid data.
             details:
               type: array
               items:
@@ -1441,7 +1442,7 @@ components:
           example: technologies.0.technology_id
         message:
           type: string
-          example: technology_id deve ser inteiro.
+          example: technology_id must be an integer.
 
     HealthResponse:
       type: object
@@ -1860,10 +1861,10 @@ components:
           example: first_save
         name:
           type: string
-          example: Primeiro radar
+          example: First radar
         description:
           type: string
-          example: Salvou o primeiro projeto open source.
+          example: Saved the first open source project.
         category:
           type: string
           example: discovery
@@ -1875,7 +1876,7 @@ components:
           example: /uploads/media/badges/first_contribution.png
         image_alt:
           type: string
-          example: Insignia de primeiro projeto salvo
+          example: First saved project badge
         icon:
           type: string
           nullable: true
@@ -1944,7 +1945,7 @@ components:
           example: PROFILE_PRIVATE
         message:
           type: string
-          example: Perfil publico desativado.
+          example: Public profile disabled.
 
     UserDataExportResponse:
       type: object
@@ -2058,20 +2059,20 @@ components:
       properties:
         slugs:
           type: array
-          description: Slugs das badges conquistadas a marcar como visualizadas.
+          description: Earned badge slugs to mark as viewed.
           items:
             type: string
           example: [first_pr, first_contribution]
         ids:
           type: array
-          description: IDs das conquistas do usuario a marcar como visualizadas.
+          description: User award IDs to mark as viewed.
           items:
             type: integer
             format: int64
           example: [12, 13]
         notification_seen:
           type: boolean
-          description: Deve ser true quando enviado.
+          description: Must be true when sent.
           example: true
 
     BadgeNotificationViewedResponse:
@@ -2109,10 +2110,10 @@ components:
           example: first_contribution
         name:
           type: string
-          example: Primeira contribuicao
+          example: First contribution
         description:
           type: string
-          example: Marcou sua primeira contribuicao como concluida.
+          example: Marked the first contribution as completed.
         category:
           type: string
           example: contribution
@@ -2124,7 +2125,7 @@ components:
           example: /uploads/media/badges/first_contribution.png
         image_alt:
           type: string
-          example: Insignia de primeira contribuicao open source
+          example: First open source contribution badge
         icon:
           type: string
           nullable: true
