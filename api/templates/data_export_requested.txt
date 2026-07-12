@@ -1,14 +1,14 @@
-Exportacao solicitada
+Export requested
 
-Ola, {{ name }}.
+Hi, {{ name }}.
 
-Recebemos uma solicitacao de exportacao dos seus dados do dotti.work.
+We received a request to export your dotti.work data.
 
-Solicitacao registrada em {{ exported_at }}. Por seguranca, este e-mail nao contem os dados exportados nem anexos.
+Request registered at {{ exported_at }}. For security, this email does not contain exported data or attachments.
 
-A exportacao e entregue apenas na sessao autenticada em que a acao foi solicitada. Guarde o arquivo com cuidado, pois ele pode conter dados pessoais e historico de interacoes.
+The export is delivered only in the authenticated session where the action was requested. Store the file carefully because it may contain personal data and interaction history.
 
-Abrir privacidade:
+Open privacy settings:
 {{ privacy_url }}
 
-Se voce nao fez essa solicitacao, encerre sessoes abertas e revise suas configuracoes.
+If you did not make this request, end open sessions and review your settings.

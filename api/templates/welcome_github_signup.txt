@@ -1,15 +1,15 @@
-Bem-vindo ao dotti.work
+Welcome to dotti.work
 
-Ola, {{ name }}.
+Hi, {{ name }}.
 
-Sua conta foi criada com GitHub{{ github_login }}. Agora voce pode descobrir projetos open source alinhados ao seu perfil, stack e objetivos.
+Your account was created with GitHub{{ github_login }}. You can now discover open source projects aligned with your profile, stack, and goals.
 
-Explorar projetos:
+Explore projects:
 {{ matches_url }}
 
-Se ainda nao concluiu o onboarding, acesse:
+If you have not completed onboarding yet, go to:
 {{ onboarding_url }}
 
-Por seguranca, o dotti.work nao inclui credenciais GitHub neste e-mail e usa a integracao apenas para ajudar a sugerir projetos relevantes.
+For security, dotti.work does not include GitHub credentials in this email and uses the integration only to help suggest relevant projects.
 
-Este e-mail foi enviado pelo dotti.work porque sua conta foi criada usando GitHub OAuth. Se voce nao reconhece esta atividade, acesse sua conta e revise suas configuracoes.
+This email was sent by dotti.work because your account was created using GitHub OAuth. If you do not recognize this activity, access your account and review your settings.

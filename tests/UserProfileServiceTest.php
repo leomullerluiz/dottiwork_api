@@ -102,7 +102,7 @@ class UserProfileServiceTest extends TestCase
                 return [];
             },
             'export_email' => function () {
-                throw new RuntimeException('SMTP indisponivel.');
+                throw new RuntimeException('SMTP unavailable.');
             },
         ]);
 

@@ -31,7 +31,7 @@ class InviteLinkService
             }
         } while ($attempts < 3);
 
-        throw new RuntimeException('Nao foi possivel gerar link de convite.');
+        throw new RuntimeException('Could not generate invite link.');
     }
 
     public function findByCode($code)

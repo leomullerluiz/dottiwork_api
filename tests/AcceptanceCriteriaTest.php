@@ -123,7 +123,7 @@ class AcceptanceCriteriaTest extends TestCase
     {
         $success = Response::successPayload(['items' => []]);
         $error = Response::validationErrorPayload([
-            ['field' => 'state', 'message' => 'Estado invalido.'],
+            ['field' => 'state', 'message' => 'Invalid state.'],
         ]);
 
         $this->assertTrue($success['success']);

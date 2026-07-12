@@ -11,7 +11,7 @@ class RepositoryController extends BaseController
         if (!empty($filters['technology'])) {
             $technology = Technology::findBySlug($filters['technology']);
             if (!$technology || !$technology['is_active']) {
-                $errors[] = ['field' => 'technology', 'message' => 'Tecnologia invalida ou inativa.'];
+                $errors[] = ['field' => 'technology', 'message' => 'Invalid or inactive technology.'];
             }
         }
 
@@ -25,13 +25,13 @@ class RepositoryController extends BaseController
         }
 
         if (!$rows) {
-            Response::badGateway('Nao foi possivel carregar repositorios populares no momento.');
+            Response::badGateway('Could not load popular repositories right now.');
         }
 
         try {
             $payload = (new TopRepositoryService())->list($rows, $filters, $technology);
         } catch (InvalidArgumentException $exception) {
-            Response::validationError([['field' => 'cursor', 'message' => 'Cursor invalido.']]);
+            Response::validationError([['field' => 'cursor', 'message' => 'Invalid cursor.']]);
         }
 
         $user = Auth::getAuthenticatedUser($request);
@@ -101,7 +101,7 @@ class RepositoryController extends BaseController
                     'limit' => $this->limit($request, 30, 100),
                 ]);
             } catch (Exception $e) {
-                Response::badGateway('Nao foi possivel carregar issues do GitHub.');
+                Response::badGateway('Could not load GitHub issues.');
             }
         }
 
@@ -119,7 +119,7 @@ class RepositoryController extends BaseController
         $allowed = ['viewed_project', 'opened_github', 'started_contributing', 'sent_pull_request', 'marked_contributed'];
 
         if (!Validator::enum($eventType, $allowed)) {
-            Response::validationError([['field' => 'event_type', 'message' => 'Tipo de evento invalido.']]);
+            Response::validationError([['field' => 'event_type', 'message' => 'Invalid event type.']]);
         }
 
         $cachedRepo = RepositoryCache::findByOwnerRepo($params['owner'], $params['repo'], false);
@@ -166,7 +166,7 @@ class RepositoryController extends BaseController
             if ($cached) {
                 return $cached;
             }
-            Response::badGateway('Nao foi possivel carregar repositorio do GitHub.');
+            Response::badGateway('Could not load GitHub repository.');
         }
     }
 

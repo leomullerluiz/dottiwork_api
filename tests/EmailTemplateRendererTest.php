@@ -11,7 +11,7 @@ class EmailTemplateRendererTest extends TestCase
     {
         $html = EmailTemplateRenderer::renderHtml($slug, $variables);
 
-        $this->assertStringContainsString('lang="pt-BR"', $html);
+        $this->assertStringContainsString('lang="en"', $html);
         $this->assertStringContainsString('dotti<span style="color:#f05d4f;">.</span>work', $html);
         $this->assertStringContainsString('max-width:600px', $html);
         $this->assertStringContainsString('background:#f5f8fb', $html);

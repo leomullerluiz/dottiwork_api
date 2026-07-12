@@ -35,7 +35,7 @@ class WelcomeEmailService
                     'onboarding_url' => $this->escape($this->frontendUrl('/onboarding')),
                     'matches_url' => $this->escape($this->frontendUrl('/matches')),
                 ],
-                'Bem-vindo ao dotti.work'
+                'Welcome to dotti.work'
             );
         } catch (Throwable $e) {
             return [

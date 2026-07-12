@@ -29,7 +29,7 @@ class UserDataExportEmailService
                     'exported_at' => $this->escape(date('Y-m-d H:i:s')),
                     'privacy_url' => $this->escape($this->frontendUrl('/settings/privacy')),
                 ],
-                'Exportacao dos seus dados dotti.work'
+                'Your dotti.work data export'
             );
         } catch (Throwable $e) {
             return [

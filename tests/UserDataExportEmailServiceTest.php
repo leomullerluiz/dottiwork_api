@@ -26,7 +26,7 @@ class UserDataExportEmailServiceTest extends TestCase
         $this->assertSame(['sent' => true, 'reason' => null], $result);
         $this->assertSame('ana@example.test', $sent['toEmail']);
         $this->assertSame('data_export_requested', $sent['slug']);
-        $this->assertSame('Exportacao dos seus dados dotti.work', $sent['subject']);
+        $this->assertSame('Your dotti.work data export', $sent['subject']);
         $this->assertSame('Ana &lt;Dev&gt;', $sent['variables']['name']);
         $this->assertSame('https://app.dotti.work/settings/privacy', $sent['variables']['privacy_url']);
         $this->assertArrayHasKey('exported_at', $sent['variables']);
@@ -51,7 +51,7 @@ class UserDataExportEmailServiceTest extends TestCase
     public function testSuppressesMailerFailuresSoExportCanContinue(): void
     {
         $service = new UserDataExportEmailService(function () {
-            throw new RuntimeException('SMTP indisponivel.');
+            throw new RuntimeException('SMTP unavailable.');
         });
 
         $result = $service->sendExportRequestedAlert([

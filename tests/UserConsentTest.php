@@ -14,10 +14,10 @@ class UserConsentTest extends TestCase
         ]);
 
         $this->assertSame([
-            ['field' => 'type', 'message' => 'Tipo de consentimento invalido.'],
-            ['field' => 'status', 'message' => 'Status deve ser granted.'],
-            ['field' => 'policy_version', 'message' => 'Versao da politica e obrigatoria e deve ter ate 50 caracteres.'],
-            ['field' => 'source', 'message' => 'Origem do consentimento invalida.'],
+            ['field' => 'type', 'message' => 'Invalid consent type.'],
+            ['field' => 'status', 'message' => 'Status must be granted.'],
+            ['field' => 'policy_version', 'message' => 'Policy version is required and must be up to 50 characters.'],
+            ['field' => 'source', 'message' => 'Invalid consent source.'],
         ], $errors);
     }
 

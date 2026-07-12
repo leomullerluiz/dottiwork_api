@@ -28,10 +28,10 @@ class ResponseContractTest extends TestCase
 
     public function testErrorPayloadUsesEnvelopeAndEmptyDetailsObjectByDefault(): void
     {
-        $payload = Response::errorPayload('Recurso nao encontrado.', 'NOT_FOUND');
+        $payload = Response::errorPayload('Resource not found.', 'NOT_FOUND');
 
         $this->assertJsonStringEqualsJsonString(
-            '{"success":false,"error":{"code":"NOT_FOUND","message":"Recurso nao encontrado.","details":{}}}',
+            '{"success":false,"error":{"code":"NOT_FOUND","message":"Resource not found.","details":{}}}',
             json_encode($payload)
         );
     }
@@ -39,27 +39,27 @@ class ResponseContractTest extends TestCase
     public function testValidationErrorPayloadKeepsFieldErrorsInsideDetails(): void
     {
         $payload = Response::validationErrorPayload([
-            ['field' => 'email', 'message' => 'Email invalido.'],
+            ['field' => 'email', 'message' => 'Invalid email.'],
             ['field' => 'password', 'message' => 'Senha obrigatoria.'],
         ]);
 
         $this->assertFalse($payload['success']);
         $this->assertSame('VALIDATION_ERROR', $payload['error']['code']);
         $this->assertSame('email', $payload['error']['details'][0]['field']);
-        $this->assertSame('Email invalido.', $payload['error']['details'][0]['message']);
+        $this->assertSame('Invalid email.', $payload['error']['details'][0]['message']);
         $this->assertSame('password', $payload['error']['details'][1]['field']);
     }
 
     public function testValidationErrorPayloadAcceptsFieldMessageMap(): void
     {
         $payload = Response::validationErrorPayload([
-            'state' => 'Estado invalido.',
+            'state' => 'Invalid state.',
         ]);
 
         $this->assertSame([
             [
                 'field' => 'state',
-                'message' => 'Estado invalido.',
+                'message' => 'Invalid state.',
             ],
         ], $payload['error']['details']);
     }

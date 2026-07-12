@@ -32,7 +32,7 @@ class InviteController extends BaseController
 
         $link = (new InviteLinkService())->validatePublicCode($code);
         if (!$link) {
-            Response::notFound('Convite nao encontrado ou indisponivel.');
+            Response::notFound('Invite not found or unavailable.');
         }
 
         Response::success([
@@ -48,12 +48,12 @@ class InviteController extends BaseController
 
         if (!Validator::integer($linkId)) {
             Response::validationError([
-                ['field' => 'id', 'message' => 'Link de convite invalido.'],
+                ['field' => 'id', 'message' => 'Invalid invite link.'],
             ]);
         }
 
         if (!(new InviteLinkService())->revoke($user['id'], $linkId)) {
-            Response::notFound('Link de convite nao encontrado.');
+            Response::notFound('Invite link not found.');
         }
 
         Response::success(['revoked' => true]);

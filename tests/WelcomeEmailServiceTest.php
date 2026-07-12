@@ -27,7 +27,7 @@ class WelcomeEmailServiceTest extends TestCase
         $this->assertSame(['sent' => true, 'reason' => null], $result);
         $this->assertSame('ana@example.test', $sent['toEmail']);
         $this->assertSame('welcome_github_signup', $sent['slug']);
-        $this->assertSame('Bem-vindo ao dotti.work', $sent['subject']);
+        $this->assertSame('Welcome to dotti.work', $sent['subject']);
         $this->assertSame('Ana &lt;Dev&gt;', $sent['variables']['name']);
         $this->assertSame(' (@ana-dev)', $sent['variables']['github_login']);
         $this->assertSame('https://app.dotti.work/onboarding', $sent['variables']['onboarding_url']);
@@ -50,7 +50,7 @@ class WelcomeEmailServiceTest extends TestCase
     public function testSuppressesMailerFailuresSoSignupCanContinue(): void
     {
         $service = new WelcomeEmailService(function () {
-            throw new RuntimeException('SMTP indisponivel.');
+            throw new RuntimeException('SMTP unavailable.');
         });
 
         $result = $service->sendAfterGitHubSignup([

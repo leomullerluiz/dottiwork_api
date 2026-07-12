@@ -20,7 +20,7 @@ class PublicProfileControllerTest extends TestCase
         $this->assertStringContainsString("RateLimiter::enforce(\$request, 'public.profile.show', 60, 60);", $controller);
         $this->assertStringContainsString("\$user = \$this->requireToken(\$request);", $controller);
         $this->assertStringContainsString("RateLimiter::enforce(\$request, 'public.profile.settings', 20, 300, 'user:' . \$user['id']);", $controller);
-        $this->assertStringContainsString("Response::notFound('Perfil publico nao encontrado.');", $controller);
+        $this->assertStringContainsString("Response::notFound('Public profile not found.');", $controller);
     }
 
     public function testOpenApiDocumentsPublicProfileEndpoints(): void

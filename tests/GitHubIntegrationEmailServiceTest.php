@@ -28,7 +28,7 @@ class GitHubIntegrationEmailServiceTest extends TestCase
         $this->assertSame(['sent' => true, 'reason' => null], $result);
         $this->assertSame('ana@example.test', $sent['toEmail']);
         $this->assertSame('github_disconnected', $sent['slug']);
-        $this->assertSame('Alerta de desconexao do GitHub no dotti.work', $sent['subject']);
+        $this->assertSame('GitHub disconnected from dotti.work', $sent['subject']);
         $this->assertSame('Ana &lt;Dev&gt;', $sent['variables']['name']);
         $this->assertSame('@ana-dev', $sent['variables']['github_login']);
         $this->assertSame('https://app.dotti.work/settings', $sent['variables']['settings_url']);
@@ -56,7 +56,7 @@ class GitHubIntegrationEmailServiceTest extends TestCase
     public function testSuppressesMailerFailuresSoDisconnectCanContinue(): void
     {
         $service = new GitHubIntegrationEmailService(function () {
-            throw new RuntimeException('SMTP indisponivel.');
+            throw new RuntimeException('SMTP unavailable.');
         });
 
         $result = $service->sendDisconnectAlert([

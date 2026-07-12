@@ -49,7 +49,7 @@ class Crypto
         $cipherText = openssl_encrypt($plainText, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $iv, $tag);
 
         if ($cipherText === false) {
-            throw new RuntimeException('Nao foi possivel criptografar o valor.');
+            throw new RuntimeException('Could not encrypt value.');
         }
 
         return self::base64UrlEncode($iv . $tag . $cipherText);
@@ -59,7 +59,7 @@ class Crypto
     {
         $raw = self::base64UrlDecode($encrypted);
         if ($raw === false || strlen($raw) < 29) {
-            throw new RuntimeException('Valor criptografado invalido.');
+            throw new RuntimeException('Invalid encrypted value.');
         }
 
         $iv = substr($raw, 0, 12);
@@ -68,7 +68,7 @@ class Crypto
         $plainText = openssl_decrypt($cipherText, 'aes-256-gcm', self::encryptionKey(), OPENSSL_RAW_DATA, $iv, $tag);
 
         if ($plainText === false) {
-            throw new RuntimeException('Nao foi possivel descriptografar o valor.');
+            throw new RuntimeException('Could not decrypt value.');
         }
 
         return $plainText;
@@ -82,7 +82,7 @@ class Crypto
         }
 
         if (!$configured) {
-            throw new RuntimeException('APP_ENCRYPTION_KEY ou APP_SECRET deve estar configurado.');
+            throw new RuntimeException('APP_ENCRYPTION_KEY or APP_SECRET must be configured.');
         }
 
         $decoded = self::base64UrlDecode($configured);

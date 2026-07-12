@@ -90,7 +90,7 @@ class Validator
                 if (!$result) {
                     $errors[] = [
                         'field' => $field,
-                        'message' => is_string($message) ? $message : 'Campo invalido.',
+                        'message' => is_string($message) ? $message : 'Invalid field.',
                     ];
                 }
             }

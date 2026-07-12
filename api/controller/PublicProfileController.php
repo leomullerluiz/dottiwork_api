@@ -11,7 +11,7 @@ class PublicProfileController extends BaseController
         $user = $service->findByLogin($login);
 
         if (!$user) {
-            Response::notFound('Perfil publico nao encontrado.');
+            Response::notFound('Public profile not found.');
         }
 
         Response::success($service->buildForUser($user));
@@ -36,7 +36,7 @@ class PublicProfileController extends BaseController
         if (!array_key_exists('is_public', $body) || !Validator::boolean($body['is_public'])) {
             $errors[] = [
                 'field' => 'is_public',
-                'message' => 'is_public deve ser booleano.',
+                'message' => 'is_public must be boolean.',
             ];
         }
 
@@ -46,7 +46,7 @@ class PublicProfileController extends BaseController
         if ($slugProvided && (!is_string($slug) || !PublicUserProfileService::normalizeSlug($slug))) {
             $errors[] = [
                 'field' => 'public_profile_slug',
-                'message' => 'public_profile_slug deve conter apenas letras, numeros e hifens, com ate 120 caracteres.',
+                'message' => 'public_profile_slug may contain only letters, numbers, and hyphens, up to 120 characters.',
             ];
         }
 
@@ -72,11 +72,11 @@ class PublicProfileController extends BaseController
     private function slugErrorMessage($code)
     {
         $messages = [
-            'public_profile_slug_invalid' => 'public_profile_slug deve conter apenas letras, numeros e hifens, com ate 120 caracteres.',
-            'public_profile_slug_required' => 'Nao foi possivel gerar um slug publico para este usuario.',
-            'public_profile_slug_unavailable' => 'public_profile_slug ja esta em uso.',
+            'public_profile_slug_invalid' => 'public_profile_slug may contain only letters, numbers, and hyphens, up to 120 characters.',
+            'public_profile_slug_required' => 'Could not generate a public slug for this user.',
+            'public_profile_slug_unavailable' => 'public_profile_slug is already in use.',
         ];
 
-        return $messages[$code] ?? 'public_profile_slug invalido.';
+        return $messages[$code] ?? 'Invalid public_profile_slug.';
     }
 }

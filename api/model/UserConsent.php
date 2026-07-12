@@ -21,16 +21,16 @@ class UserConsent
     {
         return Validator::collectErrors([
             'type' => [
-                'Tipo de consentimento invalido.' => isset($payload['type']) && Validator::enum($payload['type'], self::allowedTypes()),
+                'Invalid consent type.' => isset($payload['type']) && Validator::enum($payload['type'], self::allowedTypes()),
             ],
             'status' => [
-                'Status deve ser granted.' => !isset($payload['status']) || $payload['status'] === 'granted',
+                'Status must be granted.' => !isset($payload['status']) || $payload['status'] === 'granted',
             ],
             'policy_version' => [
-                'Versao da politica e obrigatoria e deve ter ate 50 caracteres.' => isset($payload['policy_version']) && Validator::maxLength($payload['policy_version'], 50),
+                'Policy version is required and must be up to 50 characters.' => isset($payload['policy_version']) && Validator::maxLength($payload['policy_version'], 50),
             ],
             'source' => [
-                'Origem do consentimento invalida.' => isset($payload['source']) && Validator::enum($payload['source'], self::allowedSources()),
+                'Invalid consent source.' => isset($payload['source']) && Validator::enum($payload['source'], self::allowedSources()),
             ],
         ]);
     }
@@ -41,7 +41,7 @@ class UserConsent
             return [
                 [
                     'field' => 'type',
-                    'message' => 'Tipo de consentimento invalido.',
+                    'message' => 'Invalid consent type.',
                 ],
             ];
         }

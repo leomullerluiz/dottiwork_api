@@ -30,7 +30,7 @@ class GitHubIntegrationEmailService
                     'disconnected_at' => $this->escape(date('Y-m-d H:i:s')),
                     'settings_url' => $this->escape($this->frontendUrl('/settings')),
                 ],
-                'Alerta de desconexao do GitHub no dotti.work'
+                'GitHub disconnected from dotti.work'
             );
         } catch (Throwable $e) {
             return [

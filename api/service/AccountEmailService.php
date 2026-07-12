@@ -29,7 +29,7 @@ class AccountEmailService
                     'deleted_at' => $this->escape(date('Y-m-d H:i:s')),
                     'home_url' => $this->escape($this->frontendUrl('/')),
                 ],
-                'Confirmacao de exclusao da sua conta dotti.work'
+                'Your dotti.work account deletion confirmation'
             );
         } catch (Throwable $e) {
             return [

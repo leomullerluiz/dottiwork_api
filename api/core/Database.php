@@ -1,6 +1,6 @@
 <?php
 /**
- * Classe de Conexão com Banco de Dados usando PDO
+ * PDO database connection singleton.
  */
 class Database
 {
@@ -19,12 +19,12 @@ class Database
                 error_log('DB CONN ERROR: ' . $e->getMessage());
             }
 
-            Response::serviceUnavailable('Banco de dados indisponivel.');
+            Response::serviceUnavailable('Database unavailable.');
         }
     }
 
     /**
-     * Singleton: retorna uma única instância da conexão
+     * Returns the single connection instance.
      */
     public static function getInstance()
     {
@@ -35,7 +35,7 @@ class Database
     }
 
     /**
-     * Retorna a conexão PDO
+     * Returns the PDO connection.
      */
     public function getConnection()
     {
@@ -43,17 +43,17 @@ class Database
     }
 
     /**
-     * Previne clonagem
+     * Prevents cloning.
      */
     private function __clone()
     {
     }
 
     /**
-     * Previne unserialize
+     * Prevents unserialization.
      */
     public function __wakeup()
     {
-        throw new Exception("Não é possível unserialize singleton");
+        throw new Exception("Cannot unserialize singleton.");
     }
 }

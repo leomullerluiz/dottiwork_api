@@ -413,21 +413,21 @@ class PublicUserProfileService
         if (!$isPublic) {
             $warnings[] = [
                 'code' => 'PROFILE_PRIVATE',
-                'message' => 'Perfil publico desativado.',
+                'message' => 'Public profile disabled.',
             ];
         }
 
         if (!$slug) {
             $warnings[] = [
                 'code' => 'MISSING_PUBLIC_SLUG',
-                'message' => 'Defina um login ou slug publico para compartilhar o perfil.',
+                'message' => 'Set a public login or slug to share the profile.',
             ];
         }
 
         if (empty($profile['technologies'])) {
             $warnings[] = [
                 'code' => 'EMPTY_STACK',
-                'message' => 'Adicione tecnologias para enriquecer o perfil publico.',
+                'message' => 'Add technologies to enrich the public profile.',
             ];
         }
 

@@ -114,7 +114,7 @@ class GitHubDisconnectServiceTest extends TestCase
                 return 'plain-token';
             },
             function () {
-                throw new RuntimeException('GitHub indisponivel.');
+                throw new RuntimeException('GitHub unavailable.');
             }
         );
 
@@ -143,7 +143,7 @@ class GitHubDisconnectServiceTest extends TestCase
                 return true;
             },
             function () {
-                throw new RuntimeException('SMTP indisponivel.');
+                throw new RuntimeException('SMTP unavailable.');
             }
         );
 

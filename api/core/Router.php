@@ -1,47 +1,47 @@
 <?php
 /**
- * Roteador simples para a API
+ * Simple API router.
  */
 class Router {
     private $routes = [];
 
     /**
-     * Registra uma rota POST
+     * Registers a POST route.
      */
     public function post($uri, $callback) {
         $this->addRoute('POST', $uri, $callback);
     }
 
     /**
-     * Registra uma rota GET
+     * Registers a GET route.
      */
     public function get($uri, $callback) {
         $this->addRoute('GET', $uri, $callback);
     }
 
     /**
-     * Registra uma rota PUT
+     * Registers a PUT route.
      */
     public function put($uri, $callback) {
         $this->addRoute('PUT', $uri, $callback);
     }
 
     /**
-     * Registra uma rota DELETE
+     * Registers a DELETE route.
      */
     public function delete($uri, $callback) {
         $this->addRoute('DELETE', $uri, $callback);
     }
 
     /**
-     * Registra uma rota PATCH
+     * Registers a PATCH route.
      */
     public function patch($uri, $callback) {
         $this->addRoute('PATCH', $uri, $callback);
     }
 
     /**
-     * Adiciona rota ao array
+     * Adds a route to the internal map.
      */
     private function addRoute($method, $uri, $callback) {
         $uri = '/' . trim($uri, '/');
@@ -49,33 +49,33 @@ class Router {
     }
 
     /**
-     * Processa a requisição e executa a rota correspondente
+     * Processes the request and executes the matching route.
      */
     public function dispatch(Request $request) {
         $method = $request->getMethod();
         $uri = $request->getUri();
 
-        // Verifica se existe rota exata
+        // Checks for an exact route.
         if (isset($this->routes[$method][$uri])) {
             return $this->executeCallback($this->routes[$method][$uri], $request);
         }
 
-        // Verifica rotas com parâmetros
+        // Checks routes with parameters.
         if (isset($this->routes[$method])) {
             foreach ($this->routes[$method] as $route => $callback) {
                 $pattern = $this->convertToRegex($route);
                 if (preg_match($pattern, $uri, $matches)) {
-                    array_shift($matches); // Remove o primeiro elemento (match completo)
+                    array_shift($matches); // Removes the full-match element.
                     return $this->executeCallback($callback, $request, $matches);
                 }
             }
         }
 
-        Response::notFound('Endpoint não encontrado');
+        Response::notFound('Endpoint not found.');
     }
 
     /**
-     * Converte rota para regex (suporta :param)
+     * Converts a route to regex syntax and supports :param segments.
      */
     private function convertToRegex($route) {
         $route = preg_replace('/\/:([^\/]+)/', '/(?P<$1>[^/]+)', $route);
@@ -83,23 +83,23 @@ class Router {
     }
 
     /**
-     * Executa o callback da rota
+     * Executes the route callback.
      */
     private function executeCallback($callback, $request, $params = []) {
         if (is_callable($callback)) {
             return call_user_func_array($callback, [$request, $params]);
         }
 
-        // Suporte para Controller@method
+        // Supports Controller@method.
         if (is_string($callback) && strpos($callback, '@') !== false) {
             list($controller, $method) = explode('@', $callback);
-            
+
             if (class_exists($controller) && method_exists($controller, $method)) {
                 $instance = new $controller();
                 return call_user_func_array([$instance, $method], [$request, $params]);
             }
         }
 
-        Response::error('Callback inválido', 500);
+        Response::error('Invalid callback.', 500);
     }
 }

@@ -16,7 +16,7 @@ class BaseController
 
         $origin = $request->getOrigin();
         if (!$origin && Auth::isCookieAuthRequest($request)) {
-            Response::forbidden('Origem obrigatoria para mutacoes autenticadas por cookie.');
+            Response::forbidden('Origin is required for cookie-authenticated mutations.');
         }
 
         if (!$origin) {
@@ -25,7 +25,7 @@ class BaseController
 
         $allowed = $this->allowedOrigins();
         if ($allowed && !in_array($origin, $allowed, true)) {
-            Response::forbidden('Origem nao autorizada.');
+            Response::forbidden('Unauthorized origin.');
         }
     }
 

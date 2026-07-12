@@ -1,6 +1,6 @@
 <?php
 /**
- * Configurações do Banco de Dados
+ * Database settings.
  */
 
 return [

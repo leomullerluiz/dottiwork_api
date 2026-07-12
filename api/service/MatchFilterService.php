@@ -45,12 +45,12 @@ class MatchFilterService
         if (!empty($filters['limit'])) {
             $limit = filter_var($filters['limit'], FILTER_VALIDATE_INT);
             if ($limit === false || $limit < 1 || $limit > 100) {
-                $errors[] = ['field' => 'limit', 'message' => 'Limite deve estar entre 1 e 100.'];
+                $errors[] = ['field' => 'limit', 'message' => 'Limit must be between 1 and 100.'];
             }
         }
 
         if (!empty($filters['cursor']) && self::decodeCursor($filters['cursor']) === null) {
-            $errors[] = ['field' => 'cursor', 'message' => 'Cursor invalido.'];
+            $errors[] = ['field' => 'cursor', 'message' => 'Invalid cursor.'];
         }
 
         return $errors;
@@ -279,7 +279,7 @@ class MatchFilterService
     private static function validateEnum(array &$errors, array $filters, $field, array $allowed)
     {
         if (isset($filters[$field]) && $filters[$field] !== '' && !in_array($filters[$field], $allowed, true)) {
-            $errors[] = ['field' => $field, 'message' => 'Valor invalido.'];
+            $errors[] = ['field' => $field, 'message' => 'Invalid value.'];
         }
     }
 
@@ -290,7 +290,7 @@ class MatchFilterService
         }
 
         if (!is_numeric($filters[$field]) || (float) $filters[$field] < $min || (float) $filters[$field] > $max) {
-            $errors[] = ['field' => $field, 'message' => 'Valor deve estar entre ' . $min . ' e ' . $max . '.'];
+            $errors[] = ['field' => $field, 'message' => 'Value must be between ' . $min . ' and ' . $max . '.'];
         }
     }
 

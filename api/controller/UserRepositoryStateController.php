@@ -24,11 +24,11 @@ class UserRepositoryStateController extends BaseController
         $state = $body['state'] ?? null;
 
         if (!Validator::enum($state, $this->states)) {
-            Response::validationError([['field' => 'state', 'message' => 'Estado invalido.']]);
+            Response::validationError([['field' => 'state', 'message' => 'Invalid state.']]);
         }
 
         if (isset($body['notes']) && !Validator::maxLength($body['notes'], 2000)) {
-            Response::validationError([['field' => 'notes', 'message' => 'Notas devem ter ate 2000 caracteres.']]);
+            Response::validationError([['field' => 'notes', 'message' => 'Notes must be up to 2000 characters.']]);
         }
 
         $githubRepositoryId = (int) $params['githubRepositoryId'];

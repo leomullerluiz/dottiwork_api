@@ -12,9 +12,9 @@ if (
   || $_SERVER['PHP_AUTH_USER'] !== $user
   || $_SERVER['PHP_AUTH_PW'] !== $pass
 ) {
-  header('WWW-Authenticate: Basic realm="Restrito"');
+  header('WWW-Authenticate: Basic realm="Restricted"');
   header('HTTP/1.0 401 Unauthorized');
-  echo "Acesso negado.";
+  echo "Access denied.";
   exit;
 }
 ?>

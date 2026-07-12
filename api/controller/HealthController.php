@@ -23,7 +23,7 @@ class HealthController extends BaseController
             $stmt->fetch();
             Response::success(['database' => 'online']);
         } catch (Exception $e) {
-            Response::serviceUnavailable('Banco de dados indisponivel.');
+            Response::serviceUnavailable('Database unavailable.');
         }
     }
 
@@ -33,11 +33,11 @@ class HealthController extends BaseController
             || filter_var($_ENV['SENTRY_TEST_ENABLED'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
         if (!$enabled) {
-            Response::forbidden('Teste do Sentry desabilitado neste ambiente.');
+            Response::forbidden('Sentry test disabled in this environment.');
         }
 
         if (empty($_ENV['SENTRY_DSN'])) {
-            Response::serviceUnavailable('Sentry nao configurado.');
+            Response::serviceUnavailable('Sentry is not configured.');
         }
 
         $message = 'Sentry test event from dotti.work API';

@@ -7,7 +7,7 @@ class ActivityController extends BaseController
         $user = $this->requireToken($request);
         $eventType = $request->getQuery('event_type');
         if ($eventType && !Validator::enum($eventType, UserActivityEvent::$allowedTypes)) {
-            Response::validationError([['field' => 'event_type', 'message' => 'Tipo de evento invalido.']]);
+            Response::validationError([['field' => 'event_type', 'message' => 'Invalid event type.']]);
         }
 
         Response::success([

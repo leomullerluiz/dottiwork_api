@@ -1,24 +1,24 @@
-# Como adicionar novas badges
+# Adding New Badges
 
-Este guia descreve o caminho recomendado para adicionar novas badges ao backend do dotti.work.
+This guide describes the recommended backend workflow for adding badges to dotti.work.
 
-## Visao geral
+## Overview
 
-O front nao precisa conhecer regras de conquista. Ele consome:
+The frontend does not need to know award rules. It consumes:
 
-- `GET /badges` para o catalogo publico.
-- `GET /me/badges` para badges conquistadas, progresso e conquistas recentes.
-- `POST /me/badges/evaluate` para recalculo manual do usuario autenticado.
+- `GET /badges` for the public badge catalog.
+- `GET /me/badges` for earned badges, progress, and recent awards.
+- `POST /me/badges/evaluate` for manual recalculation for the authenticated user.
 
-Toda badge nasce em `badge_definitions`. Quando um usuario cumpre o criterio, o backend grava uma linha unica em `user_badges`.
+Every badge starts in `badge_definitions`. When a user meets the criteria, the backend stores one unique row in `user_badges`.
 
-As badges devem apontar para imagens publicas em `uploads/media/badges`.
+Badges should point to public image assets under `uploads/media/badges`.
 
-## Quando basta adicionar seed
+## When a Seed Is Enough
 
-Se o criterio ja existe em `BadgeProgressService`, basta inserir uma nova definicao em `badge_definitions`.
+If the criteria already exists in `BadgeProgressService`, adding a new row to `badge_definitions` is enough.
 
-Criterios suportados hoje:
+Currently supported criteria:
 
 - `profile_onboarding_completed`
 - `technology_count`
@@ -34,7 +34,7 @@ Criterios suportados hoje:
 - `referral_count`
 - `alpha_user`
 
-Exemplo:
+Example:
 
 ```sql
 INSERT INTO badge_definitions (
@@ -43,12 +43,12 @@ INSERT INTO badge_definitions (
   created_at, updated_at
 ) VALUES (
   'view_20_projects',
-  'Mapa aberto',
-  'Visualizou 20 projetos open source.',
+  'Open map',
+  'Viewed 20 open source projects.',
   'discovery',
   'gold',
   '/uploads/media/badges/view_20_projects.png',
-  'Insignia de exploracao avancada de projetos',
+  'Advanced project exploration badge',
   'map',
   1,
   0,
@@ -73,60 +73,62 @@ INSERT INTO badge_definitions (
   updated_at = NOW();
 ```
 
-## Quando precisa alterar codigo
+## When Code Changes Are Needed
 
-Crie um novo `criteria_type` quando a regra nao puder ser expressa pelos criterios atuais.
+Create a new `criteria_type` only when the rule cannot be expressed with the existing criteria.
 
-Passos:
+Steps:
 
-1. Adicione o calculo em `BadgeProgressService::currentValue`.
-2. Se o calculo acessar banco, crie um metodo publico no proprio service e injete-o no array `$deps` do construtor.
-3. Use `criteria_config` para qualquer parametro variavel, como `threshold`, `event_type`, `state`, `label` ou janela de dias.
-4. Adicione testes em `tests/BadgeProgressServiceTest.php`.
-5. Crie uma migration com o seed da badge.
-6. Atualize o `db_dump.sql` se a badge deve existir em instalacoes novas.
+1. Add the calculation to `BadgeProgressService::currentValue`.
+2. If the calculation reads from the database, create a public method in the service and inject it through the constructor `$deps` array.
+3. Use `criteria_config` for variable parameters such as `threshold`, `event_type`, `state`, `label`, or a day window.
+4. Add tests in `tests/BadgeProgressServiceTest.php`.
+5. Create a migration that seeds the badge.
+6. Update `db_dump.sql` if the badge should exist in clean installs.
+7. Update `openapi.yaml` if the public badge contract changes.
 
-## Onde disparar avaliacao
+## When Evaluation Runs
 
-O avaliador ja roda depois de:
+The evaluator already runs after:
 
-- atualizar perfil/onboarding;
-- atualizar tecnologias;
-- atualizar preferencias;
-- visualizar ou registrar atividade em repositorio;
-- mudar estado de repositorio;
-- importar dados locais;
-- registrar uma indicacao efetiva por convite.
+- Profile or onboarding updates.
+- Technology updates.
+- Preference updates.
+- Repository activity events.
+- Repository state changes.
+- Local MVP data imports.
+- Effective referral registration from an invite link.
 
-Se uma badge depender de um novo fluxo, chame:
+If a badge depends on a new flow, call:
 
 ```php
 (new BadgeEvaluatorService())->evaluateUser($userId);
 ```
 
-Se houver um `user_activity_events.id` que explique a conquista, prefira:
+If a `user_activity_events.id` explains the award, prefer:
 
 ```php
 (new BadgeEvaluatorService())->evaluateAfterActivityEvent($userId, $eventType, $eventId);
 ```
 
-## Recalculo para usuarios antigos
+## Recalculating Existing Users
 
-Depois de publicar uma nova badge retroativa:
+After publishing a retroactive badge:
 
-1. Aplique a migration/seed.
-2. Rode `POST /me/badges/evaluate` para um usuario especifico durante testes.
-3. Para recalculo em massa, crie um comando/script administrativo que percorra `users` ativos e chame `BadgeEvaluatorService::evaluateUser($userId)`.
+1. Apply the migration/seed.
+2. Run `POST /me/badges/evaluate` for a specific user during testing.
+3. For a bulk recalculation, create an admin script that iterates over active `users` rows and calls `BadgeEvaluatorService::evaluateUser($userId)`.
 
-`user_badges` tem indice unico em `(user_id, badge_id)`, entao o recalculo e idempotente.
+`user_badges` has a unique index on `(user_id, badge_id)`, so recalculation is idempotent.
 
 ## Checklist
 
-- `slug` unico, estavel e em snake_case.
-- `name`, `description` e `image_alt` claros para o front.
-- `image_url` preenchido com o caminho publico da imagem, por exemplo `/uploads/media/badges/minha_badge.png`.
-- `criteria_type` conhecido pelo backend.
-- `criteria_config` com `threshold` ou `target` quando aplicavel.
-- Teste unitario cobrindo o criterio novo.
-- `GET /badges` retorna a definicao.
-- `GET /me/badges` mostra progresso e `awarded_at` quando conquistada.
+- `slug` is unique, stable, and snake_case.
+- `name`, `description`, and `image_alt` are clear for the frontend.
+- `image_url` uses a public image path such as `/uploads/media/badges/my_badge.png`.
+- `criteria_type` is known by the backend.
+- `criteria_config` includes `threshold` or `target` when applicable.
+- Unit tests cover any new criteria.
+- `GET /badges` returns the definition.
+- `GET /me/badges` shows progress and `awarded_at` when earned.
+- `db_dump.sql` and relevant migrations are aligned.

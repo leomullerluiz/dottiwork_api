@@ -18,11 +18,11 @@ class TechnologyController extends BaseController
         $items = isset($body['technologies']) && is_array($body['technologies']) ? $body['technologies'] : null;
 
         if ($items === null) {
-            Response::validationError([['field' => 'technologies', 'message' => 'technologies deve ser uma lista.']]);
+            Response::validationError([['field' => 'technologies', 'message' => 'technologies must be a list.']]);
         }
 
         if (count($items) > 50) {
-            Response::validationError([['field' => 'technologies', 'message' => 'Limite de 50 tecnologias excedido.']]);
+            Response::validationError([['field' => 'technologies', 'message' => 'Maximum of 50 technologies exceeded.']]);
         }
 
         $ids = [];
@@ -32,13 +32,13 @@ class TechnologyController extends BaseController
             $technologyId = $item['technology_id'] ?? null;
             $errors = Validator::collectErrors([
                 'technologies.' . $index . '.technology_id' => [
-                    'technology_id deve ser inteiro.' => Validator::integer($technologyId),
+                    'technology_id must be an integer.' => Validator::integer($technologyId),
                 ],
                 'technologies.' . $index . '.proficiency_level' => [
-                    'proficiency_level invalido.' => isset($item['proficiency_level']) && Validator::enum($item['proficiency_level'], $this->proficiencyLevels),
+                    'Invalid proficiency_level.' => isset($item['proficiency_level']) && Validator::enum($item['proficiency_level'], $this->proficiencyLevels),
                 ],
                 'technologies.' . $index . '.interest_level' => [
-                    'interest_level invalido.' => !isset($item['interest_level']) || Validator::enum($item['interest_level'], $this->interestLevels),
+                    'Invalid interest_level.' => !isset($item['interest_level']) || Validator::enum($item['interest_level'], $this->interestLevels),
                 ],
             ]);
 
@@ -56,12 +56,12 @@ class TechnologyController extends BaseController
         }
 
         if (!Validator::uniqueArray($ids)) {
-            Response::validationError([['field' => 'technologies', 'message' => 'Nao envie tecnologias duplicadas.']]);
+            Response::validationError([['field' => 'technologies', 'message' => 'Do not send duplicate technologies.']]);
         }
 
         $active = Technology::findActiveByIds($ids);
         if (count($active) !== count($ids)) {
-            Response::validationError([['field' => 'technologies', 'message' => 'Uma ou mais tecnologias nao existem ou estao inativas.']]);
+            Response::validationError([['field' => 'technologies', 'message' => 'One or more technologies do not exist or are inactive.']]);
         }
 
         $technologies = UserTechnology::replaceAll($user['id'], $normalized);

@@ -82,22 +82,22 @@ class Response
         self::error($message, 404, 'NOT_FOUND');
     }
 
-    public static function conflict($message = 'Conflito de dados.')
+    public static function conflict($message = 'Data conflict.')
     {
         self::error($message, 409, 'CONFLICT');
     }
 
-    public static function tooManyRequests($message = 'Muitas requisicoes.')
+    public static function tooManyRequests($message = 'Too many requests.')
     {
         self::error($message, 429, 'RATE_LIMITED');
     }
 
-    public static function badGateway($message = 'Servico externo indisponivel.')
+    public static function badGateway($message = 'External service unavailable.')
     {
         self::error($message, 502, 'BAD_GATEWAY');
     }
 
-    public static function serviceUnavailable($message = 'Servico temporariamente indisponivel.')
+    public static function serviceUnavailable($message = 'Service temporarily unavailable.')
     {
         self::error($message, 503, 'SERVICE_UNAVAILABLE');
     }
@@ -141,7 +141,7 @@ class Response
                 if (is_array($item)) {
                     return [
                         'field' => isset($item['field']) ? (string) $item['field'] : null,
-                        'message' => isset($item['message']) ? (string) $item['message'] : 'Campo invalido.',
+                        'message' => isset($item['message']) ? (string) $item['message'] : 'Invalid field.',
                     ];
                 }
 

@@ -26,7 +26,7 @@ class AccountEmailServiceTest extends TestCase
         $this->assertSame(['sent' => true, 'reason' => null], $result);
         $this->assertSame('ana@example.test', $sent['toEmail']);
         $this->assertSame('account_deleted', $sent['slug']);
-        $this->assertSame('Confirmacao de exclusao da sua conta dotti.work', $sent['subject']);
+        $this->assertSame('Your dotti.work account deletion confirmation', $sent['subject']);
         $this->assertSame('Ana &lt;Dev&gt;', $sent['variables']['name']);
         $this->assertSame('https://app.dotti.work/', $sent['variables']['home_url']);
         $this->assertArrayHasKey('deleted_at', $sent['variables']);
@@ -51,7 +51,7 @@ class AccountEmailServiceTest extends TestCase
     public function testSuppressesMailerFailuresSoDeletionCanContinue(): void
     {
         $service = new AccountEmailService(function () {
-            throw new RuntimeException('SMTP indisponivel.');
+            throw new RuntimeException('SMTP unavailable.');
         });
 
         $result = $service->sendDeletionConfirmation([

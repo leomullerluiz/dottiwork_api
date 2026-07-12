@@ -1,14 +1,14 @@
-Sua conta foi excluida
+Your account was deleted
 
-Ola, {{ name }}.
+Hi, {{ name }}.
 
-Confirmamos que sua conta dotti.work foi excluida.
+We confirm that your dotti.work account was deleted.
 
-Solicitacao registrada em {{ deleted_at }}. Suas sessoes locais foram encerradas e o acesso a conta foi removido.
+Request registered at {{ deleted_at }}. Your local sessions were ended and account access was removed.
 
-Dados associados a sua conta sao tratados conforme a politica de privacidade e regras de retencao aplicaveis.
+Data associated with your account is handled according to the privacy policy and applicable retention rules.
 
-Se voce nao reconhece esta acao, entre em contato pelo canal oficial do dotti.work e revise a seguranca do seu e-mail.
+If you do not recognize this action, contact the official dotti.work channel and review your email security.
 
-Pagina publica do produto:
+Product public page:
 {{ home_url }}

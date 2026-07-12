@@ -19,16 +19,16 @@ class TopRepositoryService
         $errors = [];
 
         if (!in_array($filters['sort_by'] ?? 'stars', self::ALLOWED_SORTS, true)) {
-            $errors[] = ['field' => 'sort_by', 'message' => 'Valor invalido.'];
+            $errors[] = ['field' => 'sort_by', 'message' => 'Invalid value.'];
         }
 
         $limit = filter_var($filters['limit'] ?? null, FILTER_VALIDATE_INT);
         if ($limit === false || $limit < 1 || $limit > 100) {
-            $errors[] = ['field' => 'limit', 'message' => 'Limite deve estar entre 1 e 100.'];
+            $errors[] = ['field' => 'limit', 'message' => 'Limit must be between 1 and 100.'];
         }
 
         if (self::stringOrNull($filters['cursor'] ?? null) !== null && self::decodeCursor($filters['cursor'], $filters) === null) {
-            $errors[] = ['field' => 'cursor', 'message' => 'Cursor invalido.'];
+            $errors[] = ['field' => 'cursor', 'message' => 'Invalid cursor.'];
         }
 
         return $errors;
@@ -164,7 +164,7 @@ class TopRepositoryService
     {
         $cursor = self::decodeCursor($filters['cursor'] ?? null, $filters);
         if ($cursor === null) {
-            throw new InvalidArgumentException('Cursor invalido.');
+            throw new InvalidArgumentException('Invalid cursor.');
         }
 
         if ($cursor === []) {

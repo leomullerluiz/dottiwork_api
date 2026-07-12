@@ -49,7 +49,7 @@ class BadgeProgressServiceTest extends TestCase
         $this->assertSame(1, $progress['current_value']);
         $this->assertSame(100, $progress['percent']);
         $this->assertTrue($progress['completed']);
-        $this->assertSame('Primeira contribuicao', $progress['badge']['name']);
+        $this->assertSame('First contribution', $progress['badge']['name']);
     }
 
     public function testCombinedActivityOrStateCriteriaCompletesWithEitherSignal(): void
@@ -127,12 +127,12 @@ class BadgeProgressServiceTest extends TestCase
         return array_merge([
             'id' => 1,
             'slug' => 'first_contribution',
-            'name' => 'Primeira contribuicao',
-            'description' => 'Marcou sua primeira contribuicao como concluida.',
+            'name' => 'First contribution',
+            'description' => 'Marked the first contribution as completed.',
             'category' => 'contribution',
             'level' => 'gold',
             'image_url' => '/uploads/media/badges/first_contribution.png',
-            'image_alt' => 'Insignia de primeira contribuicao open source',
+            'image_alt' => 'First open source contribution badge',
             'icon' => 'award',
             'is_active' => true,
             'is_secret' => false,
