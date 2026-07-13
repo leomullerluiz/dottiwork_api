@@ -27,6 +27,7 @@ class AuthController extends BaseController
                 'seniority' => $profile['seniority'] ?? null,
                 'onboarding_completed' => (bool) ($profile['onboarding_completed'] ?? false),
                 'goals' => $profile['goals'] ?? [],
+                'profile_frame' => UserProfileFrame::featuredForUser($user['id']),
             ],
             'github' => OAuthAccount::toPublic($githubAccount),
         ]);

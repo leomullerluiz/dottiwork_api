@@ -58,6 +58,7 @@ class PublicUserProfileServiceTest extends TestCase
         $this->assertSame(3, $payload['metrics']['pull_requests_sent_count']);
         $this->assertSame(1, count($payload['badges']));
         $this->assertSame('public_badge', $payload['badges'][0]['slug']);
+        $this->assertSame('first_key_first_egg_frame', $payload['profile']['profile_frame']['slug']);
         $this->assertSame('https://github.com/open-source-org/project', $payload['featured_repositories'][0]['public_url']);
         $this->assertArrayNotHasKey('notes', $payload['featured_repositories'][0]);
         $this->assertStringNotContainsString('email', $encoded);
@@ -224,6 +225,19 @@ class PublicUserProfileServiceTest extends TestCase
                             'is_secret' => true,
                         ],
                     ],
+                ];
+            },
+            'profile_frame' => function () {
+                return [
+                    'slug' => 'first_key_first_egg_frame',
+                    'name' => 'First to the key frame',
+                    'image_url' => null,
+                    'style_config' => [
+                        'variant' => 'founder-key-egg',
+                        'accent' => '#f05d4f',
+                    ],
+                    'source_badge_slug' => 'first_key_first_egg',
+                    'awarded_at' => '2026-07-13 15:00:00',
                 ];
             },
             'technologies_count' => function () {

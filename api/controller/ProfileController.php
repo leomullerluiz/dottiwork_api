@@ -13,9 +13,12 @@ class ProfileController extends BaseController
     public function show(Request $request)
     {
         $user = $this->requireToken($request);
+        $profile = UserProfile::getComplete($user['id']);
+        $profile['profile_frame'] = UserProfileFrame::featuredForUser($user['id']);
+
         Response::success([
             'user' => User::toPublic($user),
-            'profile' => UserProfile::getComplete($user['id']),
+            'profile' => $profile,
         ]);
     }
 
@@ -59,6 +62,7 @@ class ProfileController extends BaseController
             !empty($body['onboarding_completed'])
         );
         (new BadgeEvaluatorService())->evaluateAfterProfileUpdate($user['id']);
+        $profile['profile_frame'] = UserProfileFrame::featuredForUser($user['id']);
 
         Response::success([
             'user' => User::toPublic(User::findById($user['id'])),

@@ -19,6 +19,8 @@ DROP TABLE IF EXISTS
   `password_reset_tokens`,
   `todo_lists`,
   `todo_categories`,
+  `signup_cohort_awards`,
+  `user_profile_frames`,
   `user_badge_progress`,
   `user_badges`,
   `badge_definitions`,
@@ -196,6 +198,24 @@ CREATE TABLE `user_profile_goals` (
   CONSTRAINT `fk_user_profile_goals_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE `user_profile_frames` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` bigint(20) UNSIGNED NOT NULL,
+  `slug` varchar(100) NOT NULL,
+  `name` varchar(150) NOT NULL,
+  `image_url` varchar(500) DEFAULT NULL,
+  `style_config` json DEFAULT NULL,
+  `source_badge_slug` varchar(100) DEFAULT NULL,
+  `awarded_at` datetime NOT NULL,
+  `created_at` datetime NOT NULL,
+  `updated_at` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_user_profile_frames_user_slug` (`user_id`, `slug`),
+  KEY `idx_user_profile_frames_user_awarded` (`user_id`, `awarded_at`),
+  KEY `idx_user_profile_frames_source_badge` (`source_badge_slug`),
+  CONSTRAINT `fk_user_profile_frames_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE `technologies` (
   `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `slug` varchar(100) NOT NULL,
@@ -359,6 +379,20 @@ CREATE TABLE `user_badge_progress` (
   CONSTRAINT `fk_user_badge_progress_badge` FOREIGN KEY (`badge_id`) REFERENCES `badge_definitions` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE `signup_cohort_awards` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `cohort_slug` varchar(100) NOT NULL,
+  `user_id` bigint(20) UNSIGNED NOT NULL,
+  `position` int(11) NOT NULL,
+  `awarded_at` datetime NOT NULL,
+  `created_at` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_signup_cohort_user` (`cohort_slug`, `user_id`),
+  UNIQUE KEY `uq_signup_cohort_position` (`cohort_slug`, `position`),
+  KEY `idx_signup_cohort_awards_user_id` (`user_id`),
+  CONSTRAINT `fk_signup_cohort_awards_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE `repository_cache` (
   `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `github_repository_id` bigint(20) UNSIGNED NOT NULL,
@@ -468,7 +502,8 @@ INSERT INTO `badge_definitions` (
 ('invite_friend', 'Invite a friend', 'Invited one person who created a dotti.work account.', 'special', 'silver', '/uploads/media/badges/invite_friend.png', 'Invite a friend badge', 'user-plus', 1, 0, 150, 'referral_count', JSON_OBJECT('threshold', 1), NOW(), NOW()),
 ('invite_5_friends', 'Open source connector', 'Invited 5 people who created dotti.work accounts.', 'special', 'gold', '/uploads/media/badges/invite_5_friends.png', 'Open source connector badge', 'users', 1, 0, 160, 'referral_count', JSON_OBJECT('threshold', 5), NOW(), NOW()),
 ('invite_10_friends', 'Community in motion', 'Invited 10 people who created dotti.work accounts.', 'special', 'platinum', '/uploads/media/badges/invite_10_friends.png', 'Community in motion badge', 'sparkles', 1, 0, 170, 'referral_count', JSON_OBJECT('threshold', 10), NOW(), NOW()),
-('alpha_user', 'Alpha user', 'Joined by 2026-10-30 and completed the first goals.', 'special', 'platinum', '/uploads/media/badges/alpha_user.png', 'dotti.work alpha user badge', 'star', 1, 0, 180, 'alpha_user', JSON_OBJECT('deadline', '2026-10-30', 'threshold', 5), NOW(), NOW());
+('alpha_user', 'Alpha user', 'Joined by 2026-10-30 and completed the first goals.', 'special', 'platinum', '/uploads/media/badges/alpha_user.png', 'dotti.work alpha user badge', 'star', 1, 0, 180, 'alpha_user', JSON_OBJECT('deadline', '2026-10-30', 'threshold', 5), NOW(), NOW()),
+('first_key_first_egg', 'First to the key! First to the egg!', 'Awarded to the first 10 new members after this milestone opened.', 'special', 'legendary', '/uploads/media/badges/first_key_first_egg.png', 'First to the key and first to the egg badge', 'key-round', 1, 0, 190, 'signup_cohort_first_n', JSON_OBJECT('cohort', 'first_key_first_egg', 'limit', 10, 'target', 1), NOW(), NOW());
 
 COMMIT;
 

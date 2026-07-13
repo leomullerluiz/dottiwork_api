@@ -11,6 +11,7 @@ class UserProfileService
                 return User::toPublic(User::findById($userId));
             },
             'profile_get' => ['UserProfile', 'getComplete'],
+            'profile_frame' => ['UserProfileFrame', 'featuredForUser'],
             'technologies_find' => ['UserTechnology', 'findByUserId'],
             'preferences_find' => ['UserPreference', 'findByUserId'],
             'repository_states_list' => function ($userId) {
@@ -37,9 +38,12 @@ class UserProfileService
     public function export($user)
     {
         $userId = is_array($user) ? ($user['id'] ?? null) : $user;
+        $profile = $this->call('profile_get', $userId);
+        $profile['profile_frame'] = $this->call('profile_frame', $userId);
+
         $data = [
             'user' => $this->call('user_public', $userId),
-            'profile' => $this->call('profile_get', $userId),
+            'profile' => $profile,
             'technologies' => $this->call('technologies_find', $userId),
             'preferences' => $this->call('preferences_find', $userId),
             'repository_states' => $this->call('repository_states_list', $userId),

@@ -14,6 +14,9 @@ class UserProfileServiceTest extends TestCase
             'profile_get' => function () {
                 return ['role' => 'frontend'];
             },
+            'profile_frame' => function () {
+                return null;
+            },
             'technologies_find' => function () {
                 return [['technology_id' => 10]];
             },
@@ -33,7 +36,7 @@ class UserProfileServiceTest extends TestCase
 
         $this->assertSame([
             'user' => ['id' => 7, 'login' => 'ana'],
-            'profile' => ['role' => 'frontend'],
+            'profile' => ['role' => 'frontend', 'profile_frame' => null],
             'technologies' => [['technology_id' => 10]],
             'preferences' => ['default_sort_by' => 'best_match'],
             'repository_states' => [['state' => 'saved']],
@@ -51,6 +54,9 @@ class UserProfileServiceTest extends TestCase
             },
             'profile_get' => function () {
                 return ['role' => 'frontend'];
+            },
+            'profile_frame' => function () {
+                return null;
             },
             'technologies_find' => function () {
                 return [];
@@ -89,6 +95,9 @@ class UserProfileServiceTest extends TestCase
             'profile_get' => function () {
                 return [];
             },
+            'profile_frame' => function () {
+                return null;
+            },
             'technologies_find' => function () {
                 return [];
             },
@@ -123,6 +132,9 @@ class UserProfileServiceTest extends TestCase
             },
             'profile_get' => function () {
                 return ['role' => 'backend'];
+            },
+            'profile_frame' => function () {
+                return null;
             },
             'technologies_find' => function () {
                 return [];

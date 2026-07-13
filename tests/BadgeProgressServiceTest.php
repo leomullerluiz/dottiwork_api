@@ -111,6 +111,33 @@ class BadgeProgressServiceTest extends TestCase
         $this->assertTrue($progress['completed']);
     }
 
+    public function testSignupCohortFirstNCompletesOnlyForReservedUsers(): void
+    {
+        $service = new BadgeProgressService([
+            'signup_cohort_award_position' => function ($userId, $cohort) {
+                $this->assertSame('first_key_first_egg', $cohort);
+                return $userId === 7 ? 2 : null;
+            },
+        ]);
+
+        $definition = $this->definition([
+            'slug' => 'first_key_first_egg',
+            'name' => 'First to the key! First to the egg!',
+            'criteria_type' => 'signup_cohort_first_n',
+            'criteria_config' => ['cohort' => 'first_key_first_egg', 'limit' => 10, 'target' => 1],
+            'level' => 'legendary',
+        ]);
+
+        $awarded = $service->progressForDefinition(7, $definition);
+        $notAwarded = $service->progressForDefinition(8, $definition);
+
+        $this->assertSame(1, $awarded['current_value']);
+        $this->assertSame(1, $awarded['target_value']);
+        $this->assertTrue($awarded['completed']);
+        $this->assertSame(0, $notAwarded['current_value']);
+        $this->assertFalse($notAwarded['completed']);
+    }
+
     public function testBadgeDefinitionResponseDecodesCriteriaConfig(): void
     {
         $response = BadgeDefinition::toResponse($this->definition([

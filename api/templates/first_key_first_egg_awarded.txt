@@ -1,0 +1,12 @@
+First to the key! First to the egg!
+
+Hi, {{ name }}.
+
+Thank you for joining dotti.work early{{ github_login }}. You are one of the first 10 new members to receive "{{ badge_name }}".
+
+Your profile now includes a special gratitude frame. You can view it here:
+{{ profile_url }}
+
+Your place in this limited cohort: #{{ position }} of 10.
+
+Thank you for helping shape dotti.work from the start.

@@ -18,6 +18,7 @@ class PublicUserProfileService
                 return OAuthAccount::findByUserAndProvider($userId, 'github');
             },
             'badges_list' => ['UserBadge', 'listByUser'],
+            'profile_frame' => ['UserProfileFrame', 'featuredForUser'],
             'technologies_count' => [$this, 'queryTechnologiesCount'],
             'badges_count' => [$this, 'queryPublicBadgesCount'],
             'repository_state_counts' => [$this, 'queryRepositoryStateCounts'],
@@ -46,7 +47,7 @@ class PublicUserProfileService
         $slug = $this->publicSlugForUser($user, $settings);
 
         return [
-            'profile' => $this->publicProfile($user, $profile),
+            'profile' => $this->publicProfile($user, $profile, $this->call('profile_frame', $userId)),
             'github' => $this->githubProfile($user, $this->call('github_account_find', $userId)),
             'technologies' => $this->publicTechnologies($this->call('technologies_find', $userId)),
             'metrics' => $this->metricsForUser($userId, $user['created_at'] ?? null),
@@ -287,7 +288,7 @@ class PublicUserProfileService
         return $stmt->fetchAll();
     }
 
-    private function publicProfile(array $user, array $profile)
+    private function publicProfile(array $user, array $profile, $profileFrame = null)
     {
         return [
             'login' => $user['login'] ?? null,
@@ -301,6 +302,7 @@ class PublicUserProfileService
             'role' => $profile['role'] ?? null,
             'seniority' => $profile['seniority'] ?? null,
             'goals' => $profile['goals'] ?? [],
+            'profile_frame' => $profileFrame,
             'joined_at' => $user['created_at'] ?? null,
         ];
     }

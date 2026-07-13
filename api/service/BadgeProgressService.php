@@ -33,6 +33,7 @@ class BadgeProgressService
             'activity_distinct_days' => [$this, 'countActivityDistinctDays'],
             'referral_count' => ['UserReferral', 'countByReferrerUserId'],
             'alpha_user_started_before' => [$this, 'isAlphaUserStartedBefore'],
+            'signup_cohort_award_position' => ['SignupCohortAward', 'positionForUser'],
         ], $deps);
     }
 
@@ -69,7 +70,7 @@ class BadgeProgressService
     {
         $criteriaType = $definition['criteria_type'];
         $config = $definition['criteria_config'] ?? [];
-        $target = $this->targetValue($config);
+        $target = $this->targetValue($criteriaType, $config);
         $current = $this->currentValue($userId, $criteriaType, $config);
         $percent = $target > 0 ? min(100, (int) floor(($current / $target) * 100)) : 0;
 
@@ -252,9 +253,17 @@ class BadgeProgressService
                 return $this->call('referral_count', $userId);
             case 'alpha_user':
                 return $this->alphaUserCurrentValue($userId, $config);
+            case 'signup_cohort_first_n':
+                return $this->signupCohortFirstNCurrentValue($userId, $config);
             default:
                 return 0;
         }
+    }
+
+    private function signupCohortFirstNCurrentValue($userId, array $config)
+    {
+        $cohort = $config['cohort'] ?? SignupCohortAwardService::COHORT_SLUG;
+        return $this->call('signup_cohort_award_position', $userId, $cohort) ? 1 : 0;
     }
 
     private function alphaUserCurrentValue($userId, array $config)
@@ -272,8 +281,12 @@ class BadgeProgressService
         return $checks;
     }
 
-    private function targetValue(array $config)
+    private function targetValue($criteriaType, array $config)
     {
+        if ($criteriaType === 'signup_cohort_first_n') {
+            return 1;
+        }
+
         return max(1, (int) ($config['threshold'] ?? $config['target'] ?? 1));
     }
 

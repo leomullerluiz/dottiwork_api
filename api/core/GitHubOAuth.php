@@ -83,6 +83,7 @@ class GitHubOAuth
 
             if ($createdUser) {
                 self::registerReferralSafely($user['id'], $stateRecord['invite_code'] ?? null);
+                self::awardFirstKeyEggSafely($user, $githubUser, $verifiedEmail);
                 (new WelcomeEmailService())->sendAfterGitHubSignup($user, $githubUser, $verifiedEmail);
             }
 
@@ -170,6 +171,17 @@ class GitHubOAuth
         } catch (Throwable $e) {
             if (($_ENV['APP_ENV'] ?? 'local') !== 'production') {
                 error_log('REFERRAL REGISTER ERROR: ' . $e->getMessage());
+            }
+        }
+    }
+
+    private static function awardFirstKeyEggSafely(array $user, array $githubUser, $email)
+    {
+        try {
+            (new SignupCohortAwardService())->awardFirstKeyEggIfEligible($user, $githubUser, $email);
+        } catch (Throwable $e) {
+            if (($_ENV['APP_ENV'] ?? 'local') !== 'production') {
+                error_log('FIRST KEY EGG AWARD ERROR: ' . $e->getMessage());
             }
         }
     }

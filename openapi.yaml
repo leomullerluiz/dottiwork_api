@@ -1749,10 +1749,47 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ProfileGoal"
+        profile_frame:
+          allOf:
+            - $ref: "#/components/schemas/ProfileFrame"
+          nullable: true
         joined_at:
           type: string
           nullable: true
           example: "2026-06-23 10:00:00"
+
+    ProfileFrame:
+      type: object
+      nullable: true
+      required: [slug, name, image_url, style_config, source_badge_slug, awarded_at]
+      properties:
+        slug:
+          type: string
+          example: first_key_first_egg_frame
+        name:
+          type: string
+          example: First to the key frame
+        image_url:
+          type: string
+          nullable: true
+          example: /uploads/media/profile-frames/first_key_first_egg_frame.png
+        style_config:
+          type: object
+          additionalProperties: true
+          example:
+            variant: founder-key-egg
+            accent: "#f05d4f"
+            ring: "#f8c14a"
+            shadow: "#15202b"
+            glow: "#fff3c4"
+        source_badge_slug:
+          type: string
+          nullable: true
+          example: first_key_first_egg
+        awarded_at:
+          type: string
+          nullable: true
+          example: "2026-07-13 15:00:00"
 
     PublicGitHubProfile:
       type: object
@@ -2439,6 +2476,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ProfileGoal"
+        profile_frame:
+          allOf:
+            - $ref: "#/components/schemas/ProfileFrame"
+          nullable: true
 
     UserProfile:
       allOf:
