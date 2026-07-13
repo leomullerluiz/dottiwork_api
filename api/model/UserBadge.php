@@ -166,8 +166,20 @@ class UserBadge
     public static function awardedMapByUser($userId)
     {
         $map = [];
-        foreach (self::listByUser($userId) as $badge) {
-            $map[$badge['slug']] = $badge;
+        $db = Database::getInstance()->getConnection();
+        $stmt = $db->prepare("
+            SELECT ub.*, bd.name, bd.description, bd.category, bd.level, bd.image_url,
+                   bd.image_alt, bd.icon, bd.is_secret, bd.display_order, bd.criteria_type,
+                   bd.criteria_config
+            FROM user_badges ub
+            INNER JOIN badge_definitions bd ON bd.id = ub.badge_id
+            WHERE ub.user_id = :user_id
+            ORDER BY ub.awarded_at DESC, ub.id DESC
+        ");
+        $stmt->execute(['user_id' => $userId]);
+
+        foreach ($stmt->fetchAll() as $row) {
+            $map[$row['slug']] = self::toResponse($row);
         }
         return $map;
     }
@@ -191,6 +203,7 @@ class UserBadge
 
     public static function toResponse(array $row)
     {
+        $isSecret = !empty($row['is_secret']);
         $definition = [
             'id' => $row['badge_id'] ?? ($row['id'] ?? null),
             'slug' => $row['slug'],
@@ -209,12 +222,12 @@ class UserBadge
 
         return [
             'id' => isset($row['id']) ? (int) $row['id'] : null,
-            'slug' => (string) $row['slug'],
+            'slug' => $isSecret ? BadgeDefinition::secretSlug() : (string) $row['slug'],
             'awarded_at' => $row['awarded_at'] ?? null,
             'notification_seen' => !empty($row['notification_seen_at']),
             'notification_seen_at' => $row['notification_seen_at'] ?? null,
-            'source_event_id' => isset($row['source_event_id']) ? (int) $row['source_event_id'] : null,
-            'progress_snapshot' => self::normalizeJson($row['progress_snapshot'] ?? []),
+            'source_event_id' => $isSecret ? null : (isset($row['source_event_id']) ? (int) $row['source_event_id'] : null),
+            'progress_snapshot' => $isSecret ? [] : self::normalizeJson($row['progress_snapshot'] ?? []),
             'badge' => BadgeDefinition::compactResponse($definition),
         ];
     }

@@ -149,6 +149,58 @@ class BadgeProgressServiceTest extends TestCase
         $this->assertSame('/uploads/media/badges/first_contribution.png', $response['image_url']);
     }
 
+    public function testSecretBadgeDefinitionResponseIsGeneric(): void
+    {
+        $response = BadgeDefinition::toResponse($this->definition([
+            'slug' => 'first_key_first_egg',
+            'name' => 'First to the key! First to the egg!',
+            'description' => 'Awarded to the first 10 new members.',
+            'level' => 'legendary',
+            'image_url' => '/uploads/media/badges/first_key_first_egg.png',
+            'criteria_type' => 'signup_cohort_first_n',
+            'criteria_config' => ['cohort' => 'first_key_first_egg', 'target' => 1],
+            'is_secret' => true,
+        ]));
+
+        $this->assertSame('secret_badge', $response['slug']);
+        $this->assertSame('Secret badge', $response['name']);
+        $this->assertSame('This achievement is hidden.', $response['description']);
+        $this->assertSame('secret', $response['level']);
+        $this->assertSame('/uploads/media/badges/secret_badge.png', $response['image_url']);
+        $this->assertSame('secret', $response['criteria_type']);
+        $this->assertSame([], $response['criteria_config']);
+    }
+
+    public function testSecretBadgeProgressHidesCriteriaAndActualProgress(): void
+    {
+        $service = new BadgeProgressService([
+            'activity_event_count' => function () {
+                return 4;
+            },
+        ]);
+
+        $progress = $service->progressForDefinition(7, $this->definition([
+            'slug' => 'view_secret_projects',
+            'name' => 'Secret project viewer',
+            'criteria_type' => 'activity_event_count',
+            'criteria_config' => [
+                'event_type' => 'viewed_project',
+                'threshold' => 5,
+                'distinct_repositories' => true,
+            ],
+            'is_secret' => true,
+        ]));
+
+        $this->assertSame('secret_badge', $progress['slug']);
+        $this->assertSame(0, $progress['current_value']);
+        $this->assertSame(1, $progress['target_value']);
+        $this->assertSame(0, $progress['percent']);
+        $this->assertFalse($progress['completed']);
+        $this->assertSame('secret', $progress['criteria_type']);
+        $this->assertSame([], $progress['criteria_config']);
+        $this->assertSame('Secret badge', $progress['badge']['name']);
+    }
+
     private function definition(array $overrides = []): array
     {
         return array_merge([

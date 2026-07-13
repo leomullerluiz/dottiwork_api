@@ -22,6 +22,31 @@ class UserBadgeTest extends TestCase
         $this->assertSame('2026-07-09 10:30:00', $seen['notification_seen_at']);
     }
 
+    public function testSecretBadgeResponseHidesDetailsAndSnapshot(): void
+    {
+        $response = UserBadge::toResponse($this->row([
+            'slug' => 'first_key_first_egg',
+            'name' => 'First to the key! First to the egg!',
+            'description' => 'Awarded to the first 10 new members.',
+            'level' => 'legendary',
+            'image_url' => '/uploads/media/badges/first_key_first_egg.png',
+            'image_alt' => 'First to the key and first to the egg badge',
+            'icon' => 'key-round',
+            'is_secret' => true,
+            'source_event_id' => 99,
+            'progress_snapshot' => '{"cohort":"first_key_first_egg","position":1}',
+            'criteria_type' => 'signup_cohort_first_n',
+            'criteria_config' => '{"cohort":"first_key_first_egg","target":1}',
+        ]));
+
+        $this->assertSame('secret_badge', $response['slug']);
+        $this->assertNull($response['source_event_id']);
+        $this->assertSame([], $response['progress_snapshot']);
+        $this->assertSame('Secret badge', $response['badge']['name']);
+        $this->assertSame('secret', $response['badge']['category']);
+        $this->assertSame('lock', $response['badge']['icon']);
+    }
+
     private function row(array $overrides = []): array
     {
         return array_merge([

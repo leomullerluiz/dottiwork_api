@@ -2,6 +2,15 @@
 
 class BadgeDefinition
 {
+    private const SECRET_SLUG = 'secret_badge';
+    private const SECRET_NAME = 'Secret badge';
+    private const SECRET_DESCRIPTION = 'This achievement is hidden.';
+    private const SECRET_CATEGORY = 'secret';
+    private const SECRET_LEVEL = 'secret';
+    private const SECRET_IMAGE_URL = '/uploads/media/badges/secret_badge.png';
+    private const SECRET_IMAGE_ALT = 'Hidden secret badge';
+    private const SECRET_ICON = 'lock';
+
     public static function allActive()
     {
         $db = Database::getInstance()->getConnection();
@@ -35,6 +44,10 @@ class BadgeDefinition
 
     public static function toResponse(array $row)
     {
+        if (!empty($row['is_secret'])) {
+            return self::secretResponse(true);
+        }
+
         return [
             'slug' => (string) $row['slug'],
             'name' => (string) $row['name'],
@@ -56,6 +69,16 @@ class BadgeDefinition
         $badge = self::toResponse($row);
         unset($badge['criteria_type'], $badge['criteria_config']);
         return $badge;
+    }
+
+    public static function isSecret(array $row)
+    {
+        return !empty($row['is_secret']);
+    }
+
+    public static function secretSlug()
+    {
+        return self::SECRET_SLUG;
     }
 
     private static function decode($row)
@@ -80,5 +103,28 @@ class BadgeDefinition
         }
 
         return is_array($value) ? $value : [];
+    }
+
+    private static function secretResponse($includeCriteria)
+    {
+        $response = [
+            'slug' => self::SECRET_SLUG,
+            'name' => self::SECRET_NAME,
+            'description' => self::SECRET_DESCRIPTION,
+            'category' => self::SECRET_CATEGORY,
+            'level' => self::SECRET_LEVEL,
+            'image_url' => self::SECRET_IMAGE_URL,
+            'image_alt' => self::SECRET_IMAGE_ALT,
+            'icon' => self::SECRET_ICON,
+            'is_secret' => true,
+            'display_order' => 0,
+        ];
+
+        if ($includeCriteria) {
+            $response['criteria_type'] = 'secret';
+            $response['criteria_config'] = [];
+        }
+
+        return $response;
     }
 }

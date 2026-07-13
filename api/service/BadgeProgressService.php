@@ -73,16 +73,18 @@ class BadgeProgressService
         $target = $this->targetValue($criteriaType, $config);
         $current = $this->currentValue($userId, $criteriaType, $config);
         $percent = $target > 0 ? min(100, (int) floor(($current / $target) * 100)) : 0;
+        $completed = $target > 0 && $current >= $target;
+        $isSecret = BadgeDefinition::isSecret($definition);
 
         return [
-            'slug' => $definition['slug'],
-            'current_value' => min($current, $target),
-            'target_value' => $target,
-            'percent' => $percent,
-            'completed' => $target > 0 && $current >= $target,
+            'slug' => $isSecret ? BadgeDefinition::secretSlug() : $definition['slug'],
+            'current_value' => $isSecret ? ($completed ? 1 : 0) : min($current, $target),
+            'target_value' => $isSecret ? 1 : $target,
+            'percent' => $isSecret ? ($completed ? 100 : 0) : $percent,
+            'completed' => $completed,
             'awarded_at' => null,
-            'criteria_type' => $criteriaType,
-            'criteria_config' => $config,
+            'criteria_type' => $isSecret ? 'secret' : $criteriaType,
+            'criteria_config' => $isSecret ? [] : $config,
             'badge' => BadgeDefinition::compactResponse($definition),
         ];
     }
