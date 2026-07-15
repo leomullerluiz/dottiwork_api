@@ -7,7 +7,6 @@ class BadgeDefinition
     private const SECRET_DESCRIPTION = 'This achievement is hidden.';
     private const SECRET_CATEGORY = 'secret';
     private const SECRET_LEVEL = 'secret';
-    private const SECRET_IMAGE_URL = '/uploads/media/badges/secret_badge.png';
     private const SECRET_IMAGE_ALT = 'Hidden secret badge';
     private const SECRET_ICON = 'lock';
 
@@ -54,7 +53,6 @@ class BadgeDefinition
             'description' => (string) $row['description'],
             'category' => (string) $row['category'],
             'level' => (string) $row['level'],
-            'image_url' => (string) $row['image_url'],
             'image_alt' => (string) $row['image_alt'],
             'icon' => $row['icon'] ?? null,
             'is_secret' => !empty($row['is_secret']),
@@ -113,7 +111,6 @@ class BadgeDefinition
             'description' => self::SECRET_DESCRIPTION,
             'category' => self::SECRET_CATEGORY,
             'level' => self::SECRET_LEVEL,
-            'image_url' => self::SECRET_IMAGE_URL,
             'image_alt' => self::SECRET_IMAGE_ALT,
             'icon' => self::SECRET_ICON,
             'is_secret' => true,

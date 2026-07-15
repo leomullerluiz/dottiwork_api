@@ -353,7 +353,6 @@ class PublicUserProfileService
                     'description' => $definition['description'] ?? null,
                     'category' => $definition['category'] ?? null,
                     'level' => $definition['level'] ?? null,
-                    'image_url' => $definition['image_url'] ?? null,
                     'image_alt' => $definition['image_alt'] ?? null,
                     'icon' => $definition['icon'] ?? null,
                     'is_secret' => false,

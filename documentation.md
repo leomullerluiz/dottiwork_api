@@ -106,6 +106,7 @@ mysql -u user -p database < migrations/202607080001_badges.sql
 mysql -u user -p database < migrations/202607080002_public_user_profiles.sql
 mysql -u user -p database < migrations/202607090001_badge_notification_seen.sql
 mysql -u user -p database < migrations/202607100001_badge_image_assets.sql
+mysql -u user -p database < migrations/202607140001_remove_badge_image_url.sql
 ```
 
 ## Security

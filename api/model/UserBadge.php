@@ -6,7 +6,7 @@ class UserBadge
     {
         $db = Database::getInstance()->getConnection();
         $stmt = $db->prepare("
-            SELECT ub.*, bd.name, bd.description, bd.category, bd.level, bd.image_url,
+            SELECT ub.*, bd.name, bd.description, bd.category, bd.level,
                    bd.image_alt, bd.icon, bd.is_secret, bd.display_order, bd.criteria_type,
                    bd.criteria_config
             FROM user_badges ub
@@ -75,7 +75,7 @@ class UserBadge
     {
         $db = Database::getInstance()->getConnection();
         $stmt = $db->prepare("
-            SELECT ub.*, bd.name, bd.description, bd.category, bd.level, bd.image_url,
+            SELECT ub.*, bd.name, bd.description, bd.category, bd.level,
                    bd.image_alt, bd.icon, bd.is_secret, bd.display_order, bd.criteria_type,
                    bd.criteria_config
             FROM user_badges ub
@@ -92,7 +92,7 @@ class UserBadge
     {
         $db = Database::getInstance()->getConnection();
         $stmt = $db->prepare("
-            SELECT ub.*, bd.name, bd.description, bd.category, bd.level, bd.image_url,
+            SELECT ub.*, bd.name, bd.description, bd.category, bd.level,
                    bd.image_alt, bd.icon, bd.is_secret, bd.display_order, bd.criteria_type,
                    bd.criteria_config
             FROM user_badges ub
@@ -168,7 +168,7 @@ class UserBadge
         $map = [];
         $db = Database::getInstance()->getConnection();
         $stmt = $db->prepare("
-            SELECT ub.*, bd.name, bd.description, bd.category, bd.level, bd.image_url,
+            SELECT ub.*, bd.name, bd.description, bd.category, bd.level,
                    bd.image_alt, bd.icon, bd.is_secret, bd.display_order, bd.criteria_type,
                    bd.criteria_config
             FROM user_badges ub
@@ -188,7 +188,7 @@ class UserBadge
     {
         $db = Database::getInstance()->getConnection();
         $stmt = $db->prepare("
-            SELECT ub.*, bd.name, bd.description, bd.category, bd.level, bd.image_url,
+            SELECT ub.*, bd.name, bd.description, bd.category, bd.level,
                    bd.image_alt, bd.icon, bd.is_secret, bd.display_order, bd.criteria_type,
                    bd.criteria_config
             FROM user_badges ub
@@ -211,7 +211,6 @@ class UserBadge
             'description' => $row['description'],
             'category' => $row['category'],
             'level' => $row['level'],
-            'image_url' => $row['image_url'],
             'image_alt' => $row['image_alt'],
             'icon' => $row['icon'] ?? null,
             'is_secret' => $row['is_secret'] ?? false,

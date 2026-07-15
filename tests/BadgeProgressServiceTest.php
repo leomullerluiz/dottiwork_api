@@ -146,7 +146,7 @@ class BadgeProgressServiceTest extends TestCase
 
         $this->assertSame(['threshold' => 3], $response['criteria_config']);
         $this->assertFalse($response['is_secret']);
-        $this->assertSame('/uploads/media/badges/first_contribution.png', $response['image_url']);
+        $this->assertArrayNotHasKey('image_url', $response);
     }
 
     public function testSecretBadgeDefinitionResponseIsGeneric(): void
@@ -156,7 +156,6 @@ class BadgeProgressServiceTest extends TestCase
             'name' => 'First to the key! First to the egg!',
             'description' => 'Awarded to the first 10 new members.',
             'level' => 'legendary',
-            'image_url' => '/uploads/media/badges/first_key_first_egg.png',
             'criteria_type' => 'signup_cohort_first_n',
             'criteria_config' => ['cohort' => 'first_key_first_egg', 'target' => 1],
             'is_secret' => true,
@@ -166,7 +165,7 @@ class BadgeProgressServiceTest extends TestCase
         $this->assertSame('Secret badge', $response['name']);
         $this->assertSame('This achievement is hidden.', $response['description']);
         $this->assertSame('secret', $response['level']);
-        $this->assertSame('/uploads/media/badges/secret_badge.png', $response['image_url']);
+        $this->assertArrayNotHasKey('image_url', $response);
         $this->assertSame('secret', $response['criteria_type']);
         $this->assertSame([], $response['criteria_config']);
     }
@@ -210,7 +209,6 @@ class BadgeProgressServiceTest extends TestCase
             'description' => 'Marked the first contribution as completed.',
             'category' => 'contribution',
             'level' => 'gold',
-            'image_url' => '/uploads/media/badges/first_contribution.png',
             'image_alt' => 'First open source contribution badge',
             'icon' => 'award',
             'is_active' => true,

@@ -12,7 +12,7 @@ The frontend does not need to know award rules. It consumes:
 
 Every badge starts in `badge_definitions`. When a user meets the criteria, the backend stores one unique row in `user_badges`.
 
-Badges should point to public image assets under `uploads/media/badges`.
+Badge visuals are rendered by the frontend from badge metadata such as `slug`, `level`, and `icon`.
 
 ## When a Seed Is Enough
 
@@ -38,7 +38,7 @@ Example:
 
 ```sql
 INSERT INTO badge_definitions (
-  slug, name, description, category, level, image_url, image_alt, icon,
+  slug, name, description, category, level, image_alt, icon,
   is_active, is_secret, display_order, criteria_type, criteria_config,
   created_at, updated_at
 ) VALUES (
@@ -47,7 +47,6 @@ INSERT INTO badge_definitions (
   'Viewed 20 open source projects.',
   'discovery',
   'gold',
-  '/uploads/media/badges/view_20_projects.png',
   'Advanced project exploration badge',
   'map',
   1,
@@ -62,7 +61,6 @@ INSERT INTO badge_definitions (
   description = VALUES(description),
   category = VALUES(category),
   level = VALUES(level),
-  image_url = VALUES(image_url),
   image_alt = VALUES(image_alt),
   icon = VALUES(icon),
   is_active = VALUES(is_active),
@@ -125,7 +123,7 @@ After publishing a retroactive badge:
 
 - `slug` is unique, stable, and snake_case.
 - `name`, `description`, and `image_alt` are clear for the frontend.
-- `image_url` uses a public image path such as `/uploads/media/badges/my_badge.png`.
+- `icon`, `level`, and `slug` provide enough metadata for frontend-rendered visuals.
 - `criteria_type` is known by the backend.
 - `criteria_config` includes `threshold` or `target` when applicable.
 - Unit tests cover any new criteria.

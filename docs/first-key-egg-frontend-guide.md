@@ -28,7 +28,6 @@ Expected badge shape:
   "description": "Awarded to the first 10 new members after this milestone opened.",
   "category": "special",
   "level": "legendary",
-  "image_url": "/uploads/media/badges/first_key_first_egg.png",
   "image_alt": "First to the key and first to the egg badge",
   "icon": "key-round",
   "is_secret": false,

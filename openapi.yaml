@@ -1891,7 +1891,7 @@ components:
 
     PublicBadge:
       type: object
-      required: [slug, name, description, category, level, image_url, image_alt, is_secret, display_order]
+      required: [slug, name, description, category, level, image_alt, is_secret, display_order]
       properties:
         slug:
           type: string
@@ -1908,9 +1908,6 @@ components:
         level:
           type: string
           example: bronze
-        image_url:
-          type: string
-          example: /uploads/media/badges/first_contribution.png
         image_alt:
           type: string
           example: First saved project badge
@@ -2140,7 +2137,7 @@ components:
 
     Badge:
       type: object
-      required: [slug, name, description, category, level, image_url, image_alt, is_secret, display_order]
+      required: [slug, name, description, category, level, image_alt, is_secret, display_order]
       properties:
         slug:
           type: string
@@ -2157,9 +2154,6 @@ components:
         level:
           type: string
           example: gold
-        image_url:
-          type: string
-          example: /uploads/media/badges/first_contribution.png
         image_alt:
           type: string
           example: First open source contribution badge
